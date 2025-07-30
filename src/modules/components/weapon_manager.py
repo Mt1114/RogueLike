@@ -86,7 +86,7 @@ class WeaponManager(Component):
         
         Args:
             dt: 时间增量
-            enemies: 敌人列表，用于武器追踪
+            enemies: 敌人列表，用于武器追踪（现在主要用于获取敌人列表）
         """
         if not self.enabled:
             return
@@ -98,30 +98,74 @@ class WeaponManager(Component):
             # 检查weapon.update方法所需的参数数量
             update_signature = inspect.signature(weapon.update)
             
-            # 根据参数数量决定如何调用update方法
-            if len(update_signature.parameters) > 1:  # 如果需要额外参数（比如敌人列表）
+            # 根据方法签名调用update
+            if len(update_signature.parameters) == 2:  # update(self, dt)
+                weapon.update(dt)
+            elif len(update_signature.parameters) == 3:  # update(self, dt, enemies)
                 weapon.update(dt, enemies)
             else:
+                # 默认调用方式
                 weapon.update(dt)
+    
+    def manual_attack(self, screen):
+        """手动攻击（按J键触发）
         
-        # 更新玩家的攻击力影响
-        if hasattr(self.owner, 'passive') and self.owner.passive:
-            attack_power = self.owner.passive.get_passive_level('attack_power')
-            if attack_power > 0:
-                self.apply_attack_power_bonus()
+        Args:
+            screen: pygame屏幕对象，用于获取鼠标位置
+        """
+        if not self.enabled:
+            return
+            
+        for weapon in self.weapons:
+            if hasattr(weapon, 'manual_attack'):
+                weapon.manual_attack(screen)
+                
+    def melee_attack(self, screen):
+        """近战攻击（鼠标右键触发）
+        
+        Args:
+            screen: pygame屏幕对象，用于获取鼠标位置
+        """
+        if not self.enabled:
+            return
+            
+        for weapon in self.weapons:
+            if hasattr(weapon, 'melee_attack'):
+                weapon.melee_attack(screen)
     
     def render(self, screen, camera_x, camera_y):
         """
         渲染所有武器
         
         Args:
-            screen: 目标Surface
+            screen: pygame屏幕对象
             camera_x: 相机X坐标
             camera_y: 相机Y坐标
         """
+        if not self.enabled:
+            return
+            
         for weapon in self.weapons:
             if hasattr(weapon, 'render'):
                 weapon.render(screen, camera_x, camera_y)
+                
+    def render_melee_attacks(self, screen, camera_x, camera_y):
+        """
+        渲染所有武器的近战攻击动画
+        
+        Args:
+            screen: pygame屏幕对象
+            camera_x: 相机X坐标
+            camera_y: 相机Y坐标
+        """
+        if not self.enabled:
+            return
+            
+        for weapon in self.weapons:
+            if hasattr(weapon, 'render_melee_attack') and weapon.melee_attacking:
+                # 获取鼠标方向用于渲染
+                direction_x, direction_y = weapon.get_mouse_direction(screen)
+                weapon.render_melee_attack(screen, camera_x, camera_y, direction_x, direction_y)
     
     def apply_weapon_upgrade(self, weapon_type, level, effects):
         """

@@ -110,17 +110,57 @@ class Knife(Weapon):
     def update(self, dt):
         super().update(dt)
         
-        # 检查是否可以投掷
-        if self.can_attack():
-            self.attack_timer = 0
-            self.throw_knives()
-            
+        # 移除自动发射逻辑，改为手动发射
         # 更新已投掷的小刀
         self.projectiles.update(dt)
         
-    def throw_knives(self):
-        """投掷小刀"""
-        direction_x, direction_y = self.get_player_direction()
+    def get_weapon_image(self):
+        """获取武器图像"""
+        return self.image
+        
+    def _render_melee_weapon(self, screen, weapon_image, screen_x, screen_y, 
+                            direction_x, direction_y, progress):
+        """渲染飞刀近战攻击动画"""
+        # 计算武器旋转角度
+        angle = math.degrees(math.atan2(-direction_y, direction_x))
+        
+        # 飞刀的特殊动画：从玩家身后快速挥向前方
+        start_distance = -8   # 开始时在玩家身后（更近）
+        end_distance = 20     # 结束时在玩家前方（更近）
+        
+        # 使用更快的缓动函数，模拟快速挥击
+        ease_progress = self._ease_out_cubic(progress)
+        current_distance = start_distance + (end_distance - start_distance) * ease_progress
+        
+        # 计算武器位置
+        weapon_x = screen_x + direction_x * current_distance
+        weapon_y = screen_y + direction_y * current_distance
+        
+        # 根据攻击进度缩放武器大小
+        scale = 1.0 + 0.3 * (1.0 - ease_progress)  # 开始时稍大，结束时正常大小
+        scaled_image = pygame.transform.scale(weapon_image, 
+                                           (int(weapon_image.get_width() * scale),
+                                            int(weapon_image.get_height() * scale)))
+        
+        # 旋转武器图像
+        rotated_image = pygame.transform.rotate(scaled_image, angle)
+        
+        # 绘制武器
+        weapon_rect = rotated_image.get_rect()
+        weapon_rect.center = (weapon_x, weapon_y)
+        screen.blit(rotated_image, weapon_rect)
+        
+    def _ease_out_cubic(self, t):
+        """三次缓动函数，让飞刀攻击更快更锐利"""
+        return 1 - (1 - t) ** 3
+        
+    def _perform_attack(self, direction_x, direction_y):
+        """执行飞刀攻击
+        
+        Args:
+            direction_x: 攻击方向X分量
+            direction_y: 攻击方向Y分量
+        """
         knives_count = int(self.current_stats[WeaponStatType.PROJECTILES_PER_CAST])
         
         if knives_count > 1:
@@ -141,6 +181,43 @@ class Knife(Weapon):
             
         # 播放投掷音效
         resource_manager.play_sound('knife_throw')
+        
+    def _perform_melee_attack(self, direction_x, direction_y):
+        """执行飞刀近战攻击
+        
+        Args:
+            direction_x: 攻击方向X分量
+            direction_y: 攻击方向Y分量
+        """
+        if not self.player.game or not self.player.game.enemy_manager:
+            return
+            
+        enemies = self.player.game.enemy_manager.enemies
+        attack_range = 80  # 扩大攻击范围
+        attack_damage = self.current_stats.get(WeaponStatType.DAMAGE, 10) * 1.5  # 1.5倍伤害
+        
+        for enemy in enemies:
+            # 计算到敌人的距离
+            dx = enemy.rect.x - self.player.world_x
+            dy = enemy.rect.y - self.player.world_y
+            distance = (dx**2 + dy**2)**0.5
+            
+            if distance <= attack_range:
+                # 计算敌人相对于玩家的方向
+                enemy_dir_x = dx / distance if distance > 0 else 0
+                enemy_dir_y = dy / distance if distance > 0 else 0
+                
+                # 计算点积，判断敌人是否在攻击方向的前方
+                dot_product = direction_x * enemy_dir_x + direction_y * enemy_dir_y
+                
+                # 扩大攻击角度范围（从60度扩大到120度）
+                if dot_product > -0.5:  # 从0.5改为-0.5，扩大攻击角度
+                    # 对敌人造成伤害
+                    enemy.take_damage(attack_damage)
+                    
+                    # 播放攻击音效
+                    from ...resource_manager import resource_manager
+                    resource_manager.play_sound("melee_attack")
         
     def _throw_single_knife(self, direction_x, direction_y):
         """投掷单个小刀"""

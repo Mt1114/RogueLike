@@ -15,7 +15,6 @@ from .components.components import (
     PassiveManager,
     ProgressionSystem
 )
-
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, hero_type="ninja_frog"):
         super().__init__()
@@ -27,6 +26,9 @@ class Player(pygame.sprite.Sprite):
         # 世界坐标（实际位置）
         self.world_x = x
         self.world_y = y
+        
+        # 游戏实例引用（用于获取敌人列表等）
+        self.game = None
         
         # 初始化各组件
         self._init_components()
@@ -188,6 +190,18 @@ class Player(pygame.sprite.Sprite):
         """处理输入事件"""
         self.movement.handle_event(event)
         
+        # 处理鼠标左键攻击（远程攻击）
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # 左键
+            # 获取屏幕对象（从游戏实例获取）
+            if self.game and hasattr(self.game, 'screen'):
+                self.weapon_manager.manual_attack(self.game.screen)
+                
+        # 处理鼠标右键攻击（近战攻击）
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:  # 右键
+            # 获取屏幕对象（从游戏实例获取）
+            if self.game and hasattr(self.game, 'screen'):
+                self.weapon_manager.melee_attack(self.game.screen)
+        
     def update(self, dt):
         """更新玩家状态"""
         # 更新各组件
@@ -280,13 +294,17 @@ class Player(pygame.sprite.Sprite):
         """添加武器"""
         return self.weapon_manager.add_weapon(weapon_type)
         
-    def update_weapons(self, dt, enemies=None):
+    def update_weapons(self, dt):
         """更新所有武器状态"""
-        self.weapon_manager.update(dt, enemies)
+        self.weapon_manager.update(dt)
         
     def render_weapons(self, screen, camera_x, camera_y):
         """渲染所有武器"""
         self.weapon_manager.render(screen, camera_x, camera_y)
+        
+    def render_melee_attacks(self, screen, camera_x, camera_y):
+        """渲染所有武器的近战攻击动画"""
+        self.weapon_manager.render_melee_attacks(screen, camera_x, camera_y)
         
     def remove_weapon(self, weapon_type):
         """移除指定类型的武器"""

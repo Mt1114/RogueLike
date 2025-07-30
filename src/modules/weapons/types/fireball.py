@@ -60,7 +60,7 @@ class ExplosionEffect(pygame.sprite.Sprite):
                                  screen_y - self.image.get_height() // 2))
 
 class FireballProjectile(pygame.sprite.Sprite):
-    def __init__(self, x, y, target, stats):
+    def __init__(self, x, y, direction_x, direction_y, stats):
         super().__init__()
         # 加载基础图像
         self.base_image = resource_manager.load_image('weapon_fireball', 'images/weapons/fireball_32x32.png')
@@ -73,16 +73,13 @@ class FireballProjectile(pygame.sprite.Sprite):
         self.rect.centerx = self.world_x
         self.rect.centery = self.world_y
         
-        # 目标信息
-        self.target = target
+        # 方向信息（直线飞行）
+        self.direction_x = float(direction_x)
+        self.direction_y = float(direction_y)
         
         # 投射物属性
         self.damage = stats.get(WeaponStatType.DAMAGE, 30)
         self.speed = float(stats.get(WeaponStatType.PROJECTILE_SPEED, 300))  # 确保速度是浮点数
-        
-        # 初始化方向
-        self.direction_x = 0.0
-        self.direction_y = 0.0
         
         self.explosion_radius = stats.get(WeaponStatType.EXPLOSION_RADIUS, 50)
         self.burn_damage = stats.get(WeaponStatType.BURN_DAMAGE, 5)
@@ -101,35 +98,20 @@ class FireballProjectile(pygame.sprite.Sprite):
         # 特效组引用
         self.effects_group = None
         
-        # 初始方向
-        self._update_direction()
+        # 设置图像旋转
+        self._update_image_rotation()
         
-    def _update_direction(self):
-        """更新朝向目标的方向"""
-        if self.target and self.target.alive():
-            # 使用世界坐标计算方向
-            dx = self.target.rect.centerx - self.world_x
-            dy = self.target.rect.centery - self.world_y
-            distance = math.sqrt(dx * dx + dy * dy)
-            
-            if distance > 0:
-                # 更新方向向量（确保是标准化的单位向量）
-                self.direction_x = dx / distance
-                self.direction_y = dy / distance
-                
-                # 更新图像旋转
-                angle = math.degrees(math.atan2(-dy, dx))  # 注意：pygame的y轴是向下的，所以需要取负
-                self.image = pygame.transform.rotate(self.base_image, angle)
-                # 保持旋转后的图像中心点不变
-                new_rect = self.image.get_rect()
-                new_rect.center = self.rect.center
-                self.rect = new_rect
+    def _update_image_rotation(self):
+        """根据飞行方向旋转图像"""
+        angle = math.degrees(math.atan2(-self.direction_y, self.direction_x))  # 注意：pygame的y轴是向下的，所以需要取负
+        self.image = pygame.transform.rotate(self.base_image, angle)
+        # 保持旋转后的图像中心点不变
+        new_rect = self.image.get_rect()
+        new_rect.center = self.rect.center
+        self.rect = new_rect
         
     def update(self, dt):
-        # 更新方向（追踪目标）
-        self._update_direction()
-        
-        # 更新位置（使用浮点数计算）
+        # 直线飞行，不再追踪目标
         self.world_x += self.direction_x * self.speed * dt
         self.world_y += self.direction_y * self.speed * dt
         
@@ -143,6 +125,8 @@ class FireballProjectile(pygame.sprite.Sprite):
         
         # 更新存活时间
         self.lifetime -= dt
+        if self.lifetime <= 0:
+            self.kill()
             
     def explode(self, target_enemy, enemies=None):
         """
@@ -241,92 +225,198 @@ class Fireball(Weapon):
     def __init__(self, player):
         super().__init__(player, 'fireball')
         
-        # 加载音效（使用try-except块处理可能不存在的音效）
-        try:
-            resource_manager.load_sound('fireball_cast', 'sounds/weapons/fireball_cast.wav')
-            resource_manager.load_sound('fireball_explode', 'sounds/weapons/fireball_explode.wav')
-        except Exception as e:
-            # 在测试环境中可能没有音效资源，忽略错误
-            print(f"Warning: Could not load fireball sounds: {e}")
+        # 加载武器图像
+        self.image = resource_manager.load_image('weapon_fireball', 'images/weapons/fireball_32x32.png')
+        self.rect = self.image.get_rect()
+
+        # 加载攻击音效
+        resource_manager.load_sound('fireball_cast', 'sounds/weapons/fireball_cast.wav')
         
-        # 特效组 - 用于存放爆炸效果
-        self.effects = pygame.sprite.Group()
+        # 爆炸特效列表
+        self.explosion_effects = pygame.sprite.Group()
         
     def find_nearest_enemy(self, enemies):
-        """寻找最近的敌人"""
+        """找到最近的敌人
+        
+        Args:
+            enemies: 敌人列表
+            
+        Returns:
+            Enemy: 最近的敌人，如果没有敌人则返回None
+        """
+        if not enemies:
+            return None
+            
         nearest_enemy = None
         min_distance = float('inf')
         
         for enemy in enemies:
-            dx = enemy.rect.x - self.player.world_x
-            dy = enemy.rect.y - self.player.world_y
-            distance = math.sqrt(dx * dx + dy * dy)
-            
-            if distance < min_distance:
-                min_distance = distance
-                nearest_enemy = enemy
-                
+            if enemy.alive():
+                distance = math.sqrt(
+                    (enemy.rect.x - self.player.world_x) ** 2 + 
+                    (enemy.rect.y - self.player.world_y) ** 2
+                )
+                if distance < min_distance:
+                    min_distance = distance
+                    nearest_enemy = enemy
+                    
         return nearest_enemy
         
-    def update(self, dt, enemies):
+    def update(self, dt):
         super().update(dt)
         
-        # 检查是否可以施放火球
-        if self.can_attack():
-            self.attack_timer = 0
-            self.cast_fireballs(enemies)
-        
-        # 更新所有火球和处理碰撞
+        # 移除自动发射逻辑，改为手动发射
+        # 更新所有火球
         self.projectiles.update(dt)
         
         # 更新爆炸特效
-        self.effects.update(dt)
+        self.explosion_effects.update(dt)
         
-    def cast_fireballs(self, enemies):
-        """施放火球"""
-        target = self.find_nearest_enemy(enemies)
-        if not target:
-            return
-            
-        fireball_count = int(self.current_stats.get(WeaponStatType.PROJECTILES_PER_CAST, 1))
+    def get_weapon_image(self):
+        """获取武器图像"""
+        return self.image
         
-        if fireball_count > 1:
-            # 计算扇形分布
-            spread_angle = self.current_stats.get(WeaponStatType.SPREAD_ANGLE, 20)
-            angle_step = spread_angle / (fireball_count - 1)
-            base_angle = math.degrees(math.atan2(
-                target.rect.y - self.player.world_y,
-                target.rect.x - self.player.world_x
-            ))
-            start_angle = base_angle - spread_angle / 2
-            
-            for i in range(fireball_count):
-                self._cast_single_fireball(target)
-        else:
-            # 单个火球直接施放
-            self._cast_single_fireball(target)
+    def _render_melee_weapon(self, screen, weapon_image, screen_x, screen_y, 
+                            direction_x, direction_y, progress):
+        """渲染火球近战攻击动画"""
+        # 计算武器旋转角度
+        angle = math.degrees(math.atan2(-direction_y, direction_x))
+        
+        # 火球的特殊动画：从玩家手中发射出火焰
+        start_distance = -5   # 开始时在玩家手中（更近）
+        end_distance = 30     # 结束时在玩家前方（更近）
+        
+        # 使用火焰般的缓动函数
+        ease_progress = self._ease_out_quint(progress)
+        current_distance = start_distance + (end_distance - start_distance) * ease_progress
+        
+        # 计算武器位置
+        weapon_x = screen_x + direction_x * current_distance
+        weapon_y = screen_y + direction_y * current_distance
+        
+        # 根据攻击进度缩放和添加火焰效果
+        base_scale = 1.0 + 0.5 * (1.0 - ease_progress)  # 开始时更大
+        # 添加火焰闪烁效果
+        flame_scale = base_scale + 0.2 * math.sin(progress * 20)  # 快速闪烁
+        
+        scaled_image = pygame.transform.scale(weapon_image, 
+                                           (int(weapon_image.get_width() * flame_scale),
+                                            int(weapon_image.get_height() * flame_scale)))
+        
+        # 旋转武器图像
+        rotated_image = pygame.transform.rotate(scaled_image, angle)
+        
+        # 绘制武器
+        weapon_rect = rotated_image.get_rect()
+        weapon_rect.center = (weapon_x, weapon_y)
+        screen.blit(rotated_image, weapon_rect)
+        
+    def _ease_out_quint(self, t):
+        """五次缓动函数，让火球攻击更有爆发力"""
+        return 1 - (1 - t) ** 5
+        
+    def _perform_attack(self, direction_x, direction_y):
+        """执行火球攻击
+        
+        Args:
+            direction_x: 攻击方向X分量
+            direction_y: 攻击方向Y分量
+        """
+        # 直接朝鼠标方向发射火球，不再自动追踪敌人
+        self._cast_directional_fireball(direction_x, direction_y)
             
         # 播放施法音效
         resource_manager.play_sound('fireball_cast')
         
-    def _cast_single_fireball(self, target):
-        """施放单个火球"""
+    def _perform_melee_attack(self, direction_x, direction_y):
+        """执行火球近战攻击
+        
+        Args:
+            direction_x: 攻击方向X分量
+            direction_y: 攻击方向Y分量
+        """
+        if not self.player.game or not self.player.game.enemy_manager:
+            return
+            
+        enemies = self.player.game.enemy_manager.enemies
+        attack_range = 100  # 扩大攻击范围
+        attack_damage = self.current_stats.get(WeaponStatType.DAMAGE, 10) * 2.0  # 2.0倍伤害
+        
+        for enemy in enemies:
+            # 计算到敌人的距离
+            dx = enemy.rect.x - self.player.world_x
+            dy = enemy.rect.y - self.player.world_y
+            distance = (dx**2 + dy**2)**0.5
+            
+            if distance <= attack_range:
+                # 计算敌人相对于玩家的方向
+                enemy_dir_x = dx / distance if distance > 0 else 0
+                enemy_dir_y = dy / distance if distance > 0 else 0
+                
+                # 计算点积，判断敌人是否在攻击方向的前方
+                dot_product = direction_x * enemy_dir_x + direction_y * enemy_dir_y
+                
+                # 扩大攻击角度范围（从60度扩大到120度）
+                if dot_product > -0.5:  # 从0.5改为-0.5，扩大攻击角度
+                    # 对敌人造成伤害
+                    enemy.take_damage(attack_damage)
+                    
+                    # 应用燃烧效果
+                    if hasattr(enemy, 'apply_burn_effect'):
+                        enemy.apply_burn_effect(3, 5)  # 3秒燃烧，每秒5点伤害
+                    
+                    # 播放攻击音效
+                    from ...resource_manager import resource_manager
+                    resource_manager.play_sound("melee_attack")
+        
+    def _cast_directional_fireball(self, direction_x, direction_y):
+        """朝指定方向发射火球
+        
+        Args:
+            direction_x: 方向X分量
+            direction_y: 方向Y分量
+        """
         fireball = FireballProjectile(
             self.player.world_x,
             self.player.world_y,
-            target,
+            direction_x,
+            direction_y,
             self.current_stats
         )
-        # 设置特效组，用于后续添加爆炸效果
-        fireball.effects_group = self.effects
         self.projectiles.add(fireball)
-        return fireball
+        
+    def _cast_single_fireball(self, target):
+        """发射单个火球（保留用于兼容性）
+        
+        Args:
+            target: 目标敌人
+        """
+        # 计算朝向目标的方向
+        dx = target.rect.centerx - self.player.world_x
+        dy = target.rect.centery - self.player.world_y
+        distance = math.sqrt(dx * dx + dy * dy)
+        
+        if distance > 0:
+            direction_x = dx / distance
+            direction_y = dy / distance
+        else:
+            direction_x = 1
+            direction_y = 0
+            
+        fireball = FireballProjectile(
+            self.player.world_x,
+            self.player.world_y,
+            direction_x,
+            direction_y,
+            self.current_stats
+        )
+        self.projectiles.add(fireball)
         
     def render(self, screen, camera_x, camera_y):
         # 渲染所有火球
         for fireball in self.projectiles:
             fireball.render(screen, camera_x, camera_y)
             
-        # 渲染所有爆炸特效
-        for effect in self.effects:
+        # 渲染爆炸特效
+        for effect in self.explosion_effects:
             effect.render(screen, camera_x, camera_y) 

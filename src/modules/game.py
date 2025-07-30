@@ -204,7 +204,10 @@ class Game:
         
         # 创建新的玩家在地图中心
         self.player = Player(self.screen_center_x, self.screen_center_y, hero_id)
-        
+
+        # 设置玩家对游戏实例的引用
+        self.player.game = self
+
         # 设置玩家的世界坐标为地图中心
         self.player.world_x = map_width // 2
         self.player.world_y = map_height // 2
@@ -284,7 +287,10 @@ class Game:
             # 创建新的玩家实例，使用存档中的英雄类型
             hero_type = player_data.get('hero_type', 'ninja_frog')
             self.player = Player(self.screen_center_x, self.screen_center_y, hero_type)
-            
+
+            # 设置玩家对游戏实例的引用
+            self.player.game = self
+
             # 设置玩家属性
             self.player.health = player_data.get('health', self.player.health)
             self.player.health_component.max_health = player_data.get('max_health', self.player.health_component.max_health)
@@ -717,7 +723,7 @@ class Game:
             
             # 更新敌人和武器
             self.enemy_manager.update(dt, self.player)
-            self.player.update_weapons(dt, self.enemy_manager.enemies)
+            self.player.update_weapons(dt)
             
             # 更新物品
             if self.item_manager:
@@ -779,6 +785,7 @@ class Game:
         if self.player:
             self.player.render(self.screen)
             self.player.render_weapons(self.screen, self.camera_x, self.camera_y)
+            self.player.render_melee_attacks(self.screen, self.camera_x, self.camera_y)
             
         # 渲染视野系统（在所有游戏对象之后，UI之前）
         if self.vision_system and self.enable_vision and self.player:
