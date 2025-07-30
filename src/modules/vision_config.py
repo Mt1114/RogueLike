@@ -15,10 +15,11 @@ VISION_CONFIG = {
         "color": (255, 255, 255, 128),  # 扇形区域透明度 (R, G, B, A)
     },
     
-    # 圆形区域参数
+    # 圆形光源配置
     "circle": {
-        "radius": 25,         # 圆形区域半径（像素）- 增加5像素
-        "color": (255, 255, 255, 128),  # 圆形区域透明度 (R, G, B, A)
+        "radius": 40,  # 圆形光源半径（像素）
+        "color": (255, 255, 200, 100),  # 颜色和透明度
+        "blur_radius": 10  # 模糊半径
     },
     
     # 黑暗遮罩参数
@@ -64,7 +65,7 @@ VISION_PRESETS = {
         "name": "默认视野",
         "sector_radius": 640,
         "sector_angle": 30,
-        "circle_radius": 25,
+        "circle_radius": 40,
         "darkness_alpha": 225,
     },
     "wide": {

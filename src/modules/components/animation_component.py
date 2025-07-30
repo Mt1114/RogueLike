@@ -62,6 +62,7 @@ class AnimationComponent(Component):
                 frame_height=anim_info.get('frame_height', 32),
                 frame_count=anim_info.get('frame_count', 1),
                 row=anim_info.get('row', 0),
+                col=anim_info.get('col', 0),
                 frame_duration=anim_info.get('frame_duration', 0.1)
             )
     

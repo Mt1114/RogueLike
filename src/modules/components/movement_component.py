@@ -36,9 +36,9 @@ class MovementComponent(Component):
             'right': False
         }
         
-        # 朝向状态
-        self.current_direction = 'right'  # 当前移动方向文本描述
+        # 朝向状态 - 基于鼠标方向
         self.facing_right = True
+        self.mouse_direction = pygame.math.Vector2(1, 0)  # 鼠标方向向量
         
         # 边界检测
         self.boundaries = None  # (min_x, min_y, max_x, max_y)
@@ -87,13 +87,23 @@ class MovementComponent(Component):
         if not self.collision_tiles:
             return False
             
-        # 创建玩家在新位置的碰撞矩形
-        player_rect = pygame.Rect(
-            new_x - self.owner.rect.width // 2,
-            new_y - self.owner.rect.height // 2,
-            self.owner.rect.width,
-            self.owner.rect.height
-        )
+        # 使用玩家的collision_rect进行碰撞检测
+        if hasattr(self.owner, 'collision_rect'):
+            # 创建玩家在新位置的碰撞矩形
+            player_rect = pygame.Rect(
+                new_x - self.owner.collision_rect.width // 2,
+                new_y - self.owner.collision_rect.height // 2,
+                self.owner.collision_rect.width,
+                self.owner.collision_rect.height
+            )
+        else:
+            # 回退到使用rect
+            player_rect = pygame.Rect(
+                new_x - self.owner.rect.width // 2,
+                new_y - self.owner.rect.height // 2,
+                self.owner.rect.width,
+                self.owner.rect.height
+            )
         
         # 检查与所有碰撞图块的碰撞
         for tile_rect in self.collision_tiles:
@@ -145,6 +155,9 @@ class MovementComponent(Component):
         if not self.enabled:
             return
             
+        # 更新鼠标朝向
+        self._update_mouse_direction()
+            
         # 计算速度
         self.velocity = self.direction * self.speed
         
@@ -172,31 +185,38 @@ class MovementComponent(Component):
                 elif not self._check_collision(self.owner.world_x, new_y):
                     self.owner.world_y = new_y
     
+    def _update_mouse_direction(self):
+        """更新鼠标朝向"""
+        # 获取鼠标位置
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        
+        # 获取屏幕中心（假设游戏窗口居中）
+        screen_width = pygame.display.get_surface().get_width()
+        screen_height = pygame.display.get_surface().get_height()
+        screen_center_x = screen_width // 2
+        screen_center_y = screen_height // 2
+        
+        # 计算从屏幕中心到鼠标的方向向量
+        self.mouse_direction.x = mouse_x - screen_center_x
+        self.mouse_direction.y = mouse_y - screen_center_y
+        
+        # 标准化方向向量
+        if self.mouse_direction.length() > 0:
+            self.mouse_direction = self.mouse_direction.normalize()
+            
+            # 更新朝向（基于鼠标X方向）
+            self.facing_right = self.mouse_direction.x >= 0
+        else:
+            # 如果鼠标在屏幕中心，保持之前的朝向
+            pass
+    
     def _update_movement_direction(self):
         """更新移动方向和对应的角度"""
-        # 确定当前移动方向
-        if self.moving['right'] and not any([self.moving['up'], self.moving['down']]):
-            self.current_direction = 'right'
-        elif self.moving['right'] and self.moving['up']:
-            self.current_direction = 'right_up'
-        elif self.moving['right'] and self.moving['down']:
-            self.current_direction = 'right_down'
-        elif self.moving['left'] and not any([self.moving['up'], self.moving['down']]):
-            self.current_direction = 'left'
-        elif self.moving['left'] and self.moving['up']:
-            self.current_direction = 'left_up'
-        elif self.moving['left'] and self.moving['down']:
-            self.current_direction = 'left_down'
-        elif self.moving['up'] and not any([self.moving['left'], self.moving['right']]):
-            self.current_direction = 'up'
-        elif self.moving['down'] and not any([self.moving['left'], self.moving['right']]):
-            self.current_direction = 'down'
-            
-        # 更新方向向量
+        # 更新方向向量（基于键盘输入）
         self.direction.x = float(self.moving['right']) - float(self.moving['left'])
         self.direction.y = float(self.moving['down']) - float(self.moving['up'])
         
-        # 如果有移动输入，更新最后移动方向和角度
+        # 如果有移动输入，更新最后移动方向
         if self.direction.x != 0 or self.direction.y != 0:
             self.last_movement_direction.x = self.direction.x
             self.last_movement_direction.y = self.direction.y
@@ -204,9 +224,6 @@ class MovementComponent(Component):
             # 标准化方向向量（如果长度不为0）
             if self.direction.length() > 0:
                 self.direction = self.direction.normalize()
-                
-            # 更新朝向
-            self.facing_right = 'right' in self.current_direction
             
     def is_moving(self):
         """

@@ -41,6 +41,11 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         
+        # 调整碰撞箱大小以适配64x64像素的角色图片
+        # 保持碰撞箱为64x64像素，与图像大小一致
+        self.collision_rect = pygame.Rect(0, 0, 64, 64)
+        self.collision_rect.center = self.rect.center
+        
         # 创建遮罩
         self.mask = None
         self.update_mask()
@@ -218,6 +223,9 @@ class Player(pygame.sprite.Sprite):
         # 更新当前图像
         self.image = self.animation.get_current_frame(not self.movement.facing_right)
         
+        # 更新碰撞箱位置（使用世界坐标）
+        self.collision_rect.center = (self.world_x, self.world_y)
+        
         # 更新遮罩
         self.update_mask()
         
@@ -248,16 +256,21 @@ class Player(pygame.sprite.Sprite):
     def render(self, screen):
         """渲染玩家"""
         if not self.health_component.invincible or self.animation.visible:
-            if self.show_outline:
-                # 创建带轮廓的图像
-                outlined_image = create_outlined_sprite(
-                    self,
-                    outline_color=self.outline_color,
-                    outline_thickness=self.outline_thickness
-                )
-                screen.blit(outlined_image, self.rect)
-            else:
-                screen.blit(self.image, self.rect)
+            # 获取当前动画帧
+            current_frame = self.animation.get_current_frame(not self.movement.facing_right)
+            
+            if current_frame:
+                # 图像已经是64x64像素，不需要缩放
+                if self.show_outline:
+                    # 创建带轮廓的图像
+                    outlined_image = create_outlined_sprite(
+                        current_frame,
+                        outline_color=self.outline_color,
+                        outline_thickness=self.outline_thickness
+                    )
+                    screen.blit(outlined_image, self.rect)
+                else:
+                    screen.blit(current_frame, self.rect)
             
     def _update_animation_state(self):
         """更新动画状态"""
@@ -265,7 +278,18 @@ class Player(pygame.sprite.Sprite):
         if not self.health_component.is_hurt():
             # 根据移动状态切换动画
             if self.movement.is_moving():
-                self.animation.set_animation('run')
+                # 行走时在4个run动画之间轮播
+                current_time = pygame.time.get_ticks() / 1000.0
+                run_cycle = int(current_time * 10) % 4  # 每0.1秒切换一次
+                
+                if run_cycle == 0:
+                    self.animation.set_animation('run')
+                elif run_cycle == 1:
+                    self.animation.set_animation('run2')
+                elif run_cycle == 2:
+                    self.animation.set_animation('run3')
+                else:
+                    self.animation.set_animation('run4')
             else:
                 self.animation.set_animation('idle')
                 

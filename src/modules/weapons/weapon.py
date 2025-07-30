@@ -27,6 +27,11 @@ class Weapon(pygame.sprite.Sprite):
         # 等级
         self.level = 1
         
+        # 弹药系统
+        self.ammo = 6  # 初始弹药数量
+        self.max_ammo = float('inf')  # 最大弹药数量（无限制）
+        self.is_melee = self.type in ['knife']  # 是否为近战武器
+        
         # 攻击状态
         self.attack_timer = 0
         self.attack_interval = 1.0 / self.current_stats.get(WeaponStatType.ATTACK_SPEED, 1.0)
@@ -155,6 +160,9 @@ class Weapon(pygame.sprite.Sprite):
             
     def can_attack(self):
         """检查是否可以攻击"""
+        # 检查弹药（只有远程武器需要弹药）
+        if not self.is_melee and self.ammo <= 0:
+            return False
         return self.attack_timer >= self.attack_interval
         
     def manual_attack(self, screen):
@@ -167,8 +175,18 @@ class Weapon(pygame.sprite.Sprite):
             self.attack_timer = 0
             # 获取鼠标方向
             direction_x, direction_y = self.get_mouse_direction(screen)
+            
+            # 检查穿墙（只有远程武器需要检查）
+            if not self.is_melee and not self._check_wall_collision(direction_x, direction_y):
+                return  # 如果会穿墙，取消攻击
+            
             # 执行攻击
             self._perform_attack(direction_x, direction_y)
+            
+            # 消耗弹药（只有远程武器）
+            if not self.is_melee:
+                self.ammo -= 1
+                print(f"弹药剩余: {self.ammo}")
             
     def melee_attack(self, screen):
         """近战攻击（鼠标右键触发）
@@ -176,7 +194,8 @@ class Weapon(pygame.sprite.Sprite):
         Args:
             screen: pygame屏幕对象，用于获取鼠标位置
         """
-        if self.can_attack() and not self.melee_attacking:
+        # 近战攻击不受弹药限制，只检查攻击间隔
+        if self.attack_timer >= self.attack_interval and not self.melee_attacking:
             self.attack_timer = 0
             # 开始近战攻击动画
             self.melee_attacking = True
@@ -316,4 +335,74 @@ class Weapon(pygame.sprite.Sprite):
     def _ease_out_quad(self, t):
         """缓动函数，让动画更自然"""
         return t * (2 - t)
+    
+    def _check_wall_collision(self, direction_x, direction_y):
+        """检查攻击是否会穿墙
+        
+        Args:
+            direction_x: 攻击方向X分量
+            direction_y: 攻击方向Y分量
+            
+        Returns:
+            bool: 如果不会穿墙返回True，否则返回False
+        """
+        if not hasattr(self.player, 'game') or not self.player.game:
+            return True  # 如果没有游戏实例，允许攻击
+            
+        # 获取地图管理器
+        map_manager = getattr(self.player.game, 'map_manager', None)
+        if not map_manager or not hasattr(map_manager, 'collision_tiles'):
+            return True  # 如果没有地图管理器，允许攻击
+            
+        # 计算攻击起点（玩家位置）
+        start_x = self.player.world_x
+        start_y = self.player.world_y
+        
+        # 计算攻击终点（假设攻击距离为100像素）
+        attack_distance = 100
+        end_x = start_x + direction_x * attack_distance
+        end_y = start_y + direction_y * attack_distance
+        
+        # 检查从起点到终点的路径是否与墙壁碰撞
+        return self._check_line_collision(start_x, start_y, end_x, end_y, map_manager.collision_tiles)
+        
+    def _check_line_collision(self, start_x, start_y, end_x, end_y, collision_tiles):
+        """检查线段是否与碰撞图块相交
+        
+        Args:
+            start_x, start_y: 线段起点
+            end_x, end_y: 线段终点
+            collision_tiles: 碰撞图块列表
+            
+        Returns:
+            bool: 如果没有碰撞返回True，否则返回False
+        """
+        # 使用Bresenham算法检查线段上的每个点
+        dx = abs(end_x - start_x)
+        dy = abs(end_y - start_y)
+        x, y = start_x, start_y
+        n = 1 + dx + dy
+        x_inc = 1 if end_x > start_x else -1
+        y_inc = 1 if end_y > start_y else -1
+        error = dx - dy
+        dx *= 2
+        dy *= 2
+        
+        for _ in range(n):
+            # 检查当前点是否与任何碰撞图块重叠
+            for tile in collision_tiles:
+                if tile.collidepoint(x, y):
+                    return False  # 发生碰撞
+            
+            if x == end_x and y == end_y:
+                break
+                
+            if error > 0:
+                x += x_inc
+                error -= dy
+            else:
+                y += y_inc
+                error += dx
+                
+        return True  # 没有碰撞
     

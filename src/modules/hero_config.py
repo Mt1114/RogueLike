@@ -44,9 +44,92 @@ DEFAULT_HERO_CONFIG = {
     "unlock_condition": None  # 默认解锁
 }
 
+# 新的忍者蛙配置（使用角色图片）
+NINJA_FROG_NEW_CONFIG = {
+    "name": "忍者蛙",
+    "description": "平衡型英雄，适合初学者",
+    "animations": {
+        "idle": {
+            "sprite_sheet": "images/roles/finder/img_v3_02om_86c9f994-b2c4-430b-b5e4-ba47b143415g.png",
+            "frame_count": 1,  # 只使用1帧，保持不动
+            "frame_duration": 1.0,  # 持续时间很长，基本不动
+            "frame_width": 64,
+            "frame_height": 64,
+            "row": 0,  # 使用第一行
+            "col": 0   # 使用第一列
+        },
+        "run": {
+            "sprite_sheet": "images/roles/finder/img_v3_02om_23010a0c-0b5b-4a06-ab7c-da477c12604g.png",
+            "frame_count": 1,  # 第一张图片
+            "frame_duration": 0.1,
+            "frame_width": 64,
+            "frame_height": 64,
+            "row": 0,
+            "col": 0
+        },
+        "run2": {
+            "sprite_sheet": "images/roles/finder/img_v3_02om_86c9f994-b2c4-430b-b5e4-ba47b143415g.png",
+            "frame_count": 1,  # 第二张图片
+            "frame_duration": 0.1,
+            "frame_width": 64,
+            "frame_height": 64,
+            "row": 0,
+            "col": 0
+        },
+        "run3": {
+            "sprite_sheet": "images/roles/finder/img_v3_02om_fdf9a462-f814-427b-9cb2-8d43bdad2c6g.png",
+            "frame_count": 1,  # 第三张图片
+            "frame_duration": 0.1,
+            "frame_width": 64,
+            "frame_height": 64,
+            "row": 0,
+            "col": 0
+        },
+        "run4": {
+            "sprite_sheet": "images/roles/finder/img_v3_02om_3d6a419a-5471-44e4-944e-5d790c431dfg.png",
+            "frame_count": 1,  # 第四张图片
+            "frame_duration": 0.1,
+            "frame_width": 64,
+            "frame_height": 64,
+            "row": 0,
+            "col": 0
+        },
+        "hurt": {
+            "sprite_sheet": "images/roles/finder/img_v3_02om_fdf9a462-f814-427b-9cb2-8d43bdad2c6g.png",
+            "frame_count": 6,  # 使用前6帧作为受伤动画
+            "frame_duration": 0.05,
+            "frame_width": 64,
+            "frame_height": 64,
+            "row": 0,  # 使用第一行
+            "col": 0   # 使用第一列
+        },
+        "attack": {
+            "sprite_sheet": "images/roles/finder/img_v3_02om_3d6a419a-5471-44e4-944e-5d790c431dfg.png",
+            "frame_count": 8,  # 使用前8帧作为攻击动画
+            "frame_duration": 0.06,
+            "frame_width": 64,
+            "frame_height": 64,
+            "row": 0,  # 使用第一行
+            "col": 0   # 使用第一列
+        }
+    },
+    "base_stats": {
+        "max_health": 100,
+        "speed": 200,
+        "defense": 0,
+        "health_regen": 0,
+        "exp_multiplier": 1.0,
+        "pickup_range": 50,
+        "attack_power": 1.0,
+        "luck": 1.0
+    },
+    "starting_weapon": "frost_nova",
+    "unlock_condition": None  # 默认解锁
+}
+
 # 英雄配置字典
 HERO_CONFIGS = {
-    "ninja_frog": DEFAULT_HERO_CONFIG,
+    "ninja_frog": NINJA_FROG_NEW_CONFIG,  # 使用新的配置
     
     "masked_dude": {
         "name": "蒙面侠",

@@ -3,6 +3,7 @@ import math
 from .player import Player
 from .enemies.enemy_manager import EnemyManager
 from .items.item_manager import ItemManager
+from .items.ammo_supply_manager import AmmoSupplyManager
 from .ui import UI
 from .menu import PauseMenu, GameOverMenu, UpgradeMenu
 from .menus.main_menu import MainMenu
@@ -50,6 +51,7 @@ class Game:
         # 游戏管理器
         self.enemy_manager = None
         self.item_manager = None
+        self.ammo_supply_manager = None  # 弹药补给管理器
         self.escape_door = None  # 逃生门
         self.save_system = SaveSystem()
         self.upgrade_manager = UpgradeManager()
@@ -278,6 +280,7 @@ class Game:
         self.enemy_manager = EnemyManager()
         self.enemy_manager.set_difficulty("normal")  # 设置初始难度
         self.item_manager = ItemManager()
+        self.ammo_supply_manager = AmmoSupplyManager(self)  # 初始化弹药补给管理器
         
         # 生成钥匙（在地图左下角）
         from .items.item import Item
@@ -813,6 +816,11 @@ class Game:
             if self.escape_door:
                 self.escape_door.update(self.player)
             
+            # 更新弹药补给管理器
+            if self.ammo_supply_manager:
+                self.ammo_supply_manager.update(dt)
+                self.ammo_supply_manager.check_pickup(self.player)
+            
                     # 更新视野系统
         if self.vision_system and self.enable_vision:
             # 获取当前鼠标位置
@@ -947,6 +955,10 @@ class Game:
             try:
                 self.vision_system.render(self.screen, self.dark_overlay.get_overlay())
                 
+                # 在视野系统内部渲染补给（确保在视野内可见）
+                if self.ammo_supply_manager:
+                    self.ammo_supply_manager.render(self.screen, self.camera_x, self.camera_y)
+                
                 # 性能监控：显示视野系统性能统计（仅在调试模式下）
                 if hasattr(self, 'debug_mode') and self.debug_mode:
                     stats = self.vision_system.get_performance_stats()
@@ -958,7 +970,11 @@ class Game:
                 print(f"视野系统渲染错误: {e}")
                 # 如果视野系统出错，暂时禁用它
                 self.enable_vision = False
-            
+        else:
+            # 如果视野系统未启用，直接渲染补给
+            if self.ammo_supply_manager:
+                self.ammo_supply_manager.render(self.screen, self.camera_x, self.camera_y)
+        
         # 渲染UI（在视野系统之后）
         if self.player:
             self.ui.render(self.player, self.game_time, self.kill_num)
@@ -976,7 +992,12 @@ class Game:
                         key_item = item
                         break
             
-            self.minimap.render(self.screen, self.player, key_item, self.escape_door)
+            # 添加补给物品到小地图
+            supplies = None
+            if self.ammo_supply_manager:
+                supplies = self.ammo_supply_manager.get_supplies_for_minimap()
+            
+            self.minimap.render(self.screen, self.player, key_item, self.escape_door, supplies)
             
         # 如果游戏暂停，渲染暂停菜单
         if self.paused:

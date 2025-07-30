@@ -35,6 +35,58 @@ class UI:
         # 创建升级管理器实例用于获取图标
         self.upgrade_manager = UpgradeManager()
         
+    def _render_ammo_info(self, player):
+        """渲染弹药信息
+        
+        Args:
+            player: 玩家实例
+        """
+        # 检查是否有远程武器
+        has_ranged_weapon = False
+        total_ammo = 0
+        
+        # 统计所有远程武器的弹药
+        if hasattr(player, 'weapon_manager'):
+            for weapon in player.weapon_manager.weapons:
+                if hasattr(weapon, 'ammo') and not weapon.is_melee:
+                    has_ranged_weapon = True
+                    total_ammo += weapon.ammo
+        
+        # 如果没有远程武器，不显示弹药UI
+        if not has_ranged_weapon:
+            return
+        
+        ammo_text = f"{total_ammo}"
+        
+        # 渲染弹药文本
+        ammo_surface = self.font.render(ammo_text, True, (255, 255, 255))
+        ammo_rect = ammo_surface.get_rect()
+        
+        # 计算右下角位置
+        screen_width = self.screen.get_width()
+        screen_height = self.screen.get_height()
+        
+        # 使用金币图标
+        ammo_icon = self.coin_icon
+        icon_rect = ammo_icon.get_rect()
+        
+        # 计算图标和文本的位置（右下角）
+        icon_rect.bottomright = (screen_width - 10, screen_height - 10)
+        ammo_rect.right = icon_rect.left - 5
+        ammo_rect.centery = icon_rect.centery
+        
+        # 添加背景
+        bg_rect = pygame.Rect(ammo_rect.left - 5, ammo_rect.top - 2, 
+                             ammo_rect.width + 10 + icon_rect.width + 5, ammo_rect.height + 4)
+        bg_surface = pygame.Surface((bg_rect.width, bg_rect.height))
+        bg_surface.set_alpha(128)
+        bg_surface.fill((0, 0, 0))
+        self.screen.blit(bg_surface, bg_rect)
+        
+        # 渲染图标和文本
+        self.screen.blit(ammo_icon, icon_rect)
+        self.screen.blit(ammo_surface, ammo_rect)
+        
     def render(self, player, game_time, game_kill_num):
         screen_width = self.screen.get_width()
         screen_height = self.screen.get_height()
@@ -75,6 +127,9 @@ class UI:
         health_width = (player.health / player.max_health) * screen_width
         pygame.draw.rect(self.screen, self.health_bar_color,
                         (0, screen_height - self.bar_height, health_width, self.bar_height))
+        
+        # 显示弹药数量（在右上角）
+        self._render_ammo_info(player)
         
         # 计算技能图标框的总宽度（每排3个）
         total_icons_width = 3 * (self.icon_size + self.icon_spacing) - self.icon_spacing
