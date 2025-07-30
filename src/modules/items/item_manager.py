@@ -34,6 +34,19 @@ class ItemManager:
             if item.collected:
                 self.items.remove(item)
                 
-    def render(self, screen, camera_x, camera_y, screen_center_x, screen_center_y):
+    def render(self, screen, camera_x, camera_y, screen_center_x, screen_center_y, vision_system=None):
         for item in self.items:
-            item.render(screen, camera_x, camera_y, screen_center_x, screen_center_y) 
+            # 检查物品是否在视野内
+            if vision_system and vision_system.is_enabled():
+                # 将物品的世界坐标转换为屏幕坐标进行检查
+                item_world_x = item.world_x
+                item_world_y = item.world_y
+                item_screen_x = screen_center_x + (item_world_x - camera_x)
+                item_screen_y = screen_center_y + (item_world_y - camera_y)
+                
+                # 检查物品是否在视野内
+                if vision_system.is_in_vision(item_screen_x, item_screen_y):
+                    item.render(screen, camera_x, camera_y, screen_center_x, screen_center_y)
+            else:
+                # 如果没有视野系统或视野系统被禁用，正常渲染
+                item.render(screen, camera_x, camera_y, screen_center_x, screen_center_y) 

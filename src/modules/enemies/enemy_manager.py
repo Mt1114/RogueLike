@@ -108,7 +108,7 @@ class EnemyManager:
                     # 如果敌人已经被移除，忽略错误
                     pass
             
-    def render(self, screen, camera_x, camera_y, screen_center_x, screen_center_y):
+    def render(self, screen, camera_x, camera_y, screen_center_x, screen_center_y, vision_system=None):
         # 渲染出生点标记
         for marker in self.spawn_markers:
             marker.render(screen, camera_x, camera_y, screen_center_x, screen_center_y)
@@ -121,7 +121,26 @@ class EnemyManager:
             
             # 只渲染在屏幕范围内的敌人
             if -50 <= screen_x <= screen.get_width() + 50 and -50 <= screen_y <= screen.get_height() + 50:
-                enemy.render(screen, screen_x, screen_y)
+                # 检查敌人是否在视野内
+                if vision_system and vision_system.is_enabled():
+                    # 将敌人的世界坐标转换为屏幕坐标进行检查
+                    enemy_world_x = enemy.rect.x
+                    enemy_world_y = enemy.rect.y
+                    enemy_screen_x = screen_center_x + (enemy_world_x - camera_x)
+                    enemy_screen_y = screen_center_y + (enemy_world_y - camera_y)
+                    
+                    # 检查敌人是否在视野内
+                    if vision_system.is_in_vision(enemy_screen_x, enemy_screen_y):
+                        # 在视野内时，标记为已看到，显示怪物和血条
+                        enemy.has_been_seen = True
+                        enemy.render(screen, screen_x, screen_y, show_health_bar=True)
+                    elif enemy.has_been_seen:
+                        # 曾经被看到过但当前不在视野内，只显示怪物，不显示血条
+                        enemy.render(screen, screen_x, screen_y, show_health_bar=False)
+                    # 如果从未被看到过且当前不在视野内，则不渲染
+                else:
+                    # 如果没有视野系统或视野系统被禁用，正常渲染（包括血条）
+                    enemy.render(screen, screen_x, screen_y, show_health_bar=True)
             
     def remove_enemy(self, enemy):
         if enemy in self.enemies:

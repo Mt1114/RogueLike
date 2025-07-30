@@ -75,9 +75,9 @@ class Slime(Enemy):
         # 更新投射物
         self.projectiles.update(dt)
         
-    def render(self, screen, screen_x, screen_y):
+    def render(self, screen, screen_x, screen_y, show_health_bar=True):
         # 先调用父类渲染方法
-        super().render(screen, screen_x, screen_y)
+        super().render(screen, screen_x, screen_y, show_health_bar)
         
         # 渲染投射物
         for projectile in self.projectiles:

@@ -1,6 +1,7 @@
 import pygame
 import math
 import numpy as np
+import time
 
 class VisionSystem:
     def __init__(self, radius=300, angle=90, color=(255, 255, 200, 100), 
@@ -45,6 +46,24 @@ class VisionSystem:
         self.screen_center_x = 0
         self.screen_center_y = 0
         
+        # 性能优化：缓存和优化
+        self._cache_vertices = None
+        self._cache_center = None
+        self._cache_direction = None
+        self._cache_radius = None
+        self._cache_angle = None
+        self._last_update_time = 0
+        self._update_interval = 0.016  # 60 FPS = 16ms
+        
+        # 性能监控
+        self._performance_stats = {
+            'raycast_calls': 0,
+            'raycast_time': 0,
+            'render_time': 0,
+            'cache_hits': 0,
+            'cache_misses': 0
+        }
+        
         # 配置管理
         self.config = {
             "sector": {"radius": radius, "angle": math.degrees(self.angle), "color": color},
@@ -85,6 +104,25 @@ class VisionSystem:
         Returns:
             pygame.Surface: 视野遮罩
         """
+        # 性能优化：检查是否需要重新计算
+        current_time = time.time()
+        if (self._cache_vertices is not None and 
+            self._cache_center == (self.center_x, self.center_y) and
+            self._cache_direction == self.direction and
+            self._cache_radius == self.radius and
+            self._cache_angle == self.angle and
+            current_time - self._last_update_time < self._update_interval):
+            
+            self._performance_stats['cache_hits'] += 1
+            # 使用缓存的顶点
+            mask_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+            if len(self._cache_vertices) >= 3:
+                pygame.draw.polygon(mask_surface, (255, 255, 255, 255), self._cache_vertices)
+            return mask_surface
+        
+        self._performance_stats['cache_misses'] += 1
+        self._last_update_time = current_time
+        
         # 创建遮罩表面
         mask_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
         
@@ -93,6 +131,14 @@ class VisionSystem:
         
         # 绘制扇形区域（部分消除黑暗）
         vertices = self._calculate_vision_vertices_with_raycast(screen_width, screen_height)
+        
+        # 缓存顶点
+        self._cache_vertices = vertices
+        self._cache_center = (self.center_x, self.center_y)
+        self._cache_direction = self.direction
+        self._cache_radius = self.radius
+        self._cache_angle = self.angle
+        
         if len(vertices) >= 3:
             # 使用全白全不透明来消除黑暗
             pygame.draw.polygon(mask_surface, (255, 255, 255, 255), vertices)
@@ -185,7 +231,7 @@ class VisionSystem:
         
     def _calculate_vision_vertices_with_raycast(self, screen_width, screen_height):
         """
-        计算带光线追踪的视野扇形顶点
+        计算带光线追踪的视野扇形顶点（优化版本）
         
         Returns:
             list: 顶点坐标列表 [(x1, y1), (x2, y2), ...]
@@ -199,10 +245,19 @@ class VisionSystem:
         start_angle = self.direction - self.half_angle
         end_angle = self.direction + self.half_angle
         
-        # 生成扇形边缘的点
-        num_points = max(10, int(self.radius / 20))  # 根据半径调整点的数量
-        angles = np.linspace(start_angle, end_angle, num_points)
+        # 性能优化：根据半径动态调整光线数量
+        # 半径越大，光线越密集，但不超过合理范围
+        base_points = max(8, min(20, int(self.radius / 50)))
+        num_points = base_points
         
+        # 使用更高效的角度生成
+        angles = []
+        for i in range(num_points):
+            angle = start_angle + (end_angle - start_angle) * i / (num_points - 1)
+            angles.append(angle)
+        
+        # 批量处理光线追踪
+        start_time = time.time()
         for angle in angles:
             # 计算理论上的终点
             end_x = self.center_x + self.radius * math.cos(angle)
@@ -223,17 +278,21 @@ class VisionSystem:
             y = max(0, min(y, screen_height))
             
             vertices.append((x, y))
+        
+        self._performance_stats['raycast_time'] += time.time() - start_time
+        self._performance_stats['raycast_calls'] += len(angles)
             
         return vertices
     
     def render(self, screen, dark_overlay=None):
         """
-        渲染视野系统
+        渲染视野系统（优化版本）
         
         Args:
             screen (pygame.Surface): 游戏屏幕
             dark_overlay (pygame.Surface): 黑暗遮罩（可选）
         """
+        start_time = time.time()
         screen_width, screen_height = screen.get_size()
         
         # 创建视野遮罩
@@ -252,6 +311,8 @@ class VisionSystem:
         else:
             # 直接渲染视野遮罩
             screen.blit(vision_mask, (0, 0))
+        
+        self._performance_stats['render_time'] += time.time() - start_time
     
     def is_in_vision(self, x, y):
         """
@@ -358,6 +419,28 @@ class VisionSystem:
                 
         if "enabled" in config:
             self.config["enabled"] = config["enabled"]
+    
+    def get_performance_stats(self):
+        """获取性能统计信息"""
+        return self._performance_stats.copy()
+    
+    def reset_performance_stats(self):
+        """重置性能统计"""
+        self._performance_stats = {
+            'raycast_calls': 0,
+            'raycast_time': 0,
+            'render_time': 0,
+            'cache_hits': 0,
+            'cache_misses': 0
+        }
+    
+    def clear_cache(self):
+        """清除缓存"""
+        self._cache_vertices = None
+        self._cache_center = None
+        self._cache_direction = None
+        self._cache_radius = None
+        self._cache_angle = None
             
     def set_walls(self, walls, tile_size=32, map_width=0, map_height=0):
         """设置墙壁数据
@@ -388,7 +471,7 @@ class VisionSystem:
         self.screen_center_y = screen_center_y
         
     def ray_cast(self, start_x, start_y, end_x, end_y):
-        """光线追踪
+        """光线追踪（优化版本）
         
         Args:
             start_x, start_y: 起始点坐标（屏幕坐标）
@@ -412,10 +495,41 @@ class VisionSystem:
         dx /= distance
         dy /= distance
         
-        # 光线追踪步长
-        step_size = min(self.tile_size // 4, 8)
+        # 性能优化：动态调整步长
+        # 距离越远，步长越大，但不超过图块大小
+        step_size = min(max(4, self.tile_size // 8), 16)
         current_x = start_x
         current_y = start_y
+        
+        # 预计算世界坐标转换
+        camera_offset_x = self.camera_x - self.screen_center_x
+        camera_offset_y = self.camera_y - self.screen_center_y
+        
+        # 性能优化：使用更高效的碰撞检测
+        # 只检查在视野范围内的墙壁
+        vision_rect = pygame.Rect(
+            self.center_x - self.radius, 
+            self.center_y - self.radius,
+            self.radius * 2, 
+            self.radius * 2
+        )
+        
+        # 筛选可能碰撞的墙壁
+        relevant_walls = []
+        for wall in self.walls:
+            # 将墙壁转换到屏幕坐标
+            screen_wall = pygame.Rect(
+                wall.x - camera_offset_x,
+                wall.y - camera_offset_y,
+                wall.width,
+                wall.height
+            )
+            if screen_wall.colliderect(vision_rect):
+                relevant_walls.append(screen_wall)
+        
+        # 如果没有相关墙壁，直接返回
+        if not relevant_walls:
+            return False, (end_x, end_y)
         
         # 逐步检查
         while True:
@@ -428,19 +542,14 @@ class VisionSystem:
             if check_distance >= distance:
                 return False, (end_x, end_y)
                 
-            # 检查是否与墙壁碰撞
-            for wall in self.walls:
-                # 将屏幕坐标转换为世界坐标进行碰撞检测
-                # 正确的转换：屏幕坐标 + 相机偏移 = 世界坐标
-                world_x = current_x + self.camera_x - self.screen_center_x
-                world_y = current_y + self.camera_y - self.screen_center_y
-                
-                if wall.collidepoint(world_x, world_y):
+            # 检查是否与墙壁碰撞（使用屏幕坐标）
+            for wall in relevant_walls:
+                if wall.collidepoint(current_x, current_y):
                     return True, (current_x, current_y)
                     
             # 检查是否超出地图边界（使用世界坐标）
-            world_x = current_x + self.camera_x - self.screen_center_x
-            world_y = current_y + self.camera_y - self.screen_center_y
+            world_x = current_x + camera_offset_x
+            world_y = current_y + camera_offset_y
             
             if (world_x < 0 or world_x >= self.map_width or 
                 world_y < 0 or world_y >= self.map_height):

@@ -82,6 +82,7 @@ class MapHeroSelectMenu:
         
         self.maps = [
             {"id": "simple_map", "name": "森林", "unlocked": True},
+            {"id": "test1_map", "name": "测试地图1", "unlocked": True},
             {"id": "desert_map", "name": "沙漠", "unlocked": False},
             {"id": "cave_map", "name": "洞穴", "unlocked": False},
         ]
@@ -110,7 +111,9 @@ class MapHeroSelectMenu:
                     # 暂时使用临时创建的表面
                     image = pygame.Surface((self.map_icon_size, self.map_icon_size))
                     image.fill((100, 180, 100))  # 绿色代表森林
-                    if map_id == "desert_map":
+                    if map_id == "test1_map":
+                        image.fill((150, 100, 200))  # 紫色代表测试地图1
+                    elif map_id == "desert_map":
                         image.fill((220, 180, 100))  # 黄色代表沙漠
                     elif map_id == "cave_map":
                         image.fill((100, 100, 150))  # 蓝灰色代表洞穴

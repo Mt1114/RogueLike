@@ -65,6 +65,9 @@ class Enemy(pygame.sprite.Sprite, ABC):
         self.outline_color = (0, 255, 0)  # 默认绿色轮廓
         self.outline_thickness = 1
         
+        # 视野相关
+        self.has_been_seen = False  # 是否曾经被玩家看到过
+        
         # 创建遮罩
         self.mask = None
         
@@ -335,7 +338,7 @@ class Enemy(pygame.sprite.Sprite, ABC):
         if thickness is not None:
             self.outline_thickness = thickness
     
-    def render(self, screen, screen_x, screen_y):
+    def render(self, screen, screen_x, screen_y, show_health_bar=True):
         # 创建一个临时的rect用于绘制
         draw_rect = self.rect.copy()
         draw_rect.x = screen_x
@@ -354,21 +357,22 @@ class Enemy(pygame.sprite.Sprite, ABC):
             else:
                 screen.blit(self.image, draw_rect)
         
-        # 绘制血条
-        health_bar_width = 32 * self.scale
-        health_bar_height = 5 * self.scale
-        health_ratio = self.health / self.max_health
-        
-        # 调整血条位置，使其位于敌人上方
-        bar_x = screen_x
-        bar_y = screen_y - 10 * self.scale
-        
-        pygame.draw.rect(screen, (255, 0, 0),  # 红色背景
-                        (bar_x, bar_y,
-                         health_bar_width, health_bar_height))
-        pygame.draw.rect(screen, (0, 255, 0),  # 绿色血条
-                        (bar_x, bar_y,
-                         health_bar_width * health_ratio, health_bar_height))
+        # 绘制血条（仅在show_health_bar为True时）
+        if show_health_bar:
+            health_bar_width = 32 * self.scale
+            health_bar_height = 5 * self.scale
+            health_ratio = self.health / self.max_health
+            
+            # 调整血条位置，使其位于敌人上方
+            bar_x = screen_x
+            bar_y = screen_y - 10 * self.scale
+            
+            pygame.draw.rect(screen, (255, 0, 0),  # 红色背景
+                            (bar_x, bar_y,
+                             health_bar_width, health_bar_height))
+            pygame.draw.rect(screen, (0, 255, 0),  # 绿色血条
+                            (bar_x, bar_y,
+                             health_bar_width * health_ratio, health_bar_height))
         
     def take_damage(self, amount):
         """受到伤害

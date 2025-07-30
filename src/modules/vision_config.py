@@ -10,20 +10,20 @@ VISION_CONFIG = {
     
     # 扇形视野参数
     "sector": {
-        "radius": 300,        # 扇形视野半径（像素）
-        "angle": 90,          # 扇形视野角度（度）
+        "radius": 640,        # 扇形视野半径（像素）- 覆盖半个窗口宽度
+        "angle": 30,          # 扇形视野角度（度）
         "color": (255, 255, 255, 128),  # 扇形区域透明度 (R, G, B, A)
     },
     
     # 圆形区域参数
     "circle": {
-        "radius": 80,         # 圆形区域半径（像素）
+        "radius": 25,         # 圆形区域半径（像素）- 增加5像素
         "color": (255, 255, 255, 128),  # 圆形区域透明度 (R, G, B, A)
     },
     
     # 黑暗遮罩参数
     "darkness": {
-        "alpha": 200,         # 黑暗程度 (0-255)
+        "alpha": 225,         # 黑暗程度 (0-255)
     },
     
     # 键盘控制配置
@@ -48,10 +48,10 @@ VISION_CONFIG = {
     # 限制范围
     "limits": {
         "sector_radius_min": 100,     # 扇形视野半径最小值
-        "sector_radius_max": 800,     # 扇形视野半径最大值
+        "sector_radius_max": 1000,    # 扇形视野半径最大值
         "sector_angle_min": 30,       # 扇形视野角度最小值（度）
         "sector_angle_max": 360,      # 扇形视野角度最大值（度）
-        "circle_radius_min": 20,      # 圆形区域半径最小值
+        "circle_radius_min": 10,      # 圆形区域半径最小值
         "circle_radius_max": 200,     # 圆形区域半径最大值
         "darkness_min": 0,            # 黑暗程度最小值
         "darkness_max": 255,          # 黑暗程度最大值
@@ -62,10 +62,10 @@ VISION_CONFIG = {
 VISION_PRESETS = {
     "default": {
         "name": "默认视野",
-        "sector_radius": 300,
-        "sector_angle": 90,
-        "circle_radius": 80,
-        "darkness_alpha": 200,
+        "sector_radius": 640,
+        "sector_angle": 30,
+        "circle_radius": 25,
+        "darkness_alpha": 225,
     },
     "wide": {
         "name": "宽视野",

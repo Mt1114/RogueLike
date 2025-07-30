@@ -88,6 +88,15 @@ class Game:
         self.dark_overlay = None
         self.enable_vision = True  # 是否启用视野系统
         
+        # 调试模式
+        self.debug_mode = False
+        
+        # 帧数跟踪
+        self.fps = 0
+        self.fps_timer = 0
+        self.fps_counter = 0
+        self.fps_update_interval = 1.0  # 每1秒更新一次FPS
+        
         # 小地图
         self.minimap = None
         
@@ -284,6 +293,13 @@ class Game:
         
         # 设置边界
         self._set_map_boundaries()
+        
+        # 初始化玩家移动组件的碰撞数据
+        if self.map_manager and self.map_manager.current_map:
+            walls = self.map_manager.get_collision_tiles()
+            tile_width, tile_height = self.map_manager.get_tile_size()
+            if self.player and hasattr(self.player, 'movement'):
+                self.player.movement.set_collision_tiles(walls, tile_width, tile_height)
         
         # 初始化小地图
         screen_width = self.screen.get_width()
@@ -650,6 +666,14 @@ class Game:
                     new_radius = max(20, current_radius - 20)
                     self.set_circle_radius(new_radius)
                 return True
+            elif event.key == pygame.K_F10:
+                # 切换调试模式
+                self.debug_mode = not self.debug_mode
+                if self.debug_mode:
+                    print("调试模式已开启")
+                else:
+                    print("调试模式已关闭")
+                return True
             
         # 更新鼠标位置（用于视野系统）
         if event.type == pygame.MOUSEMOTION:
@@ -707,6 +731,15 @@ class Game:
         
     def update(self, dt):
         """更新游戏状态"""
+        # 更新帧数计算
+        self.fps_counter += 1
+        self.fps_timer += dt
+        if self.fps_timer >= self.fps_update_interval:
+            self.fps = int(self.fps_counter / self.fps_timer)
+            print(f"FPS: {self.fps}")  # 在控制台打印帧数
+            self.fps_counter = 0
+            self.fps_timer = 0
+        
         # 保持游戏状态的更新
         if self.in_main_menu:
             return
@@ -792,6 +825,10 @@ class Game:
                     self.camera_x, self.camera_y, 
                     self.screen_center_x, self.screen_center_y
                 )
+                
+                # 更新玩家移动组件的碰撞数据
+                if self.player and hasattr(self.player, 'movement'):
+                    self.player.movement.set_collision_tiles(walls, tile_width, tile_height)
         
         # 更新其他游戏对象，注意检查player和enemy_manager是否存在
         if self.enemy_manager and self.player:
@@ -879,6 +916,14 @@ class Game:
         if self.vision_system and self.enable_vision and self.player:
             try:
                 self.vision_system.render(self.screen, self.dark_overlay.get_overlay())
+                
+                # 性能监控：显示视野系统性能统计（仅在调试模式下）
+                if hasattr(self, 'debug_mode') and self.debug_mode:
+                    stats = self.vision_system.get_performance_stats()
+                    fps_text = f"光线追踪: {stats['raycast_calls']}次, 缓存命中: {stats['cache_hits']}, 缓存未命中: {stats['cache_misses']}"
+                    fps_surface = self.font.render(fps_text, True, (255, 255, 0))
+                    self.screen.blit(fps_surface, (10, 50))
+                    
             except Exception as e:
                 print(f"视野系统渲染错误: {e}")
                 # 如果视野系统出错，暂时禁用它

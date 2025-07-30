@@ -1,0 +1,84 @@
+{
+  "timestamp": "2025-07-30 15:43:52",
+  "player_data": {
+    "health": 100,
+    "max_health": 100,
+    "level": 1,
+    "experience": 0.0,
+    "coins": 0,
+    "world_x": 2082.674271502552,
+    "world_y": 454.8094377617014,
+    "weapons": [
+      [
+        "frost_nova",
+        1
+      ]
+    ],
+    "hero_type": "ninja_frog",
+    "component_states": {
+      "movement": {
+        "speed": 200
+      },
+      "health": {
+        "defense": 0,
+        "health_regen": 0
+      },
+      "progression": {
+        "exp_multiplier": 1.0,
+        "luck": 1.0
+      },
+      "passive": {
+        "passive_levels": {}
+      }
+    }
+  },
+  "game_data": {
+    "kill_num": 0,
+    "game_time": 18.950000000000006,
+    "level": 1
+  },
+  "enemies_data": [
+    {
+      "type": "Bat",
+      "health": 60,
+      "x": 1986,
+      "y": 682
+    },
+    {
+      "type": "Slime",
+      "health": 30.0,
+      "x": 2096,
+      "y": 515
+    },
+    {
+      "type": "Slime",
+      "health": 100,
+      "x": 782,
+      "y": 2186
+    },
+    {
+      "type": "Slime",
+      "health": 100,
+      "x": 611,
+      "y": 2425
+    },
+    {
+      "type": "Radish",
+      "health": 150,
+      "x": 410,
+      "y": 2659
+    },
+    {
+      "type": "Ghost",
+      "health": 80,
+      "x": 2866,
+      "y": 2723
+    },
+    {
+      "type": "Ghost",
+      "health": 80,
+      "x": 2984,
+      "y": 147
+    }
+  ]
+}

@@ -43,6 +43,11 @@ class MovementComponent(Component):
         # 边界检测
         self.boundaries = None  # (min_x, min_y, max_x, max_y)
         
+        # 地图碰撞检测
+        self.collision_tiles = []  # 碰撞图块列表
+        self.tile_width = 32  # 默认瓦片宽度
+        self.tile_height = 32  # 默认瓦片高度
+        
     def set_boundaries(self, min_x, min_y, max_x, max_y):
         """
         设置移动边界
@@ -54,6 +59,48 @@ class MovementComponent(Component):
             max_y: 最大Y坐标
         """
         self.boundaries = (min_x, min_y, max_x, max_y)
+        
+    def set_collision_tiles(self, collision_tiles, tile_width=32, tile_height=32):
+        """
+        设置碰撞图块数据
+        
+        Args:
+            collision_tiles: 碰撞图块矩形列表
+            tile_width: 瓦片宽度
+            tile_height: 瓦片高度
+        """
+        self.collision_tiles = collision_tiles
+        self.tile_width = tile_width
+        self.tile_height = tile_height
+        
+    def _check_collision(self, new_x, new_y):
+        """
+        检查新位置是否与碰撞图块重叠
+        
+        Args:
+            new_x: 新的X坐标
+            new_y: 新的Y坐标
+            
+        Returns:
+            bool: 如果发生碰撞返回True，否则返回False
+        """
+        if not self.collision_tiles:
+            return False
+            
+        # 创建玩家在新位置的碰撞矩形
+        player_rect = pygame.Rect(
+            new_x - self.owner.rect.width // 2,
+            new_y - self.owner.rect.height // 2,
+            self.owner.rect.width,
+            self.owner.rect.height
+        )
+        
+        # 检查与所有碰撞图块的碰撞
+        for tile_rect in self.collision_tiles:
+            if player_rect.colliderect(tile_rect):
+                return True
+                
+        return False
         
     def handle_event(self, event):
         """
@@ -112,8 +159,18 @@ class MovementComponent(Component):
                 new_x = max(min_x, min(new_x, max_x))
                 new_y = max(min_y, min(new_y, max_y))
             
-            self.owner.world_x = new_x
-            self.owner.world_y = new_y
+            # 检查地图碰撞
+            if not self._check_collision(new_x, new_y):
+                self.owner.world_x = new_x
+                self.owner.world_y = new_y
+            else:
+                # 如果发生碰撞，尝试分别检查X和Y方向的移动
+                # 先尝试只移动X方向
+                if not self._check_collision(new_x, self.owner.world_y):
+                    self.owner.world_x = new_x
+                # 再尝试只移动Y方向
+                elif not self._check_collision(self.owner.world_x, new_y):
+                    self.owner.world_y = new_y
     
     def _update_movement_direction(self):
         """更新移动方向和对应的角度"""
