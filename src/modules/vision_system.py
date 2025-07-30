@@ -53,7 +53,7 @@ class VisionSystem:
         self._cache_radius = None
         self._cache_angle = None
         self._last_update_time = 0
-        self._update_interval = 0.016  # 60 FPS = 16ms
+        self._update_interval = 0.033  # 30 FPS = 33ms，限制更新频率
         
         # 性能监控
         self._performance_stats = {
@@ -95,7 +95,7 @@ class VisionSystem:
             
     def create_vision_mask(self, screen_width, screen_height):
         """
-        创建视野遮罩（消除黑暗区域）
+        创建视野遮罩（消除黑暗区域）- 高度优化版本
         
         Args:
             screen_width (int): 屏幕宽度
@@ -104,9 +104,9 @@ class VisionSystem:
         Returns:
             pygame.Surface: 视野遮罩
         """
-        # 性能优化：检查是否需要重新计算
+        # 性能优化：检查缓存是否有效
         current_time = time.time()
-        if (self._cache_vertices is not None and 
+        if (self._cache_vertices and 
             self._cache_center == (self.center_x, self.center_y) and
             self._cache_direction == self.direction and
             self._cache_radius == self.radius and
@@ -114,23 +114,36 @@ class VisionSystem:
             current_time - self._last_update_time < self._update_interval):
             
             self._performance_stats['cache_hits'] += 1
-            # 使用缓存的顶点
+            # 使用缓存的遮罩
             mask_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+            mask_surface.fill((0, 0, 0, 0))
+            
+            # 绘制圆形光圈
+            pygame.draw.circle(mask_surface, (255, 255, 255, 255), 
+                             (self.center_x, self.center_y), self.circle_radius)
+            
+            # 绘制扇形视野
             if len(self._cache_vertices) >= 3:
                 pygame.draw.polygon(mask_surface, (255, 255, 255, 255), self._cache_vertices)
+            
             return mask_surface
         
         self._performance_stats['cache_misses'] += 1
         self._last_update_time = current_time
         
-        # 创建遮罩表面
+        # 创建新的遮罩表面
         mask_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+        mask_surface.fill((0, 0, 0, 0))
         
-        # 绘制带光线追踪的圆形区域
-        self._draw_circle_with_raycast(mask_surface, screen_width, screen_height)
+        # 绘制圆形光圈（始终显示）
+        pygame.draw.circle(mask_surface, (255, 255, 255, 255), 
+                         (self.center_x, self.center_y), self.circle_radius)
         
-        # 绘制扇形区域（部分消除黑暗）
-        vertices = self._calculate_vision_vertices_with_raycast(screen_width, screen_height)
+        # 计算视野顶点
+        if self.walls:
+            vertices = self._calculate_vision_vertices_with_raycast(screen_width, screen_height)
+        else:
+            vertices = self._calculate_vision_vertices(screen_width, screen_height)
         
         # 缓存顶点
         self._cache_vertices = vertices
@@ -139,12 +152,12 @@ class VisionSystem:
         self._cache_radius = self.radius
         self._cache_angle = self.angle
         
+        # 绘制扇形视野
         if len(vertices) >= 3:
-            # 使用全白全不透明来消除黑暗
             pygame.draw.polygon(mask_surface, (255, 255, 255, 255), vertices)
             
         return mask_surface
-    
+        
 
     
     def _calculate_vision_vertices(self, screen_width, screen_height):
@@ -181,7 +194,7 @@ class VisionSystem:
         
     def _draw_circle_with_raycast(self, surface, screen_width, screen_height):
         """
-        绘制带光线追踪的圆形区域
+        绘制带光线追踪的圆形区域（高度优化版本）
         
         Args:
             surface (pygame.Surface): 绘制表面
@@ -200,8 +213,8 @@ class VisionSystem:
         # 添加中心点
         vertices.append((self.center_x, self.center_y))
         
-        # 生成圆形边界的点
-        num_points = max(32, int(self.circle_radius / 4))  # 根据半径调整点的数量
+        # 性能优化：减少圆形边界的采样点
+        num_points = max(16, int(self.circle_radius / 8))  # 大幅减少采样点
         angles = np.linspace(0, 2 * math.pi, num_points)
         
         for angle in angles:
@@ -231,7 +244,7 @@ class VisionSystem:
         
     def _calculate_vision_vertices_with_raycast(self, screen_width, screen_height):
         """
-        计算带光线追踪的视野扇形顶点（优化版本）
+        计算带光线追踪的视野扇形顶点（高度优化版本）
         
         Returns:
             list: 顶点坐标列表 [(x1, y1), (x2, y2), ...]
@@ -245,9 +258,9 @@ class VisionSystem:
         start_angle = self.direction - self.half_angle
         end_angle = self.direction + self.half_angle
         
-        # 性能优化：根据半径动态调整光线数量
-        # 半径越大，光线越密集，但不超过合理范围
-        base_points = max(8, min(20, int(self.radius / 50)))
+        # 性能优化：大幅减少光线数量
+        # 根据半径动态调整，但设置更保守的上限
+        base_points = max(4, min(12, int(self.radius / 100)))  # 减少光线数量
         num_points = base_points
         
         # 使用更高效的角度生成
@@ -471,7 +484,7 @@ class VisionSystem:
         self.screen_center_y = screen_center_y
         
     def ray_cast(self, start_x, start_y, end_x, end_y):
-        """光线追踪（优化版本）
+        """光线追踪（高度优化版本）
         
         Args:
             start_x, start_y: 起始点坐标（屏幕坐标）
@@ -495,9 +508,9 @@ class VisionSystem:
         dx /= distance
         dy /= distance
         
-        # 性能优化：动态调整步长
+        # 性能优化：增加步长以减少计算量
         # 距离越远，步长越大，但不超过图块大小
-        step_size = min(max(4, self.tile_size // 8), 16)
+        step_size = min(max(8, self.tile_size // 4), 32)  # 增加步长
         current_x = start_x
         current_y = start_y
         
@@ -531,29 +544,35 @@ class VisionSystem:
         if not relevant_walls:
             return False, (end_x, end_y)
         
-        # 逐步检查
+        # 逐步检查（减少检查频率）
+        check_interval = 2  # 每2步检查一次碰撞
+        step_count = 0
+        
         while True:
             # 移动到下一个检查点
             current_x += dx * step_size
             current_y += dy * step_size
+            step_count += 1
             
             # 检查是否超出目标距离
             check_distance = math.sqrt((current_x - start_x) ** 2 + (current_y - start_y) ** 2)
             if check_distance >= distance:
                 return False, (end_x, end_y)
                 
-            # 检查是否与墙壁碰撞（使用屏幕坐标）
-            for wall in relevant_walls:
-                if wall.collidepoint(current_x, current_y):
+            # 减少碰撞检测频率
+            if step_count % check_interval == 0:
+                # 检查是否与墙壁碰撞（使用屏幕坐标）
+                for wall in relevant_walls:
+                    if wall.collidepoint(current_x, current_y):
+                        return True, (current_x, current_y)
+                        
+                # 检查是否超出地图边界（使用世界坐标）
+                world_x = current_x + camera_offset_x
+                world_y = current_y + camera_offset_y
+                
+                if (world_x < 0 or world_x >= self.map_width or 
+                    world_y < 0 or world_y >= self.map_height):
                     return True, (current_x, current_y)
-                    
-            # 检查是否超出地图边界（使用世界坐标）
-            world_x = current_x + camera_offset_x
-            world_y = current_y + camera_offset_y
-            
-            if (world_x < 0 or world_x >= self.map_width or 
-                world_y < 0 or world_y >= self.map_height):
-                return True, (current_x, current_y)
 
 
 class DarkOverlay:
