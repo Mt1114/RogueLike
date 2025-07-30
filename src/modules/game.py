@@ -15,6 +15,7 @@ from .map_manager import MapManager
 from .menus.map_hero_select_menu import MapHeroSelectMenu
 from .vision_system import VisionSystem, DarkOverlay
 from .vision_config import get_vision_config, apply_preset, apply_color_theme, validate_config
+from .minimap import Minimap
 
 class Game:
     def __init__(self, screen):
@@ -22,6 +23,7 @@ class Game:
         self.running = True
         self.paused = False
         self.game_over = False
+        self.game_victory = False  # 游戏胜利状态
         self.in_main_menu = True  # 是否在主菜单
         self.in_map_hero_select = False  # 是否在地图和英雄选择界面
         
@@ -47,9 +49,15 @@ class Game:
         # 游戏管理器
         self.enemy_manager = None
         self.item_manager = None
+        self.escape_door = None  # 逃生门
         self.save_system = SaveSystem()
         self.upgrade_manager = UpgradeManager()
         self.map_manager = MapManager(screen)  # 创建地图管理器
+        
+        # 消息提示系统
+        self.message = ""
+        self.message_timer = 0
+        self.message_duration = 0
         
         # 创建UI和菜单
         self.ui = UI(screen)
@@ -80,6 +88,9 @@ class Game:
         self.dark_overlay = None
         self.enable_vision = True  # 是否启用视野系统
         
+        # 小地图
+        self.minimap = None
+        
         # 初始化视野系统
         self._init_vision_system()
         
@@ -109,7 +120,47 @@ class Game:
         )
         
         print(f"视野系统初始化完成: 半径={config['sector']['radius']}, 角度={config['sector']['angle']}, 黑暗度={config['darkness']['alpha']}")
+    
+    def show_message(self, message, duration=3.0):
+        """显示消息提示
         
+        Args:
+            message: 要显示的消息
+            duration: 显示持续时间（秒）
+        """
+        self.message = message
+        self.message_timer = 0
+        self.message_duration = duration
+        
+    def _update_message(self, dt):
+        """更新消息提示状态"""
+        if self.message_timer < self.message_duration:
+            self.message_timer += dt
+        else:
+            self.message = ""
+            
+    def _render_message(self):
+        """渲染消息提示"""
+        if self.message and self.message_timer < self.message_duration:
+            # 创建字体
+            font = pygame.font.Font(None, 36)
+            
+            # 渲染文本
+            text_surface = font.render(self.message, True, (255, 255, 255))
+            text_rect = text_surface.get_rect()
+            
+            # 计算位置（屏幕顶部中央）
+            text_rect.centerx = self.screen.get_width() // 2
+            text_rect.y = 100
+            
+            # 绘制背景
+            bg_rect = text_rect.inflate(20, 10)
+            pygame.draw.rect(self.screen, (0, 0, 0, 128), bg_rect)
+            pygame.draw.rect(self.screen, (255, 255, 255), bg_rect, 2)
+            
+            # 绘制文本
+            self.screen.blit(text_surface, text_rect)
+            
     def set_vision_radius(self, radius):
         """设置视野半径"""
         if self.vision_system:
@@ -186,7 +237,7 @@ class Game:
         self._set_map_boundaries()
         
     def _start_game_with_selection(self, map_id, hero_id):
-        """根据选择的地图和英雄开始新游戏
+        """从地图和英雄选择界面开始游戏
         
         Args:
             map_id: 地图ID
@@ -194,6 +245,7 @@ class Game:
         """
         self.in_map_hero_select = False
         self.game_over = False
+        self.game_victory = False
         self.paused = False
         
         # 加载选中的地图
@@ -217,8 +269,26 @@ class Game:
         self.enemy_manager.set_difficulty("normal")  # 设置初始难度
         self.item_manager = ItemManager()
         
+        # 生成钥匙（在地图左下角）
+        from .items.item import Item
+        key_x = 100  # 地图左下角X坐标
+        key_y = map_height - 100  # 地图左下角Y坐标
+        key_item = Item(key_x, key_y, 'key')
+        self.item_manager.items.append(key_item)
+        
+        # 生成逃生门（在地图右上角）
+        from .items.escape_door import EscapeDoor
+        door_x = map_width - 100  # 地图右上角X坐标
+        door_y = 100  # 地图右上角Y坐标
+        self.escape_door = EscapeDoor(door_x, door_y)
+        
         # 设置边界
         self._set_map_boundaries()
+        
+        # 初始化小地图
+        screen_width = self.screen.get_width()
+        screen_height = self.screen.get_height()
+        self.minimap = Minimap(map_width, map_height, screen_width, screen_height)
         
         # 重置游戏状态
         self.game_time = 0
@@ -648,9 +718,15 @@ class Game:
         # 检查玩家是否死亡
         if self.player and self.player.health <= 0 and not self.game_over:
             self.game_over = True
-            self.game_over_menu.show()
+            self.game_over_menu.show(is_victory=False)
             # 播放游戏结束音效
             resource_manager.play_sound("player_death")
+            return
+            
+        # 检查游戏胜利
+        if self.game_victory and not self.game_over:
+            self.game_over = True
+            self.game_over_menu.show(is_victory=True)
             return
             
         # 如果游戏结束，更新游戏结束菜单
@@ -664,6 +740,9 @@ class Game:
             
         self.game_time += dt
         
+        # 更新消息提示
+        self._update_message(dt)
+        
         # 确保玩家对象存在再更新
         if self.player:
             # 更新玩家位置（在世界坐标系中）
@@ -676,6 +755,10 @@ class Game:
             # 更新相机位置（跟随玩家）
             self.camera_x = self.player.world_x
             self.camera_y = self.player.world_y
+            
+            # 更新逃生门
+            if self.escape_door:
+                self.escape_door.update(self.player)
             
                     # 更新视野系统
         if self.vision_system and self.enable_vision:
@@ -781,6 +864,11 @@ class Game:
             self.item_manager.render(self.screen, self.camera_x, self.camera_y, 
                                   self.screen_center_x, self.screen_center_y)
         
+        # 渲染逃生门
+        if self.escape_door:
+            self.escape_door.render(self.screen, self.camera_x, self.camera_y, 
+                                  self.screen_center_x, self.screen_center_y)
+        
         # 渲染玩家（始终在屏幕中心）
         if self.player:
             self.player.render(self.screen)
@@ -799,6 +887,21 @@ class Game:
         # 渲染UI（在视野系统之后）
         if self.player:
             self.ui.render(self.player, self.game_time, self.kill_num)
+            
+        # 渲染消息提示（在UI之后）
+        self._render_message()
+        
+        # 渲染小地图（在UI之后）
+        if self.minimap and self.player:
+            # 找到钥匙物品
+            key_item = None
+            if self.item_manager:
+                for item in self.item_manager.items:
+                    if hasattr(item, 'item_type') and item.item_type == 'key':
+                        key_item = item
+                        break
+            
+            self.minimap.render(self.screen, self.player, key_item, self.escape_door)
             
         # 如果游戏暂停，渲染暂停菜单
         if self.paused:

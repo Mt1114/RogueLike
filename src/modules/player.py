@@ -30,6 +30,9 @@ class Player(pygame.sprite.Sprite):
         # 游戏实例引用（用于获取敌人列表等）
         self.game = None
         
+        # 钥匙状态
+        self.has_key = False
+        
         # 初始化各组件
         self._init_components()
         

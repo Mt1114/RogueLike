@@ -213,10 +213,13 @@ class ResourceManager:
         Args:
             name: 音效资源名称
         """
-        return None
-        sound = self.get_sound(name)
-        if sound:
-            sound.play()
+        try:
+            sound = self.get_sound(name)
+            if sound:
+                sound.play()
+        except pygame.error:
+            # 音频系统未初始化或播放失败，静默忽略
+            pass
             
     def play_music(self, name: str, loops: int = -1):
         """播放音乐
@@ -225,23 +228,38 @@ class ResourceManager:
             name: 音乐资源名称
             loops: 循环次数,-1表示无限循环
         """
-        return None
-        music_path = self.get_music(name)
-        if music_path:
-            pygame.mixer.music.load(music_path)
-            pygame.mixer.music.play(loops)
+        try:
+            music_path = self.get_music(name)
+            if music_path:
+                pygame.mixer.music.load(music_path)
+                pygame.mixer.music.play(loops)
+        except pygame.error:
+            # 音频系统未初始化或播放失败，静默忽略
+            pass
             
     def stop_music(self):
         """停止当前播放的音乐"""
-        pygame.mixer.music.stop()
+        try:
+            pygame.mixer.music.stop()
+        except pygame.error:
+            # 音频系统未初始化，静默忽略
+            pass
         
     def pause_music(self):
         """暂停当前播放的音乐"""
-        pygame.mixer.music.pause()
+        try:
+            pygame.mixer.music.pause()
+        except pygame.error:
+            # 音频系统未初始化，静默忽略
+            pass
         
     def unpause_music(self):
         """恢复播放暂停的音乐"""
-        pygame.mixer.music.unpause()
+        try:
+            pygame.mixer.music.unpause()
+        except pygame.error:
+            # 音频系统未初始化，静默忽略
+            pass
         
     def set_music_volume(self, volume: float):
         """设置音乐音量
@@ -249,7 +267,11 @@ class ResourceManager:
         Args:
             volume: 音量值(0.0 - 1.0)
         """
-        pygame.mixer.music.set_volume(volume)
+        try:
+            pygame.mixer.music.set_volume(volume)
+        except pygame.error:
+            # 音频系统未初始化，静默忽略
+            pass
         
     def set_sound_volume(self, name: str, volume: float):
         """设置指定音效的音量
@@ -258,9 +280,13 @@ class ResourceManager:
             name: 音效资源名称
             volume: 音量值(0.0 - 1.0)
         """
-        sound = self.get_sound(name)
-        if sound:
-            sound.set_volume(volume)
+        try:
+            sound = self.get_sound(name)
+            if sound:
+                sound.set_volume(volume)
+        except pygame.error:
+            # 音频系统未初始化，静默忽略
+            pass
             
     def load_spritesheet(self, name: str, file_path: str) -> SpriteSheet:
         """加载精灵表

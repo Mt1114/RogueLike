@@ -172,6 +172,16 @@ class GameOverMenu(Menu):
         self.options = ["重新开始", "返回主菜单", "退出游戏"]
         self.selected_index = 0
         self.option_rects = []
+        self.is_victory = False  # 添加胜利状态
+        
+    def show(self, is_victory=False):
+        """显示游戏结束菜单
+        
+        Args:
+            is_victory: 是否为胜利状态
+        """
+        self.is_active = True
+        self.is_victory = is_victory
         
     def update(self, mouse_pos):
         """更新菜单状态
@@ -230,8 +240,11 @@ class GameOverMenu(Menu):
         self._create_overlay()
         self._draw_menu_background()
         
-        # 绘制标题
-        title = self.title_font.render("游戏结束", True, self.title_color)
+        # 根据胜利状态绘制不同的标题
+        if self.is_victory:
+            title = self.title_font.render("游戏胜利！", True, (255, 215, 0))  # 金色
+        else:
+            title = self.title_font.render("游戏结束", True, self.title_color)
         title_rect = title.get_rect(centerx=self.x + self.width//2, y=self.y + 20)
         self.screen.blit(title, title_rect)
         

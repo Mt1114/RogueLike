@@ -4,6 +4,15 @@ from modules.game import Game
 
 def main():
     pygame.init()
+    
+    # 尝试初始化音频系统，如果失败则继续运行游戏（只是没有声音）
+    try:
+        pygame.mixer.init()
+        print("音频系统初始化成功")
+    except pygame.error as e:
+        print(f"音频系统初始化失败: {e}")
+        print("游戏将继续运行，但没有声音")
+    
     screen_width = 1280
     screen_height = 720
     screen = pygame.display.set_mode((screen_width, screen_height))

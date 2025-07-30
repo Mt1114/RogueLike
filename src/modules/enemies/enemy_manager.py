@@ -2,16 +2,20 @@ import pygame
 import random
 import math
 from .types import Ghost, Radish, Bat, Slime
+from .spawn_marker import SpawnMarker
 
 class EnemyManager:
     def __init__(self):
         self.enemies = []
         self.spawn_timer = 0
-        self.spawn_interval = 1.0  # 每秒生成一个敌人
+        self.spawn_interval = 3.0  # 每3秒生成一个敌人（减慢生成速度）
         self.difficulty = "normal"  # 默认难度为normal
         self.difficulty_level = 1   # 难度等级，随游戏时间增长
         self.game_time = 0  # 游戏进行时间
         self.bat_spawn_timer = 0  # 蝙蝠生成计时器
+        
+        # 出生点标记
+        self.spawn_markers = []
         
         # 地图边界相关
         self.map_boundaries = None  # (min_x, min_y, max_x, max_y)
@@ -86,6 +90,11 @@ class EnemyManager:
                 self.bat_spawn_timer = 0.1  # 重置为0.1而不是0
                 self.spawn_bat(player)
             
+        # 更新出生点标记
+        for marker in self.spawn_markers[:]:
+            if not marker.update(dt):
+                self.spawn_markers.remove(marker)
+        
         # 更新所有敌人
         for enemy in self.enemies[:]:  # 使用切片创建副本以避免在迭代时修改列表
             enemy.update(dt, player)
@@ -100,6 +109,11 @@ class EnemyManager:
                     pass
             
     def render(self, screen, camera_x, camera_y, screen_center_x, screen_center_y):
+        # 渲染出生点标记
+        for marker in self.spawn_markers:
+            marker.render(screen, camera_x, camera_y, screen_center_x, screen_center_y)
+        
+        # 渲染敌人
         for enemy in self.enemies:
             # 计算敌人在屏幕上的位置
             screen_x = screen_center_x + (enemy.rect.x - camera_x)
@@ -114,38 +128,42 @@ class EnemyManager:
             self.enemies.remove(enemy)
             
     def random_spawn_enemy(self, player):
-        """在玩家周围随机位置生成敌人，确保在地图边界内"""
-        # 在玩家周围的随机位置生成敌人
-        spawn_distance = 600  # 生成距离
+        """在四个角落随机位置生成敌人，确保在地图边界内"""
+        if not self.map_boundaries:
+            return  # 如果没有地图边界信息，无法生成敌人
+            
+        min_x, min_y, max_x, max_y = self.map_boundaries
         
-        # 尝试生成位置，最多尝试10次以找到在边界内的位置
-        for _ in range(10):
-            # 随机角度
-            angle = random.uniform(0, 2 * math.pi)
-            
-            # 计算生成位置（世界坐标系）
-            x = player.world_x + spawn_distance * math.cos(angle)
-            y = player.world_y + spawn_distance * math.sin(angle)
-            
-            # 如果有地图边界限制，确保敌人在边界内生成
-            if self.map_boundaries:
-                min_x, min_y, max_x, max_y = self.map_boundaries
-                
-                # 检查生成位置是否在边界内
-                if min_x <= x <= max_x and min_y <= y <= max_y:
-                    break  # 位置有效，跳出循环
-                
-                # 如果位置无效，将坐标限制在边界内
-                x = max(min_x, min(x, max_x))
-                y = max(min_y, min(y, max_y))
-                break  # 使用修正后的位置
+        # 定义四个角落的生成区域（距离边界100像素）
+        corner_offset = 100
+        corners = [
+            (min_x + corner_offset, min_y + corner_offset),  # 左上角
+            (max_x - corner_offset, min_y + corner_offset),  # 右上角
+            (min_x + corner_offset, max_y - corner_offset),  # 左下角
+            (max_x - corner_offset, max_y - corner_offset)   # 右下角
+        ]
+        
+        # 随机选择一个角落
+        spawn_x, spawn_y = random.choice(corners)
+        
+        # 在选定的角落周围添加一些随机偏移（±50像素）
+        spawn_x += random.uniform(-50, 50)
+        spawn_y += random.uniform(-50, 50)
+        
+        # 确保生成位置在地图边界内
+        spawn_x = max(min_x, min(spawn_x, max_x))
+        spawn_y = max(min_y, min(spawn_y, max_y))
+        
+        # 创建出生点标记
+        spawn_marker = SpawnMarker(spawn_x, spawn_y, duration=2.0)
+        self.spawn_markers.append(spawn_marker)
         
         # 根据游戏时间决定生成什么类型的敌人
         if self.game_time < 10:  # 游戏开始10秒内
-            self.spawn_enemy('slime', x, y)
+            self.spawn_enemy('slime', spawn_x, spawn_y)
         else:  # 10秒后可以生成幽灵和萝卜
             enemy_type = random.choice(['ghost', 'radish', 'slime'])
-            self.spawn_enemy(enemy_type, x, y)
+            self.spawn_enemy(enemy_type, spawn_x, spawn_y)
             
     def set_difficulty(self, difficulty):
         """设置游戏难度
@@ -156,26 +174,34 @@ class EnemyManager:
         self.difficulty = difficulty
             
     def spawn_bat(self, player):
-        """在玩家周围生成一个蝙蝠，确保在地图边界内"""
-        spawn_distance = 600
-        
-        # 尝试生成位置，最多尝试10次以找到在边界内的位置
-        for _ in range(10):
-            angle = random.uniform(0, 2 * math.pi)
-            x = player.world_x + spawn_distance * math.cos(angle)
-            y = player.world_y + spawn_distance * math.sin(angle)
+        """在四个角落随机位置生成一个蝙蝠，确保在地图边界内"""
+        if not self.map_boundaries:
+            return  # 如果没有地图边界信息，无法生成蝙蝠
             
-            # 如果有地图边界限制，确保蝙蝠在边界内生成
-            if self.map_boundaries:
-                min_x, min_y, max_x, max_y = self.map_boundaries
-                
-                # 检查生成位置是否在边界内
-                if min_x <= x <= max_x and min_y <= y <= max_y:
-                    break  # 位置有效，跳出循环
-                
-                # 如果位置无效，将坐标限制在边界内
-                x = max(min_x, min(x, max_x))
-                y = max(min_y, min(y, max_y))
-                break  # 使用修正后的位置
+        min_x, min_y, max_x, max_y = self.map_boundaries
         
-        self.spawn_enemy('bat', x, y) 
+        # 定义四个角落的生成区域（距离边界100像素）
+        corner_offset = 100
+        corners = [
+            (min_x + corner_offset, min_y + corner_offset),  # 左上角
+            (max_x - corner_offset, min_y + corner_offset),  # 右上角
+            (min_x + corner_offset, max_y - corner_offset),  # 左下角
+            (max_x - corner_offset, max_y - corner_offset)   # 右下角
+        ]
+        
+        # 随机选择一个角落
+        spawn_x, spawn_y = random.choice(corners)
+        
+        # 在选定的角落周围添加一些随机偏移（±50像素）
+        spawn_x += random.uniform(-50, 50)
+        spawn_y += random.uniform(-50, 50)
+        
+        # 确保生成位置在地图边界内
+        spawn_x = max(min_x, min(spawn_x, max_x))
+        spawn_y = max(min_y, min(spawn_y, max_y))
+        
+        # 创建出生点标记
+        spawn_marker = SpawnMarker(spawn_x, spawn_y, duration=2.0)
+        self.spawn_markers.append(spawn_marker)
+        
+        self.spawn_enemy('bat', spawn_x, spawn_y) 

@@ -32,6 +32,14 @@ class Item(pygame.sprite.Sprite):
                                                          frame_count=1, row=0,
                                                          frame_duration=0.1).get_current_frame()
             self.value = 20  # 恢复血量
+        elif item_type == 'key':
+            # 使用金币图像作为钥匙的临时图像
+            spritesheet = resource_manager.load_spritesheet('money_spritesheet', 'images/items/money.png')
+            self.image = resource_manager.create_animation('key', spritesheet,
+                                                         frame_width=16, frame_height=16,
+                                                         frame_count=1, row=0,
+                                                         frame_duration=0.1).get_current_frame()
+            self.value = 0  # 钥匙没有数值
         # 杀boss掉落，开宝箱抽奖(武器、被动升级卡片，组合超武升级只能通过宝箱)
         elif item_type == 'chest':
             spritesheet = resource_manager.load_spritesheet('chest_spritesheet', 'images/items/chests_bundled_16x16.png')
@@ -83,6 +91,11 @@ class Item(pygame.sprite.Sprite):
             player.add_coins(self.value)
         elif self.item_type == 'health':
             player.heal(self.value)
+        elif self.item_type == 'key':
+            player.has_key = True
+            # 显示获得钥匙的提示
+            if hasattr(player, 'game') and player.game:
+                player.game.show_message("You can go out now!!!!", 3.0)
         elif self.item_type == 'chest':
             # TODO: 宝箱掉落物品,随机掉落武器、被动升级卡片、组合超武升级
             pass
