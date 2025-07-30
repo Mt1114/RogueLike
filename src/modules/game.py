@@ -16,6 +16,7 @@ from .menus.map_hero_select_menu import MapHeroSelectMenu
 from .vision_system import VisionSystem, DarkOverlay
 from .vision_config import get_vision_config, apply_preset, apply_color_theme, validate_config
 from .minimap import Minimap
+import time
 
 class Game:
     def __init__(self, screen):
@@ -128,7 +129,7 @@ class Game:
             darkness_alpha=config["darkness"]["alpha"]
         )
         
-        print(f"视野系统初始化完成: 半径={config['sector']['radius']}, 角度={config['sector']['angle']}, 黑暗度={config['darkness']['alpha']}")
+        print(f"视野系统初始化完成: 扇形半径={config['sector']['radius']}, 角度={config['sector']['angle']}, 圆形光圈={config['circle']['radius']}像素, 黑暗度={config['darkness']['alpha']}")
     
     def show_message(self, message, duration=3.0):
         """显示消息提示
@@ -674,6 +675,12 @@ class Game:
                 else:
                     print("调试模式已关闭")
                 return True
+            elif event.key == pygame.K_F11:
+                # 切换视野调试模式
+                if self.enemy_manager:
+                    self.enemy_manager.debug_vision = not getattr(self.enemy_manager, 'debug_vision', False)
+                    print(f"视野调试模式: {'开启' if self.enemy_manager.debug_vision else '关闭'}")
+                return True
             
         # 更新鼠标位置（用于视野系统）
         if event.type == pygame.MOUSEMOTION:
@@ -736,7 +743,20 @@ class Game:
         self.fps_timer += dt
         if self.fps_timer >= self.fps_update_interval:
             self.fps = int(self.fps_counter / self.fps_timer)
-            print(f"FPS: {self.fps}")  # 在控制台打印帧数
+            print(f"FPS: {self.fps}")
+            
+            # 性能监控：如果帧数低于30，显示性能警告
+            if self.fps < 30:
+                print(f"⚠️  性能警告: 当前帧数 {self.fps} 低于30帧")
+                if self.vision_system and self.enable_vision:
+                    stats = self.vision_system.get_performance_stats()
+                    total_cache = stats['cache_hits'] + stats['cache_misses']
+                    if total_cache > 0:
+                        cache_hit_rate = stats['cache_hits'] / total_cache * 100
+                        print(f"   视野系统: 光线追踪 {stats['raycast_calls']}次, 缓存命中率 {cache_hit_rate:.1f}%")
+                    else:
+                        print(f"   视野系统: 光线追踪 {stats['raycast_calls']}次, 缓存未初始化")
+            
             self.fps_counter = 0
             self.fps_timer = 0
         
@@ -810,25 +830,35 @@ class Game:
                 self.mouse_y
             )
             
-            # 更新视野系统的墙壁数据
-            if self.map_manager and self.map_manager.current_map:
-                walls = self.map_manager.get_collision_tiles()
-                map_width, map_height = self.map_manager.get_map_size()
-                tile_width, tile_height = self.map_manager.get_tile_size()
+            # 性能优化：减少墙壁数据更新频率
+            # 只在玩家移动或地图变化时更新墙壁数据
+            if (not hasattr(self, '_last_walls_update') or 
+                abs(self.camera_x - getattr(self, '_last_camera_x', 0)) > 50 or
+                abs(self.camera_y - getattr(self, '_last_camera_y', 0)) > 50):
                 
-                # 直接使用世界坐标的墙壁数据，不转换为屏幕坐标
-                # 视野系统会处理坐标转换
-                self.vision_system.set_walls(walls, tile_width, map_width, map_height)
+                if self.map_manager and self.map_manager.current_map:
+                    walls = self.map_manager.get_collision_tiles()
+                    map_width, map_height = self.map_manager.get_map_size()
+                    tile_width, tile_height = self.map_manager.get_tile_size()
+                    
+                    # 直接使用世界坐标的墙壁数据，不转换为屏幕坐标
+                    # 视野系统会处理坐标转换
+                    self.vision_system.set_walls(walls, tile_width, map_width, map_height)
+                    
+                    # 设置相机和屏幕信息
+                    self.vision_system.set_camera_and_screen(
+                        self.camera_x, self.camera_y, 
+                        self.screen_center_x, self.screen_center_y
+                    )
+                    
+                    # 更新玩家移动组件的碰撞数据
+                    if self.player and hasattr(self.player, 'movement'):
+                        self.player.movement.set_collision_tiles(walls, tile_width, tile_height)
                 
-                # 设置相机和屏幕信息
-                self.vision_system.set_camera_and_screen(
-                    self.camera_x, self.camera_y, 
-                    self.screen_center_x, self.screen_center_y
-                )
-                
-                # 更新玩家移动组件的碰撞数据
-                if self.player and hasattr(self.player, 'movement'):
-                    self.player.movement.set_collision_tiles(walls, tile_width, tile_height)
+                # 记录最后更新时间
+                self._last_walls_update = time.time()
+                self._last_camera_x = self.camera_x
+                self._last_camera_y = self.camera_y
         
         # 更新其他游戏对象，注意检查player和enemy_manager是否存在
         if self.enemy_manager and self.player:
@@ -895,11 +925,11 @@ class Game:
         if self.enemy_manager:
             # 渲染游戏对象（考虑相机偏移）
             self.enemy_manager.render(self.screen, self.camera_x, self.camera_y, 
-                                   self.screen_center_x, self.screen_center_y)
+                                   self.screen_center_x, self.screen_center_y, self.vision_system)
         
         if self.item_manager:
             self.item_manager.render(self.screen, self.camera_x, self.camera_y, 
-                                  self.screen_center_x, self.screen_center_y)
+                                  self.screen_center_x, self.screen_center_y, self.vision_system)
         
         # 渲染逃生门
         if self.escape_door:

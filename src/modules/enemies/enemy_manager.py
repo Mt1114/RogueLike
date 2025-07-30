@@ -3,6 +3,7 @@ import random
 import math
 from .types import Ghost, Radish, Bat, Slime
 from .spawn_marker import SpawnMarker
+import time
 
 class EnemyManager:
     def __init__(self):
@@ -110,8 +111,12 @@ class EnemyManager:
             
     def render(self, screen, camera_x, camera_y, screen_center_x, screen_center_y, vision_system=None):
         # 渲染出生点标记
-        for marker in self.spawn_markers:
-            marker.render(screen, camera_x, camera_y, screen_center_x, screen_center_y)
+        for marker in self.spawn_markers[:]:  # 使用切片复制避免在迭代时修改
+            marker.update(0.016)  # 假设60FPS
+            if marker.duration <= 0:
+                self.spawn_markers.remove(marker)
+            else:
+                marker.render(screen, camera_x, camera_y, screen_center_x, screen_center_y)
         
         # 渲染敌人
         for enemy in self.enemies:
@@ -119,25 +124,53 @@ class EnemyManager:
             screen_x = screen_center_x + (enemy.rect.x - camera_x)
             screen_y = screen_center_y + (enemy.rect.y - camera_y)
             
-            # 只渲染在屏幕范围内的敌人
-            if -50 <= screen_x <= screen.get_width() + 50 and -50 <= screen_y <= screen.get_height() + 50:
+            # 性能优化：只渲染在屏幕范围内的敌人
+            if (screen_x > -100 and screen_x < screen.get_width() + 100 and
+                screen_y > -100 and screen_y < screen.get_height() + 100):
+                
                 # 检查敌人是否在视野内
                 if vision_system and vision_system.is_enabled():
-                    # 将敌人的世界坐标转换为屏幕坐标进行检查
-                    enemy_world_x = enemy.rect.x
-                    enemy_world_y = enemy.rect.y
-                    enemy_screen_x = screen_center_x + (enemy_world_x - camera_x)
-                    enemy_screen_y = screen_center_y + (enemy_world_y - camera_y)
-                    
-                    # 检查敌人是否在视野内
-                    if vision_system.is_in_vision(enemy_screen_x, enemy_screen_y):
-                        # 在视野内时，标记为已看到，显示怪物和血条
-                        enemy.has_been_seen = True
-                        enemy.render(screen, screen_x, screen_y, show_health_bar=True)
-                    elif enemy.has_been_seen:
-                        # 曾经被看到过但当前不在视野内，只显示怪物，不显示血条
-                        enemy.render(screen, screen_x, screen_y, show_health_bar=False)
-                    # 如果从未被看到过且当前不在视野内，则不渲染
+                    # 性能优化：减少视野检测频率
+                    # 只在敌人移动或视野系统变化时检测
+                    if (not hasattr(enemy, '_last_vision_check') or
+                        abs(enemy.rect.x - getattr(enemy, '_last_vision_x', 0)) > 10 or
+                        abs(enemy.rect.y - getattr(enemy, '_last_vision_y', 0)) > 10):
+                        
+                        enemy_world_x = enemy.rect.x
+                        enemy_world_y = enemy.rect.y
+                        enemy_screen_x = screen_center_x + (enemy_world_x - camera_x)
+                        enemy_screen_y = screen_center_y + (enemy_world_y - camera_y)
+                        
+                        # 检查敌人是否在视野内
+                        current_in_vision = vision_system.is_in_vision(enemy_screen_x, enemy_screen_y)
+                        
+                        # 调试信息（可选）
+                        if hasattr(self, 'debug_vision') and self.debug_vision:
+                            print(f"敌人 {enemy.type} 在视野内: {current_in_vision}, 曾经被看到: {enemy.has_been_seen}")
+                        
+                        if current_in_vision:
+                            # 在视野内时，标记为已看到，显示怪物和血条
+                            enemy.has_been_seen = True
+                            enemy.render(screen, screen_x, screen_y, show_health_bar=True)
+                        elif enemy.has_been_seen:
+                            # 曾经被看到过但当前不在视野内，只显示怪物，不显示血条
+                            enemy.render(screen, screen_x, screen_y, show_health_bar=False)
+                        # 如果从未被看到过且当前不在视野内，则不渲染
+                        
+                        # 记录最后检测位置和视野状态
+                        enemy._last_vision_check = time.time()
+                        enemy._last_vision_x = enemy.rect.x
+                        enemy._last_vision_y = enemy.rect.y
+                        enemy._last_in_vision = current_in_vision
+                    else:
+                        # 使用上次的视野状态
+                        if enemy._last_in_vision:
+                            # 上次在视野内，显示血条
+                            enemy.render(screen, screen_x, screen_y, show_health_bar=True)
+                        elif enemy.has_been_seen:
+                            # 曾经被看到过但当前不在视野内，只显示怪物，不显示血条
+                            enemy.render(screen, screen_x, screen_y, show_health_bar=False)
+                        # 如果从未被看到过且当前不在视野内，则不渲染
                 else:
                     # 如果没有视野系统或视野系统被禁用，正常渲染（包括血条）
                     enemy.render(screen, screen_x, screen_y, show_health_bar=True)
