@@ -14,8 +14,8 @@ from .upgrade_system import UpgradeManager, WeaponUpgradeLevel, PassiveUpgradeLe
 from .utils import apply_mask_collision
 from .map_manager import MapManager
 from .menus.map_hero_select_menu import MapHeroSelectMenu
-from .vision_system import VisionSystem, DarkOverlay
-from .vision_config import get_vision_config, apply_preset, apply_color_theme, validate_config
+from .lighting_manager import LightingManager
+
 from .minimap import Minimap
 import time
 
@@ -86,10 +86,9 @@ class Game:
         # 地图状态
         self.current_map = None  # 当前地图名称
         
-        # 视野系统
-        self.vision_system = None
-        self.dark_overlay = None
-        self.enable_vision = True  # 是否启用视野系统
+        # 光照系统
+        self.lighting_manager = None
+        self.enable_lighting = True  # 是否启用光照系统
         
         # 调试模式
         self.debug_mode = False
@@ -103,35 +102,18 @@ class Game:
         # 小地图
         self.minimap = None
         
-        # 初始化视野系统
-        self._init_vision_system()
+        # 初始化光照系统
+        self._init_lighting_system()
         
-    def _init_vision_system(self):
-        """初始化视野系统"""
+    def _init_lighting_system(self):
+        """初始化光照系统"""
         screen_width = self.screen.get_width()
         screen_height = self.screen.get_height()
         
-        # 获取配置
-        config = get_vision_config()
-        config = validate_config(config)
+        # 创建光照管理器
+        self.lighting_manager = LightingManager(screen_width, screen_height)
         
-        # 创建视野系统
-        self.vision_system = VisionSystem(
-            radius=config["sector"]["radius"],
-            angle=config["sector"]["angle"],
-            color=config["sector"]["color"],
-            circle_radius=config["circle"]["radius"],
-            circle_color=config["circle"]["color"]
-        )
-        
-        # 创建黑暗遮罩，使用配置文件中的darkness_alpha
-        self.dark_overlay = DarkOverlay(
-            screen_width,
-            screen_height,
-            darkness_alpha=config["darkness"]["alpha"]
-        )
-        
-        print(f"视野系统初始化完成: 扇形半径={config['sector']['radius']}, 角度={config['sector']['angle']}, 圆形光圈={config['circle']['radius']}像素, 黑暗度={config['darkness']['alpha']}")
+        print(f"光照系统初始化完成")
     
     def show_message(self, message, duration=3.0):
         """显示消息提示
@@ -173,44 +155,14 @@ class Game:
             # 绘制文本
             self.screen.blit(text_surface, text_rect)
             
-    def set_vision_radius(self, radius):
-        """设置视野半径"""
-        if self.vision_system:
-            self.vision_system.set_radius(radius)
-            
-    def set_vision_angle(self, angle):
-        """设置视野角度"""
-        if self.vision_system:
-            self.vision_system.set_angle(angle)
-            
-    def toggle_vision(self):
-        """切换视野系统开关"""
-        if self.vision_system:
-            self.enable_vision = self.vision_system.toggle_enabled()
+    def toggle_lighting(self):
+        """切换光照系统开关"""
+        self.enable_lighting = not self.enable_lighting
         
-    def set_circle_radius(self, radius):
-        """设置圆形区域半径"""
-        if self.vision_system:
-            self.vision_system.set_circle_radius(radius)
-            
-    def set_darkness_alpha(self, alpha):
-        """设置黑暗程度"""
-        if self.dark_overlay:
-            self.dark_overlay.set_darkness(alpha)
-            
-    def apply_vision_preset(self, preset_name):
-        """应用视野预设"""
-        new_config = apply_preset(preset_name)
-        if self.vision_system:
-            self.vision_system.apply_config(new_config)
-        if self.dark_overlay:
-            self.dark_overlay.apply_config(new_config)
-        
-    def apply_vision_color_theme(self, theme_name):
-        """应用颜色主题"""
-        new_config = apply_color_theme(theme_name)
-        if self.vision_system:
-            self.vision_system.apply_config(new_config)
+    def set_lighting_config(self, **kwargs):
+        """设置光照配置"""
+        if self.lighting_manager:
+            self.lighting_manager.set_light_config(**kwargs)
         
     def _set_map_boundaries(self):
         """根据当前地图尺寸设置边界
@@ -625,50 +577,8 @@ class Game:
                         enemy.toggle_outline()
                 return True
             elif event.key == pygame.K_F3:
-                # 切换视野系统
-                self.toggle_vision()
-                return True
-            elif event.key == pygame.K_F4:
-                # 增加视野半径
-                if self.vision_system:
-                    current_radius = self.vision_system.radius
-                    new_radius = min(800, current_radius + 50)
-                    self.set_vision_radius(new_radius)
-                return True
-            elif event.key == pygame.K_F5:
-                # 减少视野半径
-                if self.vision_system:
-                    current_radius = self.vision_system.radius
-                    new_radius = max(100, current_radius - 50)
-                    self.set_vision_radius(new_radius)
-                return True
-            elif event.key == pygame.K_F6:
-                # 增加视野角度
-                if self.vision_system:
-                    current_angle = math.degrees(self.vision_system.angle)
-                    new_angle = min(360, current_angle + 15)
-                    self.set_vision_angle(new_angle)
-                return True
-            elif event.key == pygame.K_F7:
-                # 减少视野角度
-                if self.vision_system:
-                    current_angle = math.degrees(self.vision_system.angle)
-                    new_angle = max(30, current_angle - 15)
-                    self.set_vision_angle(new_angle)
-                return True
-            elif event.key == pygame.K_F8:
-                # 增加圆形区域半径
-                if self.vision_system:
-                    current_radius = self.vision_system.circle_radius
-                    new_radius = min(200, current_radius + 20)
-                    self.set_circle_radius(new_radius)
-                return True
-            elif event.key == pygame.K_F9:
-                # 减少圆形区域半径
-                if self.vision_system:
-                    current_radius = self.vision_system.circle_radius
-                    new_radius = max(20, current_radius - 20)
-                    self.set_circle_radius(new_radius)
+                # 切换光照系统
+                self.toggle_lighting()
                 return True
             elif event.key == pygame.K_F10:
                 # 切换调试模式
@@ -751,14 +661,6 @@ class Game:
             # 性能监控：如果帧数低于30，显示性能警告
             if self.fps < 30:
                 print(f"⚠️  性能警告: 当前帧数 {self.fps} 低于30帧")
-                if self.vision_system and self.enable_vision:
-                    stats = self.vision_system.get_performance_stats()
-                    total_cache = stats['cache_hits'] + stats['cache_misses']
-                    if total_cache > 0:
-                        cache_hit_rate = stats['cache_hits'] / total_cache * 100
-                        print(f"   视野系统: 光线追踪 {stats['raycast_calls']}次, 缓存命中率 {cache_hit_rate:.1f}%")
-                    else:
-                        print(f"   视野系统: 光线追踪 {stats['raycast_calls']}次, 缓存未初始化")
             
             self.fps_counter = 0
             self.fps_timer = 0
@@ -821,52 +723,21 @@ class Game:
                 self.ammo_supply_manager.update(dt)
                 self.ammo_supply_manager.check_pickup(self.player)
             
-                    # 更新视野系统
-        if self.vision_system and self.enable_vision:
-            # 获取当前鼠标位置
-            current_mouse_x, current_mouse_y = pygame.mouse.get_pos()
-            self.mouse_x, self.mouse_y = current_mouse_x, current_mouse_y
+            # 更新光照系统
+            if self.lighting_manager and self.enable_lighting:
+                # 获取当前鼠标位置
+                current_mouse_x, current_mouse_y = pygame.mouse.get_pos()
+                self.mouse_x, self.mouse_y = current_mouse_x, current_mouse_y
 
-            # 视野系统使用屏幕坐标，玩家在屏幕中心
-            screen_center_x = self.screen_center_x
-            screen_center_y = self.screen_center_y
-
-            self.vision_system.update(
-                screen_center_x,  # 玩家在屏幕中心
-                screen_center_y,
-                self.mouse_x,     # 鼠标屏幕坐标
-                self.mouse_y
-            )
-            
-            # 性能优化：减少墙壁数据更新频率
-            # 只在玩家移动或地图变化时更新墙壁数据
-            if (not hasattr(self, '_last_walls_update') or 
-                abs(self.camera_x - getattr(self, '_last_camera_x', 0)) > 50 or
-                abs(self.camera_y - getattr(self, '_last_camera_y', 0)) > 50):
-                
+                # 更新墙壁数据
                 if self.map_manager and self.map_manager.current_map:
                     walls = self.map_manager.get_collision_tiles()
-                    map_width, map_height = self.map_manager.get_map_size()
                     tile_width, tile_height = self.map_manager.get_tile_size()
-                    
-                    # 直接使用世界坐标的墙壁数据，不转换为屏幕坐标
-                    # 视野系统会处理坐标转换
-                    self.vision_system.set_walls(walls, tile_width, map_width, map_height)
-                    
-                    # 设置相机和屏幕信息
-                    self.vision_system.set_camera_and_screen(
-                        self.camera_x, self.camera_y, 
-                        self.screen_center_x, self.screen_center_y
-                    )
+                    self.lighting_manager.set_walls(walls, tile_width)
                     
                     # 更新玩家移动组件的碰撞数据
                     if self.player and hasattr(self.player, 'movement'):
                         self.player.movement.set_collision_tiles(walls, tile_width, tile_height)
-                
-                # 记录最后更新时间
-                self._last_walls_update = time.time()
-                self._last_camera_x = self.camera_x
-                self._last_camera_y = self.camera_y
         
         # 更新其他游戏对象，注意检查player和enemy_manager是否存在
         if self.enemy_manager and self.player:
@@ -933,11 +804,11 @@ class Game:
         if self.enemy_manager:
             # 渲染游戏对象（考虑相机偏移）
             self.enemy_manager.render(self.screen, self.camera_x, self.camera_y, 
-                                   self.screen_center_x, self.screen_center_y, self.vision_system)
-        
-        if self.item_manager:
-            self.item_manager.render(self.screen, self.camera_x, self.camera_y, 
-                                  self.screen_center_x, self.screen_center_y, self.vision_system)
+                                   self.screen_center_x, self.screen_center_y, self.lighting_manager)
+
+            if self.item_manager:
+                self.item_manager.render(self.screen, self.camera_x, self.camera_y, 
+                                       self.screen_center_x, self.screen_center_y, self.lighting_manager)
         
         # 渲染逃生门
         if self.escape_door:
@@ -950,31 +821,35 @@ class Game:
             self.player.render_weapons(self.screen, self.camera_x, self.camera_y)
             self.player.render_melee_attacks(self.screen, self.camera_x, self.camera_y)
             
-        # 渲染视野系统（在所有游戏对象之后，UI之前）
-        if self.vision_system and self.enable_vision and self.player:
+        # 渲染光照系统（在所有游戏对象之后，UI之前）
+        if self.lighting_manager and self.enable_lighting and self.player:
             try:
-                self.vision_system.render(self.screen, self.dark_overlay.get_overlay())
+                # 获取鼠标位置
+                mouse_x, mouse_y = pygame.mouse.get_pos()
                 
-                # 在视野系统内部渲染补给（确保在视野内可见）
+                # 渲染光照效果
+                self.lighting_manager.render(
+                    self.screen, 
+                    self.player.world_x, 
+                    self.player.world_y, 
+                    mouse_x, 
+                    mouse_y, 
+                    self.camera_x, 
+                    self.camera_y
+                )
+                
+                # 在光照系统内部渲染补给（确保在光照内可见）
                 if self.ammo_supply_manager:
                     self.ammo_supply_manager.render(self.screen, self.camera_x, self.camera_y)
-                
-                # 性能监控：显示视野系统性能统计（仅在调试模式下）
-                if hasattr(self, 'debug_mode') and self.debug_mode:
-                    stats = self.vision_system.get_performance_stats()
-                    fps_text = f"光线追踪: {stats['raycast_calls']}次, 缓存命中: {stats['cache_hits']}, 缓存未命中: {stats['cache_misses']}"
-                    fps_surface = self.font.render(fps_text, True, (255, 255, 0))
-                    self.screen.blit(fps_surface, (10, 50))
                     
             except Exception as e:
-                print(f"视野系统渲染错误: {e}")
-                # 如果视野系统出错，暂时禁用它
-                self.enable_vision = False
+                print(f"光照系统渲染错误: {e}")
+                # 如果光照系统出错，暂时禁用它
+                self.enable_lighting = False
         else:
-            # 如果视野系统未启用，直接渲染补给
+            # 如果光照系统未启用，直接渲染补给
             if self.ammo_supply_manager:
                 self.ammo_supply_manager.render(self.screen, self.camera_x, self.camera_y)
-        
         # 渲染UI（在视野系统之后）
         if self.player:
             self.ui.render(self.player, self.game_time, self.kill_num)
