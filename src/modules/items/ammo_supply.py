@@ -15,11 +15,11 @@ class AmmoSupply(Item):
         # 先设置图像，再调用父类构造函数
         # 加载补给图标
         try:
-            self.image = pygame.image.load("assets/images/weapons/nova_32x32.png").convert_alpha()
+            self.image = pygame.image.load("assets/images/weapons/bullet_8x8.png").convert_alpha()
         except:
             # 如果加载失败，创建一个默认的补给图标
             self.image = pygame.Surface((32, 32))
-            self.image.fill((0, 255, 0))  # 绿色
+            self.image.fill((255, 255, 0))  # 黄色
         
         # 现在调用父类构造函数
         super().__init__(x, y, "ammo_supply")
@@ -69,8 +69,9 @@ class AmmoSupply(Item):
         if hasattr(player, 'weapon_manager'):
             for weapon in player.weapon_manager.weapons:
                 if hasattr(weapon, 'ammo') and not weapon.is_melee:
-                    weapon.ammo += self.ammo_amount
-                    print(f"获得弹药补给！武器类型: {weapon.type}, 当前弹药: {weapon.ammo}")
+                    # 确保不超过最大弹药量
+                    weapon.ammo = min(weapon.ammo + self.ammo_amount, weapon.max_ammo)
+                    print(f"获得弹药补给！武器类型: {weapon.type}, 当前弹药: {weapon.ammo}/{weapon.max_ammo}")
         
         return True  # 返回True表示拾取成功，物品应该被销毁
     

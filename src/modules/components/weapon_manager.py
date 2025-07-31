@@ -108,7 +108,7 @@ class WeaponManager(Component):
                 weapon.update(dt)
     
     def manual_attack(self, screen):
-        """手动攻击（按J键触发）
+        """远程攻击（鼠标左键触发）
         
         Args:
             screen: pygame屏幕对象，用于获取鼠标位置
@@ -117,7 +117,8 @@ class WeaponManager(Component):
             return
             
         for weapon in self.weapons:
-            if hasattr(weapon, 'manual_attack'):
+            # 只有远程武器响应左键攻击
+            if hasattr(weapon, 'manual_attack') and weapon.type in ['bullet', 'fireball', 'frost_nova']:
                 weapon.manual_attack(screen)
                 
     def melee_attack(self, screen):
@@ -130,7 +131,8 @@ class WeaponManager(Component):
             return
             
         for weapon in self.weapons:
-            if hasattr(weapon, 'melee_attack'):
+            # 只有近战武器响应右键攻击
+            if hasattr(weapon, 'melee_attack') and weapon.type in ['knife']:
                 weapon.melee_attack(screen)
     
     def render(self, screen, camera_x, camera_y):

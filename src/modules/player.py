@@ -4,6 +4,7 @@ from .resource_manager import resource_manager
 from .weapons.types.knife import Knife
 from .weapons.types.fireball import Fireball
 from .weapons.types.frost_nova import FrostNova
+from .weapons.types.bullet import BulletWeapon
 from .upgrade_system import UpgradeType, WeaponUpgradeLevel, PassiveUpgradeLevel
 from .hero_config import get_hero_config
 from .utils import create_outlined_sprite
@@ -56,8 +57,9 @@ class Player(pygame.sprite.Sprite):
         self.outline_thickness = 1
         
         # 添加初始武器
-        starting_weapon = self.hero_config.get("starting_weapon", "knife")
-        self.add_weapon(starting_weapon)
+        starting_weapon = self.hero_config.get("starting_weapon", "bullet")
+        self.add_weapon(starting_weapon)  # 添加远程武器（手枪）
+        self.add_weapon("knife")  # 添加近战武器（刀）
         
     def _init_components(self):
         """初始化所有组件"""
@@ -87,7 +89,8 @@ class Player(pygame.sprite.Sprite):
         self.weapon_manager.available_weapons = {
             'knife': Knife,
             'fireball': Fireball,
-            'frost_nova': FrostNova
+            'frost_nova': FrostNova,
+            'bullet': BulletWeapon
         }
         
         # 5. 被动技能管理器

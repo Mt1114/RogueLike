@@ -15,6 +15,12 @@ class EnemyManager:
         self.game_time = 0  # 游戏进行时间
         self.bat_spawn_timer = 0  # 蝙蝠生成计时器
         
+        # 波次系统
+        self.current_round = 0  # 当前波次
+        self.round_start_time = 0  # 当前波次开始时间
+        self.round_messages = []  # 波次提示消息
+        self.message_timer = 0  # 消息显示计时器
+        
         # 出生点标记
         self.spawn_markers = []
         
@@ -57,6 +63,16 @@ class EnemyManager:
         elif enemy_type == 'slime':
             enemy = Slime(x, y, enemy_type, self.difficulty, self.difficulty_level)
             
+        # 应用波次属性加成
+        if enemy and hasattr(self, 'health_multiplier') and hasattr(self, 'damage_multiplier'):
+            # 应用生命值加成
+            enemy.health = int(enemy.health * self.health_multiplier)
+            enemy.max_health = int(enemy.max_health * self.health_multiplier)
+            
+            # 应用攻击力加成
+            if hasattr(enemy, 'damage'):
+                enemy.damage = int(enemy.damage * self.damage_multiplier)
+            
         # 如果指定了生命值，覆盖配置的生命值
         if enemy and health is not None:
             enemy.health = health
@@ -70,18 +86,32 @@ class EnemyManager:
     def update(self, dt, player):
         self.game_time += dt
         self.spawn_timer += dt
+        self.message_timer += dt
+        
+        # 更新波次系统
+        self._update_round_system(dt, player)
         
         # 更新难度等级（根据游戏时间）
         self.difficulty_level = max(1, int(self.game_time // 60) + 1)  # 每60秒提升一级
         
-        # 根据时间和玩家等级生成敌人
-        if self.spawn_timer >= self.spawn_interval:
-            self.spawn_timer = 0
-            self.random_spawn_enemy(player)
+        # 根据波次状态决定是否生成敌人
+        if self.current_round > 0 and self.current_round <= 3:
+            # 检查是否达到当前波次的最大敌人数
+            if hasattr(self, 'max_enemies_for_round') and self.max_enemies_for_round is not None:
+                if self.enemies_spawned_this_round >= self.max_enemies_for_round:
+                    # 已达到最大敌人数，停止生成
+                    return
             
-        # 如果玩家等级达到5级，更新蝙蝠生成计时器
+            if self.spawn_timer >= self.spawn_interval:
+                self.spawn_timer = 0
+                if self.random_spawn_enemy(player):
+                    # 成功生成敌人，增加计数
+                    if hasattr(self, 'enemies_spawned_this_round'):
+                        self.enemies_spawned_this_round += 1
+            
+        # 如果玩家等级达到1级，更新蝙蝠生成计时器
         if player.level >= 1:
-            # 如果是刚达到5级,立即生成一只蝙蝠
+            # 如果是刚达到1级,立即生成一只蝙蝠
             if self.bat_spawn_timer == 0:
                 self.spawn_bat(player)
                 self.bat_spawn_timer = 0.1  # 设置一个很小的值,避免重复触发初始生成
@@ -100,14 +130,109 @@ class EnemyManager:
         for enemy in self.enemies[:]:  # 使用切片创建副本以避免在迭代时修改列表
             enemy.update(dt, player)
             
-            # 检查敌人是否已死亡（包括被燃烧伤害杀死的）
-            if not enemy.alive():
-                try:
-                    self.enemies.remove(enemy)
-                    # 注意：在这里我们不再播放死亡音效，因为在enemy.py中已经播放
-                except ValueError:
-                    # 如果敌人已经被移除，忽略错误
-                    pass
+    def _update_round_system(self, dt, player):
+        """更新波次系统"""
+        game_time_minutes = self.game_time / 60.0
+        
+        # 第一波：0:00-0:30，5秒生成一个，四个点位总共24个
+        if game_time_minutes >= 0 and game_time_minutes < 0.5 and self.current_round == 0:
+            self._start_round(1, "Round 1", 5.0, 1.0, 1.0, 24)
+            
+        # 第一波结束，进入休息期：0:30-1:30
+        elif game_time_minutes >= 0.5 and game_time_minutes < 1.5 and self.current_round == 1:
+            self._end_round()
+            
+        # 第二波：1:30-3:00，3秒生成一个，四个点位总共40个
+        elif game_time_minutes >= 1.5 and game_time_minutes < 3.0 and self.current_round == 0:
+            self._start_round(2, "Round 2", 3.0, 1.2, 1.2, 40)  # 生成速度加快，属性提升20%
+            
+        # 第二波结束，进入休息期：3:00-4:00
+        elif game_time_minutes >= 3.0 and game_time_minutes < 4.0 and self.current_round == 2:
+            self._end_round()
+            
+        # 第三波：4:00-5:00，2秒生成一个，四个点位总共120个
+        elif game_time_minutes >= 4.0 and game_time_minutes < 5.0 and self.current_round == 0:
+            self._start_round(3, "Round 3", 2.0, 1.0, 1.5, 120)  # 生成速度加快，攻击力提升50%
+            
+        # 游戏结束：5:00后
+        elif game_time_minutes >= 5.0 and self.current_round != -1:
+            self._end_game()
+            
+    def _start_round(self, round_num, message, spawn_interval, health_multiplier, damage_multiplier, max_enemies=None):
+        """开始新波次"""
+        self.current_round = round_num
+        self.round_start_time = self.game_time
+        self.spawn_interval = spawn_interval
+        self.health_multiplier = health_multiplier
+        self.damage_multiplier = damage_multiplier
+        self.max_enemies_for_round = max_enemies
+        self.enemies_spawned_this_round = 0
+        
+        # 添加波次提示消息
+        self.round_messages.append({
+            'text': message,
+            'timer': 0,
+            'duration': 3.0,
+            'color': (255, 255, 0)  # 黄色
+        })
+        
+        print(f"开始第{round_num}波！生成间隔: {spawn_interval}秒, 生命值倍数: {health_multiplier}, 攻击力倍数: {damage_multiplier}, 最大敌人数: {max_enemies}")
+        
+    def _end_round(self):
+        """结束当前波次"""
+        self.current_round = 0
+        print(f"第{self.current_round}波结束，进入休息期")
+        
+    def _end_game(self):
+        """游戏结束"""
+        self.current_round = -1
+        self.round_messages.append({
+            'text': "You are safe!!!!",
+            'timer': 0,
+            'duration': 5.0,
+            'color': (0, 255, 0)  # 绿色
+        })
+        print("游戏结束！You are safe!!!!")
+        
+    def _render_round_messages(self, screen):
+        """渲染波次消息"""
+        # 更新消息计时器
+        for message in self.round_messages[:]:
+            message['timer'] += 0.016  # 假设60FPS
+            
+            # 移除过期的消息
+            if message['timer'] >= message['duration']:
+                self.round_messages.remove(message)
+                continue
+                
+            # 渲染消息
+            font = pygame.font.Font(None, 48)
+            text_surface = font.render(message['text'], True, message['color'])
+            
+            # 计算消息位置（屏幕中央）
+            text_rect = text_surface.get_rect()
+            text_rect.centerx = screen.get_width() // 2
+            text_rect.centery = screen.get_height() // 2
+            
+            # 添加透明度效果
+            alpha = 255
+            if message['timer'] > message['duration'] * 0.7:  # 最后30%时间开始淡出
+                alpha = int(255 * (1 - (message['timer'] - message['duration'] * 0.7) / (message['duration'] * 0.3)))
+            
+            # 创建带透明度的表面
+            if alpha < 255:
+                text_surface.set_alpha(alpha)
+            
+            screen.blit(text_surface, text_rect)
+            
+            # 添加阴影效果
+            shadow_surface = font.render(message['text'], True, (0, 0, 0))
+            shadow_rect = shadow_surface.get_rect()
+            shadow_rect.centerx = text_rect.centerx + 2
+            shadow_rect.centery = text_rect.centery + 2
+            if alpha < 255:
+                shadow_surface.set_alpha(alpha)
+            screen.blit(shadow_surface, shadow_rect)
             
     def render(self, screen, camera_x, camera_y, screen_center_x, screen_center_y, lighting_manager=None):
         # 渲染出生点标记
@@ -117,6 +242,9 @@ class EnemyManager:
                 self.spawn_markers.remove(marker)
             else:
                 marker.render(screen, camera_x, camera_y, screen_center_x, screen_center_y)
+        
+        # 渲染波次消息
+        self._render_round_messages(screen)
         
         # 渲染敌人
         for enemy in self.enemies:
@@ -182,12 +310,12 @@ class EnemyManager:
     def random_spawn_enemy(self, player):
         """在四个角落随机位置生成敌人，确保在地图边界内"""
         if not self.map_boundaries:
-            return  # 如果没有地图边界信息，无法生成敌人
+            return False  # 如果没有地图边界信息，无法生成敌人
             
         min_x, min_y, max_x, max_y = self.map_boundaries
         
-        # 定义四个角落的生成区域（距离边界100像素）
-        corner_offset = 100
+        # 定义四个角落的生成区域（距离边界400像素，考虑4倍缩放）
+        corner_offset = 400
         corners = [
             (min_x + corner_offset, min_y + corner_offset),  # 左上角
             (max_x - corner_offset, min_y + corner_offset),  # 右上角
@@ -217,6 +345,8 @@ class EnemyManager:
             enemy_type = random.choice(['ghost', 'radish', 'slime'])
             self.spawn_enemy(enemy_type, spawn_x, spawn_y)
             
+        return True  # 成功生成敌人
+            
     def set_difficulty(self, difficulty):
         """设置游戏难度
         
@@ -232,8 +362,8 @@ class EnemyManager:
             
         min_x, min_y, max_x, max_y = self.map_boundaries
         
-        # 定义四个角落的生成区域（距离边界100像素）
-        corner_offset = 100
+        # 定义四个角落的生成区域（距离边界400像素，考虑4倍缩放）
+        corner_offset = 400
         corners = [
             (min_x + corner_offset, min_y + corner_offset),  # 左上角
             (max_x - corner_offset, min_y + corner_offset),  # 右上角

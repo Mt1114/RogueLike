@@ -8,15 +8,15 @@ from .resource_manager import resource_manager
 class MapManager:
     """地图管理器类，用于加载和渲染TMX地图文件"""
     
-    def __init__(self, screen, scale=2.0):
+    def __init__(self, screen, scale_factor=4.0):
         """初始化地图管理器
         
         Args:
             screen: pygame显示屏幕
-            scale: 地图缩放比例，默认为2.0（放大2倍）
+            scale_factor: 地图缩放因子，默认为4.0（4倍放大）
         """
         self.screen = screen
-        self.scale = scale  # 地图缩放比例
+        self.scale_factor = scale_factor  # 地图缩放因子
         self.current_map = None
         self.map_layer = None
         self.map_group = None
@@ -103,11 +103,11 @@ class MapManager:
             try:
                 self.tmx_data = load_pygame(map_path)
                 
-                # 获取地图尺寸（应用缩放）
-                self.tile_width = int(self.tmx_data.tilewidth * self.scale)
-                self.tile_height = int(self.tmx_data.tileheight * self.scale)
-                self.map_width = int(self.tmx_data.width * self.tile_width)
-                self.map_height = int(self.tmx_data.height * self.tile_height)
+                # 获取地图尺寸
+                self.tile_width = self.tmx_data.tilewidth * self.scale_factor
+                self.tile_height = self.tmx_data.tileheight * self.scale_factor
+                self.map_width = self.tmx_data.width * self.tile_width
+                self.map_height = self.tmx_data.height * self.tile_height
                 
                 # 存储地图数据
                 self.current_map = {
@@ -130,8 +130,8 @@ class MapManager:
                         clamp_camera=True  # 限制相机不超出地图边界
                     )
                     
-                    # 应用缩放比例
-                    self.map_layer.zoom = self.scale
+                    # 缩放比例可以调整
+                    self.map_layer.zoom = self.scale_factor
                     
                     # 创建地图精灵组
                     self.map_group = pyscroll.PyscrollGroup(map_layer=self.map_layer)
@@ -162,7 +162,7 @@ class MapManager:
             
         self.tile_cache = {}
         
-        # 遍历所有图层和图块，缓存它们
+        # 遍历所有图层和图块，缓存它们（应用缩放）
         for layer in self.tmx_data.visible_layers:
             if isinstance(layer, pytmx.TiledTileLayer):
                 for x, y, gid in layer:
@@ -170,8 +170,12 @@ class MapManager:
                         if gid not in self.tile_cache:
                             tile = self.tmx_data.get_tile_image_by_gid(gid)
                             if tile:
-                                # 应用缩放
-                                scaled_tile = pygame.transform.scale(tile, (self.tile_width, self.tile_height))
+                                # 缩放图块
+                                scaled_tile = pygame.transform.scale(
+                                    tile, 
+                                    (int(tile.get_width() * self.scale_factor), 
+                                     int(tile.get_height() * self.scale_factor))
+                                )
                                 self.tile_cache[gid] = scaled_tile
         
     
@@ -186,7 +190,7 @@ class MapManager:
             return
         
         # 计算视口边界（以图块为单位）
-        # 使用偏移量计算起始位置
+        # 使用偏移量计算起始位置（考虑缩放）
         viewport_left = max(0, int(-offset_x / self.tile_width))
         viewport_top = max(0, int(-offset_y / self.tile_height))
         
@@ -309,8 +313,8 @@ class MapManager:
                         if gid:  # 如果图块ID不为0
                             collision_rects.append(
                                 pygame.Rect(
-                                    int(x * self.tile_width),
-                                    int(y * self.tile_height),
+                                    x * self.tile_width,
+                                    y * self.tile_height,
                                     self.tile_width,
                                     self.tile_height
                                 )
@@ -356,20 +360,4 @@ class MapManager:
             # 如果找不到指定名称的层
             print(f"找不到名为 '{layer_name}' 的对象层")
         
-        return objects
-    
-    def set_scale(self, scale):
-        """设置地图缩放比例
-        
-        Args:
-            scale (float): 缩放比例，1.0为原始大小，2.0为放大2倍
-        """
-        self.scale = scale
-        if self.current_map:
-            # 重新加载当前地图以应用新的缩放
-            current_map_name = self.current_map['name']
-            self.load_map(current_map_name)
-    
-    def get_scale(self):
-        """获取当前缩放比例"""
-        return self.scale 
+        return objects 

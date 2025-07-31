@@ -101,18 +101,20 @@ class Knife(Weapon):
         super().__init__(player, 'knife')
         
         # 加载武器图像
-        self.image = resource_manager.load_image('weapon_knife', 'images/weapons/knife_32x32.png')
+        self.image = resource_manager.load_image('weapon_knife', 'images/weapons/knife.png')
         self.rect = self.image.get_rect()
-
+        
         # 加载攻击音效
         resource_manager.load_sound('knife_throw', 'sounds/weapons/knife_throw.wav')
         
     def update(self, dt):
         super().update(dt)
         
-        # 移除自动发射逻辑，改为手动发射
-        # 更新已投掷的小刀
-        self.projectiles.update(dt)
+        # 刀武器只更新近战攻击特效，不更新投射物
+        if hasattr(self, 'melee_attacking') and self.melee_attacking:
+            self.melee_attack_timer += dt
+            if self.melee_attack_timer >= self.melee_attack_duration:
+                self.melee_attacking = False
         
     def get_weapon_image(self):
         """获取武器图像"""
@@ -155,32 +157,14 @@ class Knife(Weapon):
         return 1 - (1 - t) ** 3
         
     def _perform_attack(self, direction_x, direction_y):
-        """执行飞刀攻击
+        """执行刀近战攻击（刀武器只有近战能力）
         
         Args:
             direction_x: 攻击方向X分量
             direction_y: 攻击方向Y分量
         """
-        knives_count = int(self.current_stats[WeaponStatType.PROJECTILES_PER_CAST])
-        
-        if knives_count > 1:
-            # 计算扇形分布
-            spread_angle = self.current_stats[WeaponStatType.SPREAD_ANGLE]
-            angle_step = spread_angle / (knives_count - 1)
-            base_angle = math.degrees(math.atan2(direction_y, direction_x))
-            start_angle = base_angle - spread_angle / 2
-            
-            for i in range(knives_count):
-                current_angle = math.radians(start_angle + angle_step * i)
-                knife_dir_x = math.cos(current_angle)
-                knife_dir_y = math.sin(current_angle)
-                self._throw_single_knife(knife_dir_x, knife_dir_y)
-        else:
-            # 单个小刀直接投掷
-            self._throw_single_knife(direction_x, direction_y)
-            
-        # 播放投掷音效
-        resource_manager.play_sound('knife_throw')
+        # 刀武器只进行近战攻击，不进行远程攻击
+        self._perform_melee_attack(direction_x, direction_y)
         
     def _perform_melee_attack(self, direction_x, direction_y):
         """执行飞刀近战攻击
@@ -195,6 +179,12 @@ class Knife(Weapon):
         enemies = self.player.game.enemy_manager.enemies
         attack_range = 80  # 扩大攻击范围
         attack_damage = self.current_stats.get(WeaponStatType.DAMAGE, 10) * 1.5  # 1.5倍伤害
+        
+        # 设置攻击状态
+        self.melee_attacking = True
+        self.melee_attack_timer = 0
+        self.melee_attack_duration = 0.3  # 攻击持续时间
+        self.melee_attack_direction = (direction_x, direction_y)
         
         for enemy in enemies:
             # 计算到敌人的距离
@@ -231,6 +221,39 @@ class Knife(Weapon):
         self.projectiles.add(knife)
         
     def render(self, screen, camera_x, camera_y):
-        # 渲染所有投掷出去的小刀
-        for knife in self.projectiles:
-            knife.render(screen, camera_x, camera_y)
+        # 刀武器只进行近战攻击，不渲染特效
+        pass
+    
+    def _render_melee_attack_effect(self, screen, camera_x, camera_y):
+        """渲染近战攻击特效"""
+        if not self.attack_effect:
+            return
+        
+        # 计算玩家屏幕位置
+        player_screen_x = screen.get_width() // 2
+        player_screen_y = screen.get_height() // 2
+        
+        # 计算攻击特效位置（在玩家前方）
+        direction_x, direction_y = self.melee_attack_direction
+        effect_distance = 40  # 特效距离玩家的距离
+        effect_x = player_screen_x + direction_x * effect_distance
+        effect_y = player_screen_y + direction_y * effect_distance
+        
+        # 计算特效旋转角度
+        angle = math.degrees(math.atan2(-direction_y, direction_x))
+        
+        # 根据攻击进度计算特效透明度
+        progress = self.melee_attack_timer / self.melee_attack_duration
+        alpha = int(255 * (1 - progress))  # 从完全不透明到完全透明
+        
+        # 创建带透明度的特效图像
+        effect_surface = self.attack_effect.copy()
+        effect_surface.set_alpha(alpha)
+        
+        # 旋转特效图像
+        rotated_effect = pygame.transform.rotate(effect_surface, angle)
+        
+        # 渲染特效
+        effect_rect = rotated_effect.get_rect()
+        effect_rect.center = (effect_x, effect_y)
+        screen.blit(rotated_effect, effect_rect)

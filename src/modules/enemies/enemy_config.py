@@ -40,6 +40,7 @@ ENEMY_CONFIGS = {
         "damage": 10,           # 基础伤害
         "speed": 100,           # 基础移动速度
         "score_value": 50,      # 击败后获得的分数
+        "exp_value": 20,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333, # 动画速度
         "scale": 1.0,           # 缩放大小
     },
@@ -50,6 +51,7 @@ ENEMY_CONFIGS = {
         "damage": 15,
         "speed": 70,
         "score_value": 15,
+        "exp_value": 20,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333,
         "scale": 1.0,
     },
@@ -60,6 +62,7 @@ ENEMY_CONFIGS = {
         "damage": 8,
         "speed": 160,
         "score_value": 80,
+        "exp_value": 20,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333,
         "scale": 2.0,
     },
@@ -70,6 +73,7 @@ ENEMY_CONFIGS = {
         "damage": 12,
         "speed": 80,
         "score_value": 150,
+        "exp_value": 20,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333,
         "scale": 1.0,
         "attack_range": 800,    # 攻击范围

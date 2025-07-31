@@ -24,7 +24,7 @@ class HealthSupplyManager:
         self.spawn_count = 1  # 每次生成1个补给
         
         # 生成区域（地图边界内）
-        self.spawn_margin = 100  # 距离地图边缘的最小距离
+        self.spawn_margin = 400  # 距离地图边缘的最小距离（考虑4倍缩放）
         
         # 游戏开始时立即生成一些补给
         print("初始化生命补给管理器...")

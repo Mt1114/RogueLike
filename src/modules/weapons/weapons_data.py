@@ -9,50 +9,33 @@ from .weapon_stats import WeaponStatType
 # 所有武器的配置数据
 WEAPONS_CONFIG = {
     'knife': {
-        'name': '飞刀',
-        'icon_path': 'images/weapons/knife_32x32.png',
+        'name': '刀',
+        'icon_path': 'images/weapons/knife.png',
         'max_level': 3,
         'levels': [
             {
                 'level': 1,
                 'effects': {
-                    WeaponStatType.DAMAGE: 200,
+                    WeaponStatType.DAMAGE: 25,
                     WeaponStatType.ATTACK_SPEED: 1.0,
-                    WeaponStatType.PROJECTILE_SPEED: 400,
-                    WeaponStatType.CAN_PENETRATE: False,
-                    WeaponStatType.PROJECTILES_PER_CAST: 1,
-                    WeaponStatType.SPREAD_ANGLE: 0,
-                    WeaponStatType.LIFETIME: 3.0
                 },
-                'description': '基础飞刀，单发直线飞行'
+                'description': '基础刀，近战攻击'
             },
             {
                 'level': 2,
                 'effects': {
-                    WeaponStatType.DAMAGE: 20,
-                    WeaponStatType.ATTACK_SPEED: 1.1,
-                    WeaponStatType.PROJECTILE_SPEED: 400,
-                    WeaponStatType.CAN_PENETRATE: False,
-                    WeaponStatType.PROJECTILES_PER_CAST: 2,
-                    WeaponStatType.SPREAD_ANGLE: 15,
-                    WeaponStatType.LIFETIME: 3.0
+                    WeaponStatType.DAMAGE: 30,
+                    WeaponStatType.ATTACK_SPEED: 1.2,
                 },
-                'description': '同时发射两把飞刀，呈扇形分布'
+                'description': '提升伤害和攻击速度'
             },
             {
                 'level': 3,
                 'effects': {
-                    WeaponStatType.DAMAGE: 30,
-                    WeaponStatType.ATTACK_SPEED: 1.25,
-                    WeaponStatType.PROJECTILE_SPEED: 400,
-                    WeaponStatType.CAN_PENETRATE: True,
-                    WeaponStatType.PROJECTILES_PER_CAST: 2,
-                    WeaponStatType.SPREAD_ANGLE: 15,
-                    WeaponStatType.LIFETIME: 3.0,
-                    WeaponStatType.MAX_PENETRATION: 10,
-                    WeaponStatType.PENETRATION_DAMAGE_REDUCTION: 0.2
+                    WeaponStatType.DAMAGE: 40,
+                    WeaponStatType.ATTACK_SPEED: 1.5,
                 },
-                'description': '飞刀可以穿透敌人，伤害提升'
+                'description': '最高伤害和攻击速度'
             }
         ]
     },
@@ -93,6 +76,52 @@ WEAPONS_CONFIG = {
                     WeaponStatType.COOLDOWN: 1.2
                 },
                 'description': '提升伤害和燃烧效果，减少冷却时间'
+            }
+        ]
+    },
+    'bullet': {
+        'name': '手枪',
+        'icon_path': 'images/weapons/gun.png',
+        'max_level': 3,
+        'levels': [
+            {
+                'level': 1,
+                'effects': {
+                    WeaponStatType.DAMAGE: 20,
+                    WeaponStatType.ATTACK_SPEED: 1.0,
+                    WeaponStatType.PROJECTILE_SPEED: 600,
+                    WeaponStatType.PENETRATION: 1,
+                    WeaponStatType.PROJECTILES_PER_CAST: 1,
+                    WeaponStatType.SPREAD_ANGLE: 0,
+                    WeaponStatType.LIFETIME: 3.0
+                },
+                'description': '基础手枪，单发直线射击'
+            },
+            {
+                'level': 2,
+                'effects': {
+                    WeaponStatType.DAMAGE: 25,
+                    WeaponStatType.ATTACK_SPEED: 1.2,
+                    WeaponStatType.PROJECTILE_SPEED: 700,
+                    WeaponStatType.PENETRATION: 2,
+                    WeaponStatType.PROJECTILES_PER_CAST: 1,
+                    WeaponStatType.SPREAD_ANGLE: 0,
+                    WeaponStatType.LIFETIME: 3.0
+                },
+                'description': '提升伤害和射速，子弹可以穿透一个敌人'
+            },
+            {
+                'level': 3,
+                'effects': {
+                    WeaponStatType.DAMAGE: 30,
+                    WeaponStatType.ATTACK_SPEED: 1.5,
+                    WeaponStatType.PROJECTILE_SPEED: 800,
+                    WeaponStatType.PENETRATION: 3,
+                    WeaponStatType.PROJECTILES_PER_CAST: 1,
+                    WeaponStatType.SPREAD_ANGLE: 0,
+                    WeaponStatType.LIFETIME: 3.0
+                },
+                'description': '最高伤害和射速，子弹可以穿透多个敌人'
             }
         ]
     },

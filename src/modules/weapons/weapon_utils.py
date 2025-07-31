@@ -6,13 +6,15 @@
 from .types.knife import Knife
 from .types.fireball import Fireball
 from .types.frost_nova import FrostNova
+from .types.bullet import BulletWeapon
 from .weapons_data import get_weapon_config
 
 # 武器类映射
 WEAPON_CLASSES = {
     'knife': Knife,
     'fireball': Fireball,
-    'frost_nova': FrostNova
+    'frost_nova': FrostNova,
+    'bullet': BulletWeapon
 }
 
 def create_weapon(weapon_type, player):

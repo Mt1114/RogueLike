@@ -57,7 +57,7 @@ class Game:
         self.escape_door = None  # 逃生门
         self.save_system = SaveSystem()
         self.upgrade_manager = UpgradeManager()
-        self.map_manager = MapManager(screen, scale=4.0)  # 创建地图管理器，放大2倍
+        self.map_manager = MapManager(screen)  # 创建地图管理器
         
         # 消息提示系统
         self.message = ""
@@ -630,14 +630,6 @@ class Game:
                     self.enemy_manager.debug_vision = not getattr(self.enemy_manager, 'debug_vision', False)
                     print(f"视野调试模式: {'开启' if self.enemy_manager.debug_vision else '关闭'}")
                 return True
-            elif event.key == pygame.K_F12:
-                # 切换地图缩放
-                if self.map_manager:
-                    current_scale = self.map_manager.get_scale()
-                    new_scale = 1.0 if current_scale > 1.0 else 2.0
-                    self.map_manager.set_scale(new_scale)
-                    print(f"地图缩放: {new_scale}x")
-                return True
             
         # 更新鼠标位置（用于视野系统）
         if event.type == pygame.MOUSEMOTION:
@@ -811,7 +803,7 @@ class Game:
             self._check_collisions()
             
             # 检查是否可以升级
-            if self.player.add_experience(0):  # 检查是否可以升级，不添加经验值
+            if self.player.experience >= self.player.exp_to_next_level:  # 直接检查经验值是否足够升级
                 self.player.level_up()
                 self.upgrade_menu.show(self.player, self)  # 显示升级选择菜单，传入Game实例
         
@@ -999,6 +991,11 @@ class Game:
                             
                             if enemy.health <= 0:
                                 self.kill_num += 1
+                                # 给玩家添加经验值奖励
+                                if hasattr(enemy, 'config') and 'exp_value' in enemy.config:
+                                    exp_reward = enemy.config['exp_value']
+                                    self.player.add_experience(exp_reward)
+                                    print(f"击杀 {enemy.type} 获得 {exp_reward} 经验值")
                                 # 在敌人死亡位置生成物品，传递player对象以应用幸运值加成
                                 if self.item_manager:
                                     self.item_manager.spawn_item(enemy.rect.x, enemy.rect.y, enemy.type, self.player)

@@ -40,7 +40,7 @@ DEFAULT_HERO_CONFIG = {
         "attack_power": 1.0,
         "luck": 1.0
     },
-    "starting_weapon": "frost_nova",
+    "starting_weapon": "bullet",
     "unlock_condition": None  # 默认解锁
 }
 
@@ -123,7 +123,7 @@ NINJA_FROG_NEW_CONFIG = {
         "attack_power": 1.0,
         "luck": 1.0
     },
-    "starting_weapon": "frost_nova",
+    "starting_weapon": "bullet",
     "unlock_condition": None  # 默认解锁
 }
 
@@ -167,7 +167,7 @@ HERO_CONFIGS = {
             "attack_power": 0.9,
             "luck": 1.2
         },
-        "starting_weapon": "fireball",
+        "starting_weapon": "bullet",
         "unlock_condition": "reach_level_10"  # 达到10级解锁
     },
     
@@ -207,7 +207,7 @@ HERO_CONFIGS = {
             "attack_power": 1.1,
             "luck": 0.8
         },
-        "starting_weapon": "frost_nova",
+        "starting_weapon": "bullet",
         "unlock_condition": "collect_1000_coins"  # 收集1000金币解锁
     }
 }

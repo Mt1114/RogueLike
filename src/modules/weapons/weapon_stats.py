@@ -19,6 +19,7 @@ class WeaponStatType(Enum):
     # 穿透属性 Penetration Stats
     CAN_PENETRATE = 'can_penetrate'             # 是否可以穿透敌人
     MAX_PENETRATION = 'max_penetration'         # 最大穿透次数
+    PENETRATION = 'penetration'                 # 穿透次数
     PENETRATION_DAMAGE_REDUCTION = 'penetration_damage_reduction' # 每次穿透后的伤害衰减系数(0-1)
     
     # 元素效果 Elemental Effects
