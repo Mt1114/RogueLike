@@ -320,7 +320,7 @@ class LIGHT:
         return render
 
     def main(self, tiles, display, x, y):
-        self.render_surface.fill((0,0,0))
+        self.render_surface.fill((0,0,0,0))
         self.render_surface.blit(self.baked_pixel_shader_surf, (0, 0))
         
         dx, dy = x - self.radius, y - self.radius

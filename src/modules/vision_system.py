@@ -5,7 +5,7 @@ import time
 
 class VisionSystem:
     def __init__(self, radius=300, angle=90, color=(255, 255, 200, 100), 
-                 circle_radius=80, circle_color=(255, 255, 200, 100)):
+                 circle_radius=80, circle_color=(255, 255, 200, 100), ray_count=24):
         """
         视野系统初始化
         
@@ -152,9 +152,17 @@ class VisionSystem:
         self._cache_radius = self.radius
         self._cache_angle = self.angle
         
-        # 绘制扇形视野
+        # 绘制扇形视野（抗锯齿处理）
         if len(vertices) >= 3:
-            pygame.draw.polygon(mask_surface, (255, 255, 255, 255), vertices)
+            # 使用更平滑的绘制方式
+            pygame.draw.polygon(mask_surface, (255, 255, 255, 255), vertices, 0)
+            
+            # 添加边缘平滑处理
+            if len(vertices) > 3:
+                # 在边缘点绘制小圆来平滑边界
+                for vertex in vertices[1:]:  # 跳过中心点
+                    pygame.draw.circle(mask_surface, (255, 255, 255, 255), 
+                                     (int(vertex[0]), int(vertex[1])), 3)
             
         return mask_surface
         
@@ -213,8 +221,8 @@ class VisionSystem:
         # 添加中心点
         vertices.append((self.center_x, self.center_y))
         
-        # 性能优化：减少圆形边界的采样点
-        num_points = max(16, int(self.circle_radius / 8))  # 大幅减少采样点
+        # 性能优化：根据圆形半径调整采样点数量
+        num_points = max(24, int(self.circle_radius / 6))  # 增加采样点以获得更平滑的圆形
         angles = np.linspace(0, 2 * math.pi, num_points)
         
         for angle in angles:
@@ -258,10 +266,8 @@ class VisionSystem:
         start_angle = self.direction - self.half_angle
         end_angle = self.direction + self.half_angle
         
-        # 性能优化：大幅减少光线数量
-        # 根据半径动态调整，但设置更保守的上限
-        base_points = max(4, min(12, int(self.radius / 100)))  # 减少光线数量
-        num_points = base_points
+        # 使用配置的光线数量来确保平滑的扇形
+        num_points = getattr(self, 'ray_count', 12)  # 使用配置的光线数量
         
         # 使用更高效的角度生成
         angles = []
@@ -367,11 +373,13 @@ class VisionSystem:
     def set_radius(self, radius):
         """设置视野半径"""
         self.radius = radius
+        self.config["sector"]["radius"] = radius
         
     def set_angle(self, angle):
         """设置视野角度（度）"""
         self.angle = math.radians(angle)
         self.half_angle = self.angle / 2
+        self.config["sector"]["angle"] = math.degrees(self.angle)
         
     def set_color(self, color):
         """设置视野颜色"""
@@ -387,17 +395,6 @@ class VisionSystem:
         """设置圆形光圈颜色"""
         self.circle_color = color
         self.config["circle"]["color"] = color
-        
-    def set_radius(self, radius):
-        """设置视野半径"""
-        self.radius = radius
-        self.config["sector"]["radius"] = radius
-        
-    def set_angle(self, angle):
-        """设置视野角度（度）"""
-        self.angle = math.radians(angle)
-        self.half_angle = self.angle / 2
-        self.config["sector"]["angle"] = angle
         
     def toggle_enabled(self):
         """切换启用状态"""
@@ -468,6 +465,9 @@ class VisionSystem:
         self.tile_size = tile_size
         self.map_width = map_width
         self.map_height = map_height
+        
+        # 清除缓存，因为墙壁数据发生了变化
+        self.clear_cache()
         
     def set_camera_and_screen(self, camera_x, camera_y, screen_center_x, screen_center_y):
         """设置相机位置和屏幕中心点

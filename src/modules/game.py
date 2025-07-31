@@ -57,7 +57,7 @@ class Game:
         self.escape_door = None  # 逃生门
         self.save_system = SaveSystem()
         self.upgrade_manager = UpgradeManager()
-        self.map_manager = MapManager(screen)  # 创建地图管理器
+        self.map_manager = MapManager(screen, scale=4.0)  # 创建地图管理器，放大2倍
         
         # 消息提示系统
         self.message = ""
@@ -112,10 +112,10 @@ class Game:
         screen_width = self.screen.get_width()
         screen_height = self.screen.get_height()
         
-        # 创建光照管理器
-        self.lighting_manager = LightingManager(screen_width, screen_height)
+        # 创建光照管理器（使用默认预设）
+        self.lighting_manager = LightingManager(screen_width, screen_height, "default")
         
-        print(f"光照系统初始化完成")
+        print(f"光照系统初始化完成，当前预设: {self.lighting_manager.get_current_preset()}")
     
     def show_message(self, message, duration=3.0):
         """显示消息提示
@@ -165,6 +165,30 @@ class Game:
         """设置光照配置"""
         if self.lighting_manager:
             self.lighting_manager.set_light_config(**kwargs)
+    
+    def set_lighting_preset(self, preset_name):
+        """设置光照预设
+        
+        Args:
+            preset_name (str): 预设名称
+        """
+        if self.lighting_manager:
+            self.lighting_manager.set_preset(preset_name)
+            preset_info = self.lighting_manager.get_preset_info(preset_name)
+            if preset_info:
+                self.show_message(f"已切换到: {preset_info['name']}", 2.0)
+    
+    def get_available_lighting_presets(self):
+        """获取可用的光照预设列表"""
+        if self.lighting_manager:
+            return self.lighting_manager.get_available_presets()
+        return []
+    
+    def get_current_lighting_preset(self):
+        """获取当前光照预设"""
+        if self.lighting_manager:
+            return self.lighting_manager.get_current_preset()
+        return "default"
         
     def _set_map_boundaries(self):
         """根据当前地图尺寸设置边界
@@ -583,6 +607,15 @@ class Game:
                 # 切换光照系统
                 self.toggle_lighting()
                 return True
+            elif event.key == pygame.K_F4:
+                # 循环切换光照预设
+                if self.lighting_manager:
+                    self.lighting_manager.cycle_preset()
+                    current_preset = self.lighting_manager.get_current_preset()
+                    preset_info = self.lighting_manager.get_preset_info(current_preset)
+                    if preset_info:
+                        self.show_message(f"光照预设: {preset_info['name']}", 2.0)
+                return True
             elif event.key == pygame.K_F10:
                 # 切换调试模式
                 self.debug_mode = not self.debug_mode
@@ -596,6 +629,14 @@ class Game:
                 if self.enemy_manager:
                     self.enemy_manager.debug_vision = not getattr(self.enemy_manager, 'debug_vision', False)
                     print(f"视野调试模式: {'开启' if self.enemy_manager.debug_vision else '关闭'}")
+                return True
+            elif event.key == pygame.K_F12:
+                # 切换地图缩放
+                if self.map_manager:
+                    current_scale = self.map_manager.get_scale()
+                    new_scale = 1.0 if current_scale > 1.0 else 2.0
+                    self.map_manager.set_scale(new_scale)
+                    print(f"地图缩放: {new_scale}x")
                 return True
             
         # 更新鼠标位置（用于视野系统）

@@ -13,6 +13,7 @@ VISION_CONFIG = {
         "radius": 640,        # 扇形视野半径（像素）- 覆盖半个窗口宽度
         "angle": 30,          # 扇形视野角度（度）
         "color": (255, 255, 255, 128),  # 扇形区域透明度 (R, G, B, A)
+        "ray_count": 24,      # 光线数量（影响扇形的平滑度）
     },
     
     # 圆形光源配置
@@ -65,8 +66,9 @@ VISION_PRESETS = {
         "name": "默认视野",
         "sector_radius": 640,
         "sector_angle": 30,
-        "circle_radius": 40,
-        "darkness_alpha": 225,
+        "circle_radius": 80,
+        "darkness_alpha": 200,
+        "ray_count": 12,
     },
     "wide": {
         "name": "宽视野",
@@ -74,13 +76,15 @@ VISION_PRESETS = {
         "sector_angle": 120,
         "circle_radius": 100,
         "darkness_alpha": 180,
+        "ray_count": 12,
     },
-    "nd'dddarrow": {
+    "narrow": {
         "name": "窄视野",
         "sector_radius": 200,
         "sector_angle": 60,
         "circle_radius": 60,
         "darkness_alpha": 220,
+        "ray_count": 12,
     },
     "night_vision": {
         "name": "夜视模式",
@@ -88,6 +92,7 @@ VISION_PRESETS = {
         "sector_angle": 180,
         "circle_radius": 120,
         "darkness_alpha": 150,
+        "ray_count": 12,
     },
     "tunnel": {
         "name": "隧道视野",
@@ -95,6 +100,39 @@ VISION_PRESETS = {
         "sector_angle": 45,
         "circle_radius": 40,
         "darkness_alpha": 240,
+        "ray_count": 20,
+    },
+    "spotlight": {
+        "name": "聚光灯",
+        "sector_radius": 350,
+        "sector_angle": 30,
+        "circle_radius": 80,
+        "darkness_alpha": 210,
+        "ray_count": 28,
+    },
+    "floodlight": {
+        "name": "泛光灯",
+        "sector_radius": 600,
+        "sector_angle": 150,
+        "circle_radius": 200,
+        "darkness_alpha": 160,
+        "ray_count": 56,
+    },
+    "minimal": {
+        "name": "最小视野",
+        "sector_radius": 150,
+        "sector_angle": 45,
+        "circle_radius": 30,
+        "darkness_alpha": 250,
+        "ray_count": 20,
+    },
+    "bright": {
+        "name": "明亮模式",
+        "sector_radius": 400,
+        "sector_angle": 90,
+        "circle_radius": 150,
+        "darkness_alpha": 120,
+        "ray_count": 36,
     }
 }
 
@@ -139,6 +177,7 @@ def apply_preset(preset_name):
         # 应用预设参数
         config["sector"]["radius"] = preset["sector_radius"]
         config["sector"]["angle"] = preset["sector_angle"]
+        config["sector"]["ray_count"] = preset.get("ray_count", 24)  # 应用光线数量
         config["circle"]["radius"] = preset["circle_radius"]
         config["darkness"]["alpha"] = preset["darkness_alpha"]
         
