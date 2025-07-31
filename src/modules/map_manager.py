@@ -285,14 +285,21 @@ class MapManager:
             list: 包含所有碰撞图块的矩形列表
         """
         if not self.current_map:
+            print("get_collision_tiles: 没有当前地图")
             return []
             
         tmx_data = self.current_map['tmx_data']
         collision_rects = []
         
+        print(f"get_collision_tiles: 查找层 '{layer_name}'")
+        print(f"get_collision_tiles: visible_layers 是生成器类型")
+        
         # 查找指定的碰撞层
         for layer in tmx_data.visible_layers:
+            layer_name_actual = getattr(layer, 'name', 'unnamed')
+            print(f"get_collision_tiles: 检查层 '{layer_name_actual}'")
             if hasattr(layer, 'name') and layer.name == layer_name:
+                print(f"get_collision_tiles: 找到碰撞层 '{layer_name}'")
                 # 这是一个图块层
                 if hasattr(layer, 'data'):                  
                     for x, y, gid in layer.iter_data():
@@ -305,8 +312,12 @@ class MapManager:
                                     self.tile_height
                                 )
                             )
+                    print(f"get_collision_tiles: 找到 {len(collision_rects)} 个碰撞图块")
                 break
 
+        if not collision_rects:
+            print(f"get_collision_tiles: 警告: 没有找到碰撞图块数据")
+            
         return collision_rects
     
     def get_objects(self, layer_name):

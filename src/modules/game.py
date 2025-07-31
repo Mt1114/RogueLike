@@ -4,6 +4,7 @@ from .player import Player
 from .enemies.enemy_manager import EnemyManager
 from .items.item_manager import ItemManager
 from .items.ammo_supply_manager import AmmoSupplyManager
+from .items.health_supply_manager import HealthSupplyManager
 from .ui import UI
 from .menu import PauseMenu, GameOverMenu, UpgradeMenu
 from .menus.main_menu import MainMenu
@@ -52,6 +53,7 @@ class Game:
         self.enemy_manager = None
         self.item_manager = None
         self.ammo_supply_manager = None  # 弹药补给管理器
+        self.health_supply_manager = None  # 生命补给管理器
         self.escape_door = None  # 逃生门
         self.save_system = SaveSystem()
         self.upgrade_manager = UpgradeManager()
@@ -233,6 +235,7 @@ class Game:
         self.enemy_manager.set_difficulty("normal")  # 设置初始难度
         self.item_manager = ItemManager()
         self.ammo_supply_manager = AmmoSupplyManager(self)  # 初始化弹药补给管理器
+        self.health_supply_manager = HealthSupplyManager(self)  # 初始化生命补给管理器
         
         # 生成钥匙（在地图左下角）
         from .items.item import Item
@@ -723,6 +726,11 @@ class Game:
                 self.ammo_supply_manager.update(dt)
                 self.ammo_supply_manager.check_pickup(self.player)
             
+            # 更新生命补给管理器
+            if self.health_supply_manager:
+                self.health_supply_manager.update(dt)
+                self.health_supply_manager.check_pickup(self.player)
+            
             # 更新光照系统
             if self.lighting_manager and self.enable_lighting:
                 # 获取当前鼠标位置
@@ -840,7 +848,11 @@ class Game:
                 
                 # 在光照系统内部渲染补给（确保在光照内可见）
                 if self.ammo_supply_manager:
-                    self.ammo_supply_manager.render(self.screen, self.camera_x, self.camera_y)
+                    self.ammo_supply_manager.render(self.screen, self.camera_x, self.camera_y, 
+                                                  self.screen_center_x, self.screen_center_y)
+                if self.health_supply_manager:
+                    self.health_supply_manager.render(self.screen, self.camera_x, self.camera_y, 
+                                                    self.screen_center_x, self.screen_center_y)
                     
             except Exception as e:
                 print(f"光照系统渲染错误: {e}")
@@ -849,7 +861,11 @@ class Game:
         else:
             # 如果光照系统未启用，直接渲染补给
             if self.ammo_supply_manager:
-                self.ammo_supply_manager.render(self.screen, self.camera_x, self.camera_y)
+                self.ammo_supply_manager.render(self.screen, self.camera_x, self.camera_y,
+                                              self.screen_center_x, self.screen_center_y)
+            if self.health_supply_manager:
+                self.health_supply_manager.render(self.screen, self.camera_x, self.camera_y,
+                                                self.screen_center_x, self.screen_center_y)
         # 渲染UI（在视野系统之后）
         if self.player:
             self.ui.render(self.player, self.game_time, self.kill_num)
@@ -868,11 +884,14 @@ class Game:
                         break
             
             # 添加补给物品到小地图
-            supplies = None
+            ammo_supplies = None
+            health_supplies = None
             if self.ammo_supply_manager:
-                supplies = self.ammo_supply_manager.get_supplies_for_minimap()
+                ammo_supplies = self.ammo_supply_manager.get_supplies_for_minimap()
+            if self.health_supply_manager:
+                health_supplies = self.health_supply_manager.get_supplies_for_minimap()
             
-            self.minimap.render(self.screen, self.player, key_item, self.escape_door, supplies)
+            self.minimap.render(self.screen, self.player, key_item, self.escape_door, ammo_supplies, health_supplies)
             
         # 如果游戏暂停，渲染暂停菜单
         if self.paused:

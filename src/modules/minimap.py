@@ -33,7 +33,8 @@ class Minimap:
         self.player_color = (0, 255, 0)         # 绿色玩家
         self.key_color = (255, 255, 0)          # 黄色钥匙
         self.door_color = (255, 0, 0)           # 红色逃生门
-        self.supply_color = (0, 255, 255)       # 青色补给
+        self.ammo_supply_color = (0, 255, 255)  # 青色弹药补给
+        self.health_supply_color = (255, 0, 255) # 紫色生命补给
         
         # 标记大小
         self.marker_size = 4
@@ -59,7 +60,7 @@ class Minimap:
         # 添加边框
         pygame.draw.circle(self.surface, (255, 255, 255), (x, y), size, 1)
     
-    def render(self, screen, player, key_item, escape_door, supplies=None):
+    def render(self, screen, player, key_item, escape_door, ammo_supplies=None, health_supplies=None):
         """渲染小地图
         
         Args:
@@ -67,7 +68,8 @@ class Minimap:
             player: 玩家对象
             key_item: 钥匙物品对象
             escape_door: 逃生门对象
-            supplies: 补给物品列表
+            ammo_supplies: 弹药补给物品列表
+            health_supplies: 生命补给物品列表
         """
         # 清空小地图表面
         self.surface.fill((0, 0, 0))
@@ -91,12 +93,19 @@ class Minimap:
             door_x, door_y = self.world_to_minimap(escape_door.world_x, escape_door.world_y)
             self.draw_marker(door_x, door_y, self.door_color, 6)
         
-        # 绘制补给位置
-        if supplies:
-            for supply in supplies:
+        # 绘制弹药补给位置
+        if ammo_supplies:
+            for supply in ammo_supplies:
                 if hasattr(supply, 'world_x') and hasattr(supply, 'world_y'):
                     supply_x, supply_y = self.world_to_minimap(supply.world_x, supply.world_y)
-                    self.draw_marker(supply_x, supply_y, self.supply_color, 3)
+                    self.draw_marker(supply_x, supply_y, self.ammo_supply_color, 3)
+        
+        # 绘制生命补给位置
+        if health_supplies:
+            for supply in health_supplies:
+                if hasattr(supply, 'world_x') and hasattr(supply, 'world_y'):
+                    supply_x, supply_y = self.world_to_minimap(supply.world_x, supply.world_y)
+                    self.draw_marker(supply_x, supply_y, self.health_supply_color, 3)
         
         # 将小地图绘制到屏幕上
         screen.blit(self.surface, (self.minimap_x, self.minimap_y))
@@ -131,7 +140,7 @@ class Minimap:
         door_text = legend_font.render("door", True, (255, 255, 255))
         screen.blit(door_text, (legend_x + 120, legend_y))
         
-        # 补给图例
-        pygame.draw.circle(screen, self.supply_color, (legend_x + 160, legend_y + 8), 3)
-        supply_text = legend_font.render("ammo", True, (255, 255, 255))
-        screen.blit(supply_text, (legend_x + 170, legend_y)) 
+        # 弹药补给图例
+        pygame.draw.circle(screen, self.ammo_supply_color, (legend_x + 160, legend_y + 8), 3)
+        ammo_text = legend_font.render("ammo", True, (255, 255, 255))
+        screen.blit(ammo_text, (legend_x + 170, legend_y)) 

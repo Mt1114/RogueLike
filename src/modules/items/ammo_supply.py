@@ -29,14 +29,13 @@ class AmmoSupply(Item):
         
         # 补给属性
         self.ammo_amount = 10  # 每次补给10发
-        self.lifetime = 30.0  # 存活30秒
+        self.lifetime = 20.0  # 存活20秒
         self.spawn_timer = 0.0  # 生成计时器
         
-        # 动画效果
+        # 动画效果（只影响渲染，不影响世界坐标）
         self.bob_timer = 0.0
         self.bob_speed = 2.0
         self.bob_amount = 3.0
-        self.original_y = y
         
         # 闪烁效果
         self.blink_timer = 0.0
@@ -52,13 +51,8 @@ class AmmoSupply(Item):
         if self.spawn_timer >= self.lifetime:
             return False  # 返回False表示应该销毁
         
-        # 上下浮动动画
+        # 更新浮动动画计时器（只用于渲染效果，不影响世界坐标）
         self.bob_timer += dt * self.bob_speed
-        new_y = self.original_y + math.sin(self.bob_timer) * self.bob_amount
-        
-        # 更新世界坐标和碰撞区域位置
-        self.world_y = new_y
-        self.rect.centery = new_y
         
         # 闪烁效果（最后10秒开始闪烁）
         if self.spawn_timer >= self.lifetime - 10.0:
@@ -80,22 +74,29 @@ class AmmoSupply(Item):
         
         return True  # 返回True表示拾取成功，物品应该被销毁
     
-    def render(self, screen, camera_x, camera_y):
+    def render(self, screen, camera_x, camera_y, screen_center_x=None, screen_center_y=None):
         """渲染补给物品"""
         if not self.visible:
             return
             
-        # 计算屏幕坐标
-        screen_x = int(self.world_x - camera_x)
-        screen_y = int(self.world_y - camera_y)
+        # 计算屏幕坐标（使用与门相同的坐标系统）
+        if screen_center_x is not None and screen_center_y is not None:
+            # 使用与门相同的坐标系统
+            screen_x = screen_center_x + (self.world_x - camera_x)
+            screen_y = screen_center_y + (self.world_y - camera_y)
+        else:
+            # 兼容旧的坐标系统
+            screen_x = int(self.world_x - camera_x)
+            screen_y = int(self.world_y - camera_y)
+        
+        # 应用浮动效果（只影响渲染位置，不影响世界坐标）
+        bob_offset = math.sin(self.bob_timer) * self.bob_amount
+        screen_y += int(bob_offset)
         
         # 检查是否在屏幕范围内
         if (screen_x < -50 or screen_x > screen.get_width() + 50 or
             screen_y < -50 or screen_y > screen.get_height() + 50):
-            print(f"补给在屏幕外: 世界坐标({self.world_x}, {self.world_y}), 屏幕坐标({screen_x}, {screen_y})")
             return
-        
-        print(f"渲染补给: 世界坐标({self.world_x}, {self.world_y}), 屏幕坐标({screen_x}, {screen_y})")
         
         # 绘制补给物品
         screen.blit(self.image, (screen_x - self.rect.width // 2, 

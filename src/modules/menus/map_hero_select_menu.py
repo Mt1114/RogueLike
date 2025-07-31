@@ -83,6 +83,7 @@ class MapHeroSelectMenu:
         self.maps = [
             {"id": "simple_map", "name": "森林", "unlocked": True},
             {"id": "test1_map", "name": "测试地图1", "unlocked": True},
+            {"id": "test2_map", "name": "测试地图2", "unlocked": True},
             {"id": "desert_map", "name": "沙漠", "unlocked": False},
             {"id": "cave_map", "name": "洞穴", "unlocked": False},
         ]

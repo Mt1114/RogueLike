@@ -75,7 +75,7 @@ VISION_PRESETS = {
         "circle_radius": 100,
         "darkness_alpha": 180,
     },
-    "narrow": {
+    "nd'dddarrow": {
         "name": "窄视野",
         "sector_radius": 200,
         "sector_angle": 60,
