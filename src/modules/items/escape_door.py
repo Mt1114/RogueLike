@@ -49,9 +49,9 @@ class EscapeDoor(pygame.sprite.Sprite):
         if self.is_opened:
             return
             
-        # 检查玩家是否有钥匙
-        if hasattr(player, 'has_key') and player.has_key:
-            # 玩家有钥匙，可以开启门
+        # 检查玩家是否有足够的钥匙
+        if hasattr(player, 'keys_collected') and player.keys_collected >= player.total_keys_needed:
+            # 玩家有足够的钥匙，可以开启门
             self.is_locked = False
             self.is_opened = True
             self._update_appearance()
@@ -61,9 +61,10 @@ class EscapeDoor(pygame.sprite.Sprite):
                 player.game.show_message("You have opened the escape door! You win!", 5.0)
                 player.game.game_victory = True
         else:
-            # 玩家没有钥匙，显示提示
+            # 玩家没有足够的钥匙，显示提示
             if hasattr(player, 'game') and player.game:
-                player.game.show_message("You need a key to open the escape door!", 2.0)
+                remaining_keys = player.total_keys_needed - player.keys_collected
+                player.game.show_message(f"You need {remaining_keys} more key(s) to open the escape door!", 2.0)
     
     def _update_appearance(self):
         """更新门的外观"""

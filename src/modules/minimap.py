@@ -60,13 +60,13 @@ class Minimap:
         # 添加边框
         pygame.draw.circle(self.surface, (255, 255, 255), (x, y), size, 1)
     
-    def render(self, screen, player, key_item, escape_door, ammo_supplies=None, health_supplies=None):
+    def render(self, screen, player, key_items, escape_door, ammo_supplies=None, health_supplies=None):
         """渲染小地图
         
         Args:
             screen: 游戏屏幕
             player: 玩家对象
-            key_item: 钥匙物品对象
+            key_items: 钥匙物品对象列表
             escape_door: 逃生门对象
             ammo_supplies: 弹药补给物品列表
             health_supplies: 生命补给物品列表
@@ -84,9 +84,11 @@ class Minimap:
             self.draw_marker(player_x, player_y, self.player_color, 5)
         
         # 绘制钥匙位置
-        if key_item and hasattr(key_item, 'world_x') and hasattr(key_item, 'world_y'):
-            key_x, key_y = self.world_to_minimap(key_item.world_x, key_item.world_y)
-            self.draw_marker(key_x, key_y, self.key_color, 4)
+        if key_items:
+            for key_item in key_items:
+                if hasattr(key_item, 'world_x') and hasattr(key_item, 'world_y'):
+                    key_x, key_y = self.world_to_minimap(key_item.world_x, key_item.world_y)
+                    self.draw_marker(key_x, key_y, self.key_color, 4)
         
         # 绘制逃生门位置
         if escape_door and hasattr(escape_door, 'world_x') and hasattr(escape_door, 'world_y'):
@@ -106,6 +108,8 @@ class Minimap:
                 if hasattr(supply, 'world_x') and hasattr(supply, 'world_y'):
                     supply_x, supply_y = self.world_to_minimap(supply.world_x, supply.world_y)
                     self.draw_marker(supply_x, supply_y, self.health_supply_color, 3)
+        
+
         
         # 将小地图绘制到屏幕上
         screen.blit(self.surface, (self.minimap_x, self.minimap_y))
@@ -143,4 +147,6 @@ class Minimap:
         # 弹药补给图例
         pygame.draw.circle(screen, self.ammo_supply_color, (legend_x + 160, legend_y + 8), 3)
         ammo_text = legend_font.render("ammo", True, (255, 255, 255))
-        screen.blit(ammo_text, (legend_x + 170, legend_y)) 
+        screen.blit(ammo_text, (legend_x + 170, legend_y))
+        
+ 

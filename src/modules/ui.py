@@ -87,6 +87,36 @@ class UI:
         self.screen.blit(ammo_icon, icon_rect)
         self.screen.blit(ammo_surface, ammo_rect)
         
+    def _render_key_info(self, player):
+        """渲染钥匙信息
+        
+        Args:
+            player: 玩家实例
+        """
+        # 检查玩家是否有钥匙系统
+        if not hasattr(player, 'keys_collected') or not hasattr(player, 'total_keys_needed'):
+            return
+            
+        key_text = f"{player.keys_collected}/{player.total_keys_needed}"
+        
+        # 渲染钥匙文本
+        key_surface = self.font.render(key_text, True, (255, 255, 0))  # 黄色
+        key_rect = key_surface.get_rect()
+        
+        # 计算左上角位置
+        key_rect.topleft = (10, 10)
+        
+        # 添加背景
+        bg_rect = pygame.Rect(key_rect.left - 5, key_rect.top - 2, 
+                             key_rect.width + 10, key_rect.height + 4)
+        bg_surface = pygame.Surface((bg_rect.width, bg_rect.height))
+        bg_surface.set_alpha(128)
+        bg_surface.fill((0, 0, 0))
+        self.screen.blit(bg_surface, bg_rect)
+        
+        # 渲染文本
+        self.screen.blit(key_surface, key_rect)
+        
     def render(self, player, game_time, game_kill_num):
         screen_width = self.screen.get_width()
         screen_height = self.screen.get_height()
@@ -130,6 +160,9 @@ class UI:
         
         # 显示弹药数量（在右上角）
         self._render_ammo_info(player)
+        
+        # 显示钥匙数量（在左上角）
+        self._render_key_info(player)
         
         # 计算技能图标框的总宽度（每排3个）
         total_icons_width = 3 * (self.icon_size + self.icon_spacing) - self.icon_spacing

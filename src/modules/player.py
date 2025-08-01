@@ -31,8 +31,9 @@ class Player(pygame.sprite.Sprite):
         # 游戏实例引用（用于获取敌人列表等）
         self.game = None
         
-        # 钥匙状态
-        self.has_key = False
+        # 钥匙状态 - 改为支持多把钥匙
+        self.keys_collected = 0  # 收集的钥匙数量
+        self.total_keys_needed = 3  # 需要收集的总钥匙数量
         
         # 初始化各组件
         self._init_components()

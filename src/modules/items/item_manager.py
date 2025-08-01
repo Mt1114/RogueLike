@@ -32,7 +32,11 @@ class ItemManager:
         for item in self.items[:]:  # 使用切片创建副本以避免在迭代时修改列表
             item.update(dt, player)
             if item.collected:
-                self.items.remove(item)
+                try:
+                    self.items.remove(item)
+                except ValueError:
+                    # 物品可能已经被其他系统移除，忽略错误
+                    pass
                 
     def render(self, screen, camera_x, camera_y, screen_center_x, screen_center_y, lighting_manager=None):
         for item in self.items:

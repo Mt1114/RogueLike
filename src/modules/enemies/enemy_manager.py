@@ -2,6 +2,7 @@ import pygame
 import random
 import math
 from .types import Ghost, Radish, Bat, Slime
+from .types.soul_boss import SoulBoss
 from .spawn_marker import SpawnMarker
 import time
 
@@ -26,6 +27,9 @@ class EnemyManager:
         
         # 地图边界相关
         self.map_boundaries = None  # (min_x, min_y, max_x, max_y)
+        
+        # 敌人子弹列表
+        self.enemy_projectiles = []
         
     def set_map_boundaries(self, min_x, min_y, max_x, max_y):
         """设置地图边界
@@ -62,6 +66,8 @@ class EnemyManager:
             enemy = Bat(x, y, enemy_type, self.difficulty, self.difficulty_level)
         elif enemy_type == 'slime':
             enemy = Slime(x, y, enemy_type, self.difficulty, self.difficulty_level)
+        elif enemy_type == 'soul_boss':
+            enemy = SoulBoss(x, y, enemy_type, self.difficulty, self.difficulty_level)
             
         # 应用波次属性加成
         if enemy and hasattr(self, 'health_multiplier') and hasattr(self, 'damage_multiplier'):
@@ -93,6 +99,9 @@ class EnemyManager:
         
         # 更新难度等级（根据游戏时间）
         self.difficulty_level = max(1, int(self.game_time // 60) + 1)  # 每60秒提升一级
+        
+        # 更新敌人子弹
+        self._update_enemy_projectiles(dt)
         
         # 根据波次状态决定是否生成敌人
         if self.current_round > 0 and self.current_round <= 3:
@@ -302,6 +311,9 @@ class EnemyManager:
                 else:
                     # 如果没有光照系统或光照系统被禁用，正常渲染（包括血条）
                     enemy.render(screen, screen_x, screen_y, show_health_bar=True)
+        
+        # 渲染敌人子弹
+        self._render_enemy_projectiles(screen, camera_x, camera_y, screen_center_x, screen_center_y)
             
     def remove_enemy(self, enemy):
         if enemy in self.enemies:
@@ -386,4 +398,40 @@ class EnemyManager:
         spawn_marker = SpawnMarker(spawn_x, spawn_y, duration=2.0)
         self.spawn_markers.append(spawn_marker)
         
-        self.spawn_enemy('bat', spawn_x, spawn_y) 
+        self.spawn_enemy('bat', spawn_x, spawn_y)
+        
+    def _update_enemy_projectiles(self, dt):
+        """更新敌人子弹"""
+        for projectile in self.enemy_projectiles[:]:  # 使用切片避免在迭代时修改
+            # 更新子弹位置
+            projectile.world_x += projectile.direction_x * projectile.speed * dt
+            projectile.world_y += projectile.direction_y * projectile.speed * dt
+            
+            # 检查子弹是否超出地图边界
+            if self.map_boundaries:
+                min_x, min_y, max_x, max_y = self.map_boundaries
+                if (projectile.world_x < min_x or projectile.world_x > max_x or
+                    projectile.world_y < min_y or projectile.world_y > max_y):
+                    self.enemy_projectiles.remove(projectile)
+                    continue
+            
+            # 检查子弹生命周期
+            if hasattr(projectile, 'lifetime'):
+                projectile.lifetime -= dt
+                if projectile.lifetime <= 0:
+                    self.enemy_projectiles.remove(projectile)
+                    
+    def _render_enemy_projectiles(self, screen, camera_x, camera_y, screen_center_x, screen_center_y):
+        """渲染敌人子弹"""
+        for projectile in self.enemy_projectiles:
+            # 计算子弹在屏幕上的位置
+            screen_x = screen_center_x + (projectile.world_x - camera_x)
+            screen_y = screen_center_y + (projectile.world_y - camera_y)
+            
+            # 渲染子弹
+            if hasattr(projectile, 'image'):
+                projectile.rect.center = (screen_x, screen_y)
+                screen.blit(projectile.image, projectile.rect)
+            else:
+                # 如果没有图像，绘制一个简单的圆形
+                pygame.draw.circle(screen, (255, 0, 0), (int(screen_x), int(screen_y)), 5) 

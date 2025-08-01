@@ -261,12 +261,9 @@ class Game:
         self.ammo_supply_manager = AmmoSupplyManager(self)  # 初始化弹药补给管理器
         self.health_supply_manager = HealthSupplyManager(self)  # 初始化生命补给管理器
         
-        # 生成钥匙（在地图左下角）
-        from .items.item import Item
-        key_x = 100  # 地图左下角X坐标
-        key_y = map_height - 100  # 地图左下角Y坐标
-        key_item = Item(key_x, key_y, 'key')
-        self.item_manager.items.append(key_item)
+        # 初始化钥匙管理器
+        from .items.key_manager import KeyManager
+        self.key_manager = KeyManager(self)
         
         # 生成逃生门（在地图右上角）
         from .items.escape_door import EscapeDoor
@@ -293,6 +290,9 @@ class Game:
         self.game_time = 0
         self.kill_num = 0
         self.level = 1
+        
+        # Boss相关状态
+        self.boss_spawned = False  # 是否已生成boss
         
         # 设置相机位置为玩家位置
         self.camera_x = self.player.world_x
@@ -764,6 +764,13 @@ class Game:
                 self.health_supply_manager.update(dt)
                 self.health_supply_manager.check_pickup(self.player)
             
+            # 更新钥匙管理器
+            if self.key_manager:
+                self.key_manager.update(dt, self.game_time)
+            
+            # Boss生成逻辑
+            self._update_boss_spawn(dt)
+            
             # 更新光照系统
             if self.lighting_manager and self.enable_lighting:
                 # 获取当前鼠标位置
@@ -919,13 +926,12 @@ class Game:
         
         # 渲染小地图（在UI之后）
         if self.minimap and self.player:
-            # 找到钥匙物品
-            key_item = None
+            # 找到所有钥匙物品
+            key_items = []
             if self.item_manager:
                 for item in self.item_manager.items:
                     if hasattr(item, 'item_type') and item.item_type == 'key':
-                        key_item = item
-                        break
+                        key_items.append(item)
             
             # 添加补给物品到小地图
             ammo_supplies = None
@@ -935,7 +941,7 @@ class Game:
             if self.health_supply_manager:
                 health_supplies = self.health_supply_manager.get_supplies_for_minimap()
             
-            self.minimap.render(self.screen, self.player, key_item, self.escape_door, ammo_supplies, health_supplies)
+            self.minimap.render(self.screen, self.player, key_items, self.escape_door, ammo_supplies, health_supplies)
             
         # 如果游戏暂停，渲染暂停菜单
         if self.paused:
@@ -955,6 +961,37 @@ class Game:
             
         # 更新显示
         pygame.display.flip()
+        
+    def _update_boss_spawn(self, dt):
+        """更新boss生成逻辑"""
+        if not self.boss_spawned and self.game_time >= 1.0:  # 第一秒生成boss
+            self._spawn_boss()
+            self.boss_spawned = True
+            
+    def _spawn_boss(self):
+        """生成boss"""
+        if not self.enemy_manager or not self.player:
+            return
+            
+        # 获取地图尺寸
+        map_width, map_height = self.map_manager.get_map_size()
+        
+        # 在玩家附近生成boss，确保玩家能看到
+        boss_x = self.player.world_x + 200  # 在玩家右侧200像素
+        boss_y = self.player.world_y + 200  # 在玩家下方200像素
+        
+        # 确保boss在地图边界内
+        boss_x = max(100, min(boss_x, map_width - 100))
+        boss_y = max(100, min(boss_y, map_height - 100))
+        
+        # 生成boss
+        boss = self.enemy_manager.spawn_enemy('soul_boss', boss_x, boss_y)
+        
+        if boss:
+            print(f"Boss已生成在位置 ({boss_x}, {boss_y})")
+            print(f"玩家位置: ({self.player.world_x}, {self.player.world_y})")
+            # 显示boss出现提示
+            self.show_message("Boss出现了！", 3.0)
         
     def _draw_grid(self):
         # 计算网格偏移量（基于相机位置）
@@ -1038,6 +1075,26 @@ class Game:
                             # 播放受伤音效
                             resource_manager.play_sound("player_hurt")
                             break  # 一次只处理一个碰撞
+        
+        # 检测敌人子弹和玩家的碰撞
+        if hasattr(self.enemy_manager, 'enemy_projectiles'):
+            for projectile in self.enemy_manager.enemy_projectiles[:]:  # 使用切片避免在迭代时修改
+                # 计算子弹和玩家的距离
+                dx = self.player.world_x - projectile.world_x
+                dy = self.player.world_y - projectile.world_y
+                distance = (dx**2 + dy**2)**0.5
+                
+                if distance < 30:  # 碰撞检测范围
+                    # 对玩家造成伤害
+                    if hasattr(projectile, 'damage'):
+                        self.player.take_damage(projectile.damage)
+                        print(f"玩家受到 {projectile.damage} 点伤害")
+                    
+                    # 移除子弹
+                    self.enemy_manager.enemy_projectiles.remove(projectile)
+                    
+                    # 播放受伤音效
+                    resource_manager.play_sound("player_hurt")
         
     def _update_game_state(self):
         # 获取当前等级

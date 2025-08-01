@@ -92,10 +92,18 @@ class Item(pygame.sprite.Sprite):
         elif self.item_type == 'health':
             player.heal(self.value)
         elif self.item_type == 'key':
-            player.has_key = True
+            player.keys_collected += 1
             # 显示获得钥匙的提示
             if hasattr(player, 'game') and player.game:
-                player.game.show_message("You can go out now!!!!", 3.0)
+                remaining_keys = player.total_keys_needed - player.keys_collected
+                if remaining_keys > 0:
+                    player.game.show_message(f"获得钥匙！还需要 {remaining_keys} 把钥匙", 3.0)
+                else:
+                    player.game.show_message("收集完所有钥匙！现在可以开门了！", 3.0)
+            
+            # 从钥匙管理器中移除钥匙（在标记为已收集之后）
+            if hasattr(player, 'game') and player.game and hasattr(player.game, 'key_manager'):
+                player.game.key_manager.remove_key(self)
         elif self.item_type == 'chest':
             # TODO: 宝箱掉落物品,随机掉落武器、被动升级卡片、组合超武升级
             pass
