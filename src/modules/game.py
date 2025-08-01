@@ -782,18 +782,27 @@ class Game:
         
         # 更新其他游戏对象，注意检查player和enemy_manager是否存在
         if self.enemy_manager and self.player:
-            # 处理被状态效果（如燃烧）导致死亡的敌人
-            for enemy in list(self.enemy_manager.enemies):  # 使用列表复制避免在迭代时修改
-                if enemy in self.enemy_manager.enemies and not enemy.alive():
-                    self.kill_num += 1
-                    # 在敌人死亡位置生成物品，传递player对象以应用幸运值加成
-                    if self.item_manager:
-                        self.item_manager.spawn_item(enemy.rect.x, enemy.rect.y, enemy.type, self.player)
-                    # 敌人已经在enemy_manager.update()中被移除，无需再次移除
-            
             # 更新敌人和武器
             self.enemy_manager.update(dt, self.player)
             self.player.update_weapons(dt)
+            
+            # 处理死亡的敌人
+            for enemy in list(self.enemy_manager.enemies):  # 使用列表复制避免在迭代时修改
+                if enemy in self.enemy_manager.enemies and not enemy.alive():
+                    # 防止重复处理：检查敌人是否已经被标记为死亡
+                    if not hasattr(enemy, '_death_processed'):
+                        enemy._death_processed = True
+                        self.kill_num += 1
+                        # 给玩家添加经验值奖励
+                        if hasattr(enemy, 'config') and 'exp_value' in enemy.config:
+                            exp_reward = enemy.config['exp_value']
+                            self.player.add_experience(exp_reward)
+                            print(f"击杀 {enemy.type} 获得 {exp_reward} 经验值")
+                        # 在敌人死亡位置生成物品，传递player对象以应用幸运值加成
+                        if self.item_manager:
+                            self.item_manager.spawn_item(enemy.rect.x, enemy.rect.y, enemy.type, self.player)
+                        # 移除敌人
+                        self.enemy_manager.remove_enemy(enemy)
             
             # 更新物品
             if self.item_manager:
