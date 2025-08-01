@@ -248,19 +248,22 @@ class BulletWeapon(Weapon):
         weapon_screen_x = player_screen_x + direction_x * weapon_distance
         weapon_screen_y = player_screen_y + direction_y * weapon_distance
         
-        # 计算枪的旋转角度（枪口朝向鼠标）
-        angle = math.degrees(math.atan2(-direction_y, direction_x))
-        
-        # 应用旋转
-        rotated_image = pygame.transform.rotate(weapon_image, angle)
-        
         # 根据方向决定是否需要上下翻转
         # 当鼠标在玩家左侧时（direction_x < 0），需要上下翻转
         if direction_x < 0:
+            # 当在左侧时，需要调整角度计算
+            # 对于左侧，我们需要镜像角度
+            angle = math.degrees(math.atan2(direction_y, direction_x))
+            # 应用旋转
+            rotated_image = pygame.transform.rotate(weapon_image, angle)
             # 上下翻转图像
             flipped_image = pygame.transform.flip(rotated_image, False, True)
             final_image = flipped_image
         else:
+            # 右侧正常计算角度
+            angle = math.degrees(math.atan2(-direction_y, direction_x))
+            # 应用旋转
+            rotated_image = pygame.transform.rotate(weapon_image, angle)
             final_image = rotated_image
         
         # 渲染武器

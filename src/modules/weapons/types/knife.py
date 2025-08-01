@@ -137,9 +137,9 @@ class Knife(Weapon):
         # 计算武器旋转角度
         angle = math.degrees(math.atan2(-direction_y, direction_x))
         
-        # 飞刀的特殊动画：从玩家身后快速挥向前方
-        start_distance = -8   # 开始时在玩家身后（更近）
-        end_distance = 20     # 结束时在玩家前方（更近）
+        # 飞刀的特殊动画：从玩家前方32像素开始，挥向更前方
+        start_distance = 32   # 开始时在玩家前方32像素
+        end_distance = 48     # 结束时在玩家前方48像素
         
         # 使用更快的缓动函数，模拟快速挥击
         ease_progress = self._ease_out_cubic(progress)
@@ -197,6 +197,10 @@ class Knife(Weapon):
         self.melee_attack_duration = 0.3  # 攻击持续时间
         self.melee_attack_direction = (direction_x, direction_y)
         
+        # 计算特效位置：在玩家当前位置，朝着鼠标方向偏移32像素
+        effect_x = self.player.world_x + direction_x * 32
+        effect_y = self.player.world_y + direction_y * 32
+        
         # 创建攻击特效
         self.attack_effect = AttackEffect(
             'images/attcak/hit_animations/swing02.png',
@@ -204,17 +208,21 @@ class Knife(Weapon):
             frame_height=64,
             frame_count=10
         )
-        self.attack_effect.play(self.player.world_x, self.player.world_y, direction_x, direction_y)
+        self.attack_effect.play(effect_x, effect_y, direction_x, direction_y)
         self.effect_playing = True
         
+        # 计算攻击位置（特效和刀的位置）
+        attack_x = self.player.world_x + direction_x * 32
+        attack_y = self.player.world_y + direction_y * 32
+        
         for enemy in enemies:
-            # 计算到敌人的距离
-            dx = enemy.rect.x - self.player.world_x
-            dy = enemy.rect.y - self.player.world_y
+            # 计算到攻击位置的距离（而不是到玩家的距离）
+            dx = enemy.rect.x - attack_x
+            dy = enemy.rect.y - attack_y
             distance = (dx**2 + dy**2)**0.5
             
             if distance <= attack_range:
-                # 计算敌人相对于玩家的方向
+                # 计算敌人相对于攻击位置的方向
                 enemy_dir_x = dx / distance if distance > 0 else 0
                 enemy_dir_y = dy / distance if distance > 0 else 0
                 
@@ -244,8 +252,12 @@ class Knife(Weapon):
     def render(self, screen, camera_x, camera_y):
         # 渲染攻击特效
         if self.attack_effect and self.effect_playing:
-            # 传递玩家当前位置，让特效跟随玩家移动
-            self.attack_effect.render(screen, camera_x, camera_y, self.player.world_x, self.player.world_y)
+            # 计算特效位置：在玩家当前位置，朝着攻击方向偏移32像素
+            direction_x, direction_y = self.melee_attack_direction
+            effect_x = self.player.world_x + direction_x * 32
+            effect_y = self.player.world_y + direction_y * 32
+            # 传递特效位置，让特效跟随玩家移动
+            self.attack_effect.render(screen, camera_x, camera_y, effect_x, effect_y)
     
     def _render_melee_attack_effect(self, screen, camera_x, camera_y):
         """渲染近战攻击特效"""
