@@ -4,6 +4,7 @@
 """
 
 import pygame
+import os
 from .base_component import Component
 
 class AnimationComponent(Component):
@@ -50,21 +51,68 @@ class AnimationComponent(Component):
         from ..resource_manager import resource_manager
         
         for anim_name, anim_info in animation_data.items():
-            sprite_sheet = resource_manager.load_spritesheet(
-                f"{anim_name}_sprite", 
-                anim_info['sprite_sheet']
-            )
-            
-            self.animations[anim_name] = resource_manager.create_animation(
-                f"{anim_name}_anim",
-                sprite_sheet,
-                frame_width=anim_info.get('frame_width', 32),
-                frame_height=anim_info.get('frame_height', 32),
-                frame_count=anim_info.get('frame_count', 1),
-                row=anim_info.get('row', 0),
-                col=anim_info.get('col', 0),
-                frame_duration=anim_info.get('frame_duration', 0.1)
-            )
+            # 检查是否使用单独的帧文件
+            if anim_info.get('use_sprite_sheet', True) == False:
+                # 使用单独的帧文件
+                self._load_separate_frames(anim_name, anim_info)
+            else:
+                # 使用精灵表
+                sprite_sheet = resource_manager.load_spritesheet(
+                    f"{anim_name}_sprite", 
+                    anim_info['sprite_sheet']
+                )
+                
+                self.animations[anim_name] = resource_manager.create_animation(
+                    f"{anim_name}_anim",
+                    sprite_sheet,
+                    frame_width=anim_info.get('frame_width', 32),
+                    frame_height=anim_info.get('frame_height', 32),
+                    frame_count=anim_info.get('frame_count', 1),
+                    row=anim_info.get('row', 0),
+                    col=anim_info.get('col', 0),
+                    frame_duration=anim_info.get('frame_duration', 0.1)
+                )
+    
+    def _load_separate_frames(self, anim_name, anim_info):
+        """
+        加载单独的帧文件
+        
+        Args:
+            anim_name: 动画名称
+            anim_info: 动画信息
+        """
+        from ..resource_manager import resource_manager
+        
+        frames = []
+        frame_count = anim_info.get('frame_count', 1)
+        base_path = anim_info['sprite_sheet']
+        
+        # 获取基础路径（去掉文件名）
+        base_dir = os.path.dirname(base_path)
+        base_name = os.path.splitext(os.path.basename(base_path))[0]
+        
+        # 加载所有帧
+        for i in range(1, frame_count + 1):
+            frame_path = os.path.join(base_dir, f"{base_name}_{i:02d}.png")
+            try:
+                frame = resource_manager.load_image(f"{anim_name}_frame_{i}", frame_path)
+                frames.append(frame)
+            except:
+                print(f"无法加载帧文件: {frame_path}")
+                # 如果加载失败，使用第一帧作为替代
+                if i == 1:
+                    frame = resource_manager.load_image(f"{anim_name}_frame_{i}", base_path)
+                    frames.append(frame)
+                else:
+                    frames.append(frames[0])  # 使用第一帧作为替代
+        
+        # 创建动画
+        from ..resource_manager import Animation
+        self.animations[anim_name] = Animation(
+            frames=frames,
+            frame_duration=anim_info.get('frame_duration', 0.1),
+            loop=True
+        )
     
     def set_animation(self, animation_name):
         """

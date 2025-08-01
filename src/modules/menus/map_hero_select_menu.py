@@ -91,6 +91,7 @@ class MapHeroSelectMenu:
         
         self.heroes = [
             {"id": "ninja_frog", "name": "忍者蛙", "unlocked": True},
+            {"id": "role2", "name": "神秘剑士", "unlocked": True},
             {"id": "knight", "name": "骑士", "unlocked": False},
             {"id": "warrior", "name": "战士", "unlocked": False},
             {"id": "mage", "name": "法师", "unlocked": False},

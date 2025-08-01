@@ -56,10 +56,29 @@ class Player(pygame.sprite.Sprite):
         self.outline_color = (255, 0, 0)  # 默认红色轮廓
         self.outline_thickness = 1
         
+        # 大招相关
+        self.ultimate_active = False
+        self.ultimate_timer = 0
+        self.ultimate_duration = 1.0  # 大招持续时间1秒
+        self.ultimate_damage = 60  # 大招伤害
+        self.ultimate_distance = 256  # 大招移动距离
+        self.ultimate_start_x = 0  # 大招开始位置
+        self.ultimate_start_y = 0
+        self.ultimate_direction_x = 0  # 大招方向
+        self.ultimate_direction_y = 0
+        self.ultimate_hit_enemies = set()  # 已经造成伤害的敌人
+        self.ultimate_cooldown = 15.0  # 大招CD时间
+        self.ultimate_cooldown_timer = 0  # 大招CD计时器
+        self.ultimate_icon = None  # 大招图标
+        
         # 添加初始武器
         starting_weapon = self.hero_config.get("starting_weapon", "bullet")
         self.add_weapon(starting_weapon)  # 添加远程武器（手枪）
         self.add_weapon("knife")  # 添加近战武器（刀）
+        
+        # 加载大招图标（仅对role2角色）
+        if self.hero_type == "role2":
+            self._load_ultimate_icon()
         
     def _init_components(self):
         """初始化所有组件"""
@@ -213,15 +232,30 @@ class Player(pygame.sprite.Sprite):
             if self.game and hasattr(self.game, 'screen'):
                 self.weapon_manager.melee_attack(self.game.screen)
         
+        # 处理空格键大招（仅对role2角色）
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            if self.hero_type == "role2" and not self.ultimate_active:
+                self.activate_ultimate()
+        
     def update(self, dt):
         """更新玩家状态"""
-        # 更新各组件
-        self.movement.update(dt)
-        self.animation.update(dt)
-        self.health_component.update(dt)
+        # 更新大招CD计时器
+        if self.ultimate_cooldown_timer > 0:
+            self.ultimate_cooldown_timer -= dt
+            if self.ultimate_cooldown_timer < 0:
+                self.ultimate_cooldown_timer = 0
         
-        # 更新动画状态
-        self._update_animation_state()
+        # 更新大招状态
+        if self.ultimate_active:
+            self.update_ultimate(dt)
+        else:
+            # 更新各组件
+            self.movement.update(dt)
+            self.animation.update(dt)
+            self.health_component.update(dt)
+            
+            # 更新动画状态
+            self._update_animation_state()
         
         # 更新当前图像
         self.image = self.animation.get_current_frame(not self.movement.facing_right)
@@ -277,6 +311,10 @@ class Player(pygame.sprite.Sprite):
             
     def _update_animation_state(self):
         """更新动画状态"""
+        # 如果在大招状态，不切换动画
+        if self.ultimate_active:
+            return
+            
         # 如果不在受伤状态
         if not self.health_component.is_hurt():
             # 根据移动状态切换动画
@@ -350,4 +388,136 @@ class Player(pygame.sprite.Sprite):
         
     def add_coins(self, amount):
         """添加金币"""
-        return self.progression.add_coins(amount) 
+        return self.progression.add_coins(amount)
+    
+    def activate_ultimate(self):
+        """激活大招"""
+        if self.ultimate_active or self.ultimate_cooldown_timer > 0:
+            return
+            
+        self.ultimate_active = True
+        self.ultimate_timer = 0
+        self.ultimate_hit_enemies.clear()
+        
+        # 记录开始位置
+        self.ultimate_start_x = self.world_x
+        self.ultimate_start_y = self.world_y
+        
+        # 获取鼠标方向
+        if self.game and hasattr(self.game, 'screen'):
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            screen_center_x = self.game.screen.get_width() // 2
+            screen_center_y = self.game.screen.get_height() // 2
+            
+            # 计算方向向量
+            dx = mouse_x - screen_center_x
+            dy = mouse_y - screen_center_y
+            
+            # 标准化方向向量
+            length = (dx ** 2 + dy ** 2) ** 0.5
+            if length > 0:
+                self.ultimate_direction_x = dx / length
+                self.ultimate_direction_y = dy / length
+            else:
+                # 如果没有鼠标输入，使用玩家朝向
+                self.ultimate_direction_x = 1 if self.movement.facing_right else -1
+                self.ultimate_direction_y = 0
+        
+        # 设置大招动画
+        self.animation.set_animation('ultimate')
+    
+    def update_ultimate(self, dt):
+        """更新大招状态"""
+        if not self.ultimate_active:
+            return
+            
+        self.ultimate_timer += dt
+        
+        # 计算移动距离
+        progress = self.ultimate_timer / self.ultimate_duration
+        current_distance = progress * self.ultimate_distance
+        
+        # 更新位置
+        self.world_x = self.ultimate_start_x + self.ultimate_direction_x * current_distance
+        self.world_y = self.ultimate_start_y + self.ultimate_direction_y * current_distance
+        
+        # 检查敌人碰撞
+        if self.game and hasattr(self.game, 'enemy_manager'):
+            for enemy in self.game.enemy_manager.enemies:
+                if enemy.alive():
+                    # 检查是否已经对这个敌人造成过伤害
+                    if enemy not in self.ultimate_hit_enemies:
+                        # 计算距离
+                        dx = enemy.rect.centerx - self.world_x
+                        dy = enemy.rect.centery - self.world_y
+                        distance = (dx ** 2 + dy ** 2) ** 0.5
+                        
+                        # 如果敌人在大招范围内，造成伤害
+                        if distance < 100:  # 大招范围
+                            enemy.take_damage(self.ultimate_damage)
+                            self.ultimate_hit_enemies.add(enemy)
+        
+        # 检查大招是否结束
+        if self.ultimate_timer >= self.ultimate_duration:
+            self.ultimate_active = False
+            self.ultimate_cooldown_timer = self.ultimate_cooldown  # 开始CD
+            # 恢复正常动画
+            self._update_animation_state()
+    
+    def render_ultimate(self, screen):
+        """渲染大招效果"""
+        if self.ultimate_active:
+            # 可以在这里添加大招特效
+            pass
+    
+    def _load_ultimate_icon(self):
+        """加载大招图标"""
+        try:
+            from .resource_manager import resource_manager
+            # 加载大招的最后一帧作为图标
+            self.ultimate_icon = resource_manager.load_image(
+                "ultimate_icon", 
+                "images/roles/role2/attack_frames/frame_04.png"
+            )
+            # 缩放图标到合适大小
+            if self.ultimate_icon and self.ultimate_icon.get_size() != (1, 1):
+                self.ultimate_icon = pygame.transform.scale(self.ultimate_icon, (48, 48))
+            else:
+                print("大招图标加载失败，使用默认图标")
+                self.ultimate_icon = None
+        except Exception as e:
+            print(f"无法加载大招图标: {e}")
+            self.ultimate_icon = None
+    
+    def render_ultimate_cooldown(self, screen):
+        """渲染大招CD显示"""
+        if self.hero_type != "role2":
+            return
+            
+        # 计算CD显示位置（左侧中央）
+        icon_size = 48
+        margin = 20
+        x = margin
+        y = screen.get_height() // 2 - icon_size // 2
+        
+        # 如果没有图标，创建一个默认的红色圆形图标
+        if not self.ultimate_icon:
+            self.ultimate_icon = pygame.Surface((icon_size, icon_size), pygame.SRCALPHA)
+            pygame.draw.circle(self.ultimate_icon, (255, 0, 0), (icon_size // 2, icon_size // 2), icon_size // 2)
+        
+        # 渲染图标
+        screen.blit(self.ultimate_icon, (x, y))
+        
+        # 如果CD中，渲染半透明遮罩和CD时间
+        if self.ultimate_cooldown_timer > 0:
+            # 创建半透明遮罩
+            overlay = pygame.Surface((icon_size, icon_size), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 128))  # 半透明黑色
+            screen.blit(overlay, (x, y))
+            
+            # 渲染CD时间
+            font = pygame.font.Font(None, 24)
+            cd_text = f"{self.ultimate_cooldown_timer:.1f}"
+            text_surface = font.render(cd_text, True, (255, 255, 255))
+            text_rect = text_surface.get_rect(center=(x + icon_size // 2, y + icon_size // 2))
+            screen.blit(text_surface, text_rect) 

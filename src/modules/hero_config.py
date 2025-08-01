@@ -127,9 +127,61 @@ NINJA_FROG_NEW_CONFIG = {
     "unlock_condition": None  # 默认解锁
 }
 
+# 新角色配置（role2）
+ROLE2_CONFIG = {
+    "name": "神秘剑士",
+    "description": "神秘的剑士，拥有强大的战斗能力",
+    "animations": {
+        "idle": {
+            "sprite_sheet": "images/roles/role2/normal_frames/frame_01.png",
+            "frame_count": 4,
+            "frame_duration": 0.2,
+            "frame_width": 96,
+            "frame_height": 96,
+            "use_sprite_sheet": False  # 使用单独的帧文件
+        },
+        "run": {
+            "sprite_sheet": "images/roles/role2/run_frames/frame_01.png",
+            "frame_count": 4,
+            "frame_duration": 0.15,
+            "frame_width": 96,
+            "frame_height": 96,
+            "use_sprite_sheet": False  # 使用单独的帧文件
+        },
+        "hurt": {
+            "sprite_sheet": "images/roles/role2/attacked.png",
+            "frame_count": 1,
+            "frame_duration": 0.2,
+            "frame_width": 96,
+            "frame_height": 96
+        },
+        "ultimate": {
+            "sprite_sheet": "images/roles/role2/attack_frames/frame_01.png",
+            "frame_count": 4,
+            "frame_duration": 0.25,  # 1秒内播放完4帧
+            "frame_width": 96,
+            "frame_height": 96,
+            "use_sprite_sheet": False  # 使用单独的帧文件
+        }
+    },
+    "base_stats": {
+        "max_health": 100,
+        "speed": 200,
+        "defense": 0,
+        "health_regen": 0,
+        "exp_multiplier": 1.0,
+        "pickup_range": 50,
+        "attack_power": 1.0,
+        "luck": 1.0
+    },
+    "starting_weapon": "bullet",
+    "unlock_condition": None  # 默认解锁
+}
+
 # 英雄配置字典
 HERO_CONFIGS = {
     "ninja_frog": NINJA_FROG_NEW_CONFIG,  # 使用新的配置
+    "role2": ROLE2_CONFIG,  # 新角色
     
     "masked_dude": {
         "name": "蒙面侠",

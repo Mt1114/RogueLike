@@ -870,6 +870,8 @@ class Game:
             self.player.render(self.screen)
             self.player.render_weapons(self.screen, self.camera_x, self.camera_y)
             self.player.render_melee_attacks(self.screen, self.camera_x, self.camera_y)
+            self.player.render_ultimate(self.screen)
+            self.player.render_ultimate_cooldown(self.screen)
             
         # 渲染光照系统（在所有游戏对象之后，UI之前）
         if self.lighting_manager and self.enable_lighting and self.player:
