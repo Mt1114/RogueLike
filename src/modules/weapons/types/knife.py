@@ -4,6 +4,7 @@ from ...resource_manager import resource_manager
 from ..weapon import Weapon
 from ..weapon_stats import WeaponStatType, WeaponStatsDict
 from ..weapons_data import get_weapon_base_stats
+from ..attack_effect import AttackEffect
 
 class ThrownKnife(pygame.sprite.Sprite):
     """飞刀投射物类"""
@@ -104,11 +105,21 @@ class Knife(Weapon):
         self.image = resource_manager.load_image('weapon_knife', 'images/weapons/knife.png')
         self.rect = self.image.get_rect()
         
-        # 加载攻击音效
-        resource_manager.load_sound('knife_throw', 'sounds/weapons/knife_throw.wav')
+       
+        
+        # 初始化攻击特效
+        self.attack_effect = None
+        self.effect_playing = False
         
     def update(self, dt):
         super().update(dt)
+        
+        # 更新攻击特效
+        if self.attack_effect and self.effect_playing:
+            self.attack_effect.update(dt)
+            if self.attack_effect.is_finished():
+                self.effect_playing = False
+                self.attack_effect = None
         
         # 刀武器只更新近战攻击特效，不更新投射物
         if hasattr(self, 'melee_attacking') and self.melee_attacking:
@@ -134,7 +145,7 @@ class Knife(Weapon):
         ease_progress = self._ease_out_cubic(progress)
         current_distance = start_distance + (end_distance - start_distance) * ease_progress
         
-        # 计算武器位置
+        # 计算武器位置（相对于玩家当前位置）
         weapon_x = screen_x + direction_x * current_distance
         weapon_y = screen_y + direction_y * current_distance
         
@@ -186,6 +197,16 @@ class Knife(Weapon):
         self.melee_attack_duration = 0.3  # 攻击持续时间
         self.melee_attack_direction = (direction_x, direction_y)
         
+        # 创建攻击特效
+        self.attack_effect = AttackEffect(
+            'images/attcak/hit_animations/swing02.png',
+            frame_width=64,
+            frame_height=64,
+            frame_count=10
+        )
+        self.attack_effect.play(self.player.world_x, self.player.world_y, direction_x, direction_y)
+        self.effect_playing = True
+        
         for enemy in enemies:
             # 计算到敌人的距离
             dx = enemy.rect.x - self.player.world_x
@@ -221,8 +242,10 @@ class Knife(Weapon):
         self.projectiles.add(knife)
         
     def render(self, screen, camera_x, camera_y):
-        # 刀武器只进行近战攻击，不渲染特效
-        pass
+        # 渲染攻击特效
+        if self.attack_effect and self.effect_playing:
+            # 传递玩家当前位置，让特效跟随玩家移动
+            self.attack_effect.render(screen, camera_x, camera_y, self.player.world_x, self.player.world_y)
     
     def _render_melee_attack_effect(self, screen, camera_x, camera_y):
         """渲染近战攻击特效"""
