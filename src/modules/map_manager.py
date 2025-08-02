@@ -293,7 +293,7 @@ class MapManager:
             list: 包含所有碰撞图块的矩形列表
         """
         if not self.current_map:
-            print("get_collision_tiles: 没有当前地图")
+            # print("get_collision_tiles: 没有当前地图")
             return []
             
         tmx_data = self.current_map['tmx_data']

@@ -50,7 +50,7 @@ class ExplosionEffect(pygame.sprite.Sprite):
             self.image = pygame.transform.scale(self.image, (128, 128))
             self.rect = self.image.get_rect(center=(int(self.world_x), int(self.world_y)))
     
-    def render(self, screen, camera_x, camera_y):
+    def render(self, screen, camera_x, camera_y, attack_direction_x=None, attack_direction_y=None):
         # 计算屏幕位置
         screen_x = self.world_x - camera_x + screen.get_width() // 2
         screen_y = self.world_y - camera_y + screen.get_height() // 2
@@ -191,7 +191,7 @@ class FireballProjectile(pygame.sprite.Sprite):
         # 销毁火球
         self.kill()
         
-    def render(self, screen, camera_x, camera_y):
+    def render(self, screen, camera_x, camera_y, attack_direction_x=None, attack_direction_y=None):
         # 计算屏幕位置
         screen_x = self.world_x - camera_x + screen.get_width() // 2
         screen_y = self.world_y - camera_y + screen.get_height() // 2
@@ -412,11 +412,11 @@ class Fireball(Weapon):
         )
         self.projectiles.add(fireball)
         
-    def render(self, screen, camera_x, camera_y):
+    def render(self, screen, camera_x, camera_y, attack_direction_x=None, attack_direction_y=None):
         # 渲染所有火球
         for fireball in self.projectiles:
-            fireball.render(screen, camera_x, camera_y)
+            fireball.render(screen, camera_x, camera_y, attack_direction_x, attack_direction_y)
             
         # 渲染爆炸特效
         for effect in self.explosion_effects:
-            effect.render(screen, camera_x, camera_y) 
+            effect.render(screen, camera_x, camera_y, attack_direction_x, attack_direction_y) 

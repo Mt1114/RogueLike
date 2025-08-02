@@ -135,7 +135,7 @@ class WeaponManager(Component):
             if hasattr(weapon, 'melee_attack') and weapon.type in ['knife']:
                 weapon.melee_attack(screen)
     
-    def render(self, screen, camera_x, camera_y):
+    def render(self, screen, camera_x, camera_y, attack_direction_x=None, attack_direction_y=None):
         """
         渲染所有武器
         
@@ -143,13 +143,15 @@ class WeaponManager(Component):
             screen: pygame屏幕对象
             camera_x: 相机X坐标
             camera_y: 相机Y坐标
+            attack_direction_x: 攻击方向X分量
+            attack_direction_y: 攻击方向Y分量
         """
         if not self.enabled:
             return
             
         for weapon in self.weapons:
             if hasattr(weapon, 'render'):
-                weapon.render(screen, camera_x, camera_y)
+                weapon.render(screen, camera_x, camera_y, attack_direction_x, attack_direction_y)
                 
     def render_melee_attacks(self, screen, camera_x, camera_y):
         """
@@ -234,4 +236,20 @@ class WeaponManager(Component):
         """
         for weapon in self.weapons:
             if hasattr(weapon, '_apply_player_attack_power'):
-                weapon._apply_player_attack_power(attack_power) 
+                weapon._apply_player_attack_power(attack_power)
+                
+    def disable_all_weapons(self):
+        """
+        禁用所有武器（用于忍者蛙等只能发光的角色）
+        """
+        self.weapons.clear()
+        self.weapon_levels.clear()
+        
+    def enable_weapons(self):
+        """
+        重新启用武器（恢复默认武器）
+        """
+        if hasattr(self.owner, 'hero_config'):
+            starting_weapon = self.owner.hero_config.get("starting_weapon", "bullet")
+            self.add_weapon(starting_weapon)
+            self.add_weapon("knife") 

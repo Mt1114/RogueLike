@@ -16,6 +16,7 @@ from .utils import apply_mask_collision
 from .map_manager import MapManager
 from .menus.map_hero_select_menu import MapHeroSelectMenu
 from .lighting_manager import LightingManager
+from .dual_player_system import DualPlayerSystem
 
 from .minimap import Minimap
 import time
@@ -36,6 +37,7 @@ class Game:
         
         # 创建玩家在屏幕中心
         self.player = None
+        self.dual_player_system = None  # 双角色系统
         
         # 相机位置（对应于世界坐标系中的位置）
         self.camera_x = 0
@@ -244,15 +246,21 @@ class Game:
         # 获取地图尺寸
         map_width, map_height = self.map_manager.get_map_size()
         
-        # 创建新的玩家在地图中心
-        self.player = Player(self.screen_center_x, self.screen_center_y, hero_id)
-
-        # 设置玩家对游戏实例的引用
-        self.player.game = self
-
-        # 设置玩家的世界坐标为地图中心
-        self.player.world_x = map_width // 2
-        self.player.world_y = map_height // 2
+        # 创建双角色系统
+        self.dual_player_system = DualPlayerSystem(self.screen, self)
+        
+        # 设置两个角色的世界坐标为地图中心
+        center_x = map_width // 2
+        center_y = map_height // 2
+        
+        # 忍者蛙稍微偏左，神秘剑士稍微偏右
+        self.dual_player_system.ninja_frog.world_x = center_x - 100
+        self.dual_player_system.ninja_frog.world_y = center_y
+        self.dual_player_system.mystic_swordsman.world_x = center_x + 100
+        self.dual_player_system.mystic_swordsman.world_y = center_y
+        
+        # 为了兼容性，设置player为忍者蛙（主要角色）
+        self.player = self.dual_player_system.ninja_frog
         
         # 初始化游戏管理器
         self.enemy_manager = EnemyManager()
@@ -278,8 +286,13 @@ class Game:
         if self.map_manager and self.map_manager.current_map:
             walls = self.map_manager.get_collision_tiles()
             tile_width, tile_height = self.map_manager.get_tile_size()
-            if self.player and hasattr(self.player, 'movement'):
-                self.player.movement.set_collision_tiles(walls, tile_width, tile_height)
+            
+            # 设置两个角色的碰撞数据
+            if self.dual_player_system:
+                if hasattr(self.dual_player_system.ninja_frog, 'movement'):
+                    self.dual_player_system.ninja_frog.movement.set_collision_tiles(walls, tile_width, tile_height)
+                if hasattr(self.dual_player_system.mystic_swordsman, 'movement'):
+                    self.dual_player_system.mystic_swordsman.movement.set_collision_tiles(walls, tile_width, tile_height)
         
         # 初始化小地图
         screen_width = self.screen.get_width()
@@ -294,9 +307,10 @@ class Game:
         # Boss相关状态
         self.boss_spawned = False  # 是否已生成boss
         
-        # 设置相机位置为玩家位置
-        self.camera_x = self.player.world_x
-        self.camera_y = self.player.world_y
+        # 设置相机位置为两个角色的中心位置
+        center_x, center_y = self.dual_player_system.get_center_position()
+        self.camera_x = center_x
+        self.camera_y = center_y
         
         # 播放背景音乐
         resource_manager.play_music("background", loops=-1)
@@ -638,8 +652,10 @@ class Game:
             # 确保鼠标点击时也更新位置
             self.mouse_x, self.mouse_y = event.pos
             
-        # 处理玩家输入
-        if self.player:
+        # 处理双角色系统输入
+        if self.dual_player_system:
+            self.dual_player_system.handle_event(event)
+        elif self.player:  # 兼容单角色模式
             self.player.handle_event(event)
             
         return True
@@ -710,7 +726,17 @@ class Game:
             return
             
         # 检查玩家是否死亡
-        if self.player and self.player.health <= 0 and not self.game_over:
+        if self.dual_player_system:
+            # 双角色模式：两个角色都死亡才算游戏结束
+            ninja_dead = self.dual_player_system.ninja_frog.health <= 0
+            mystic_dead = self.dual_player_system.mystic_swordsman.health <= 0
+            
+            if ninja_dead and mystic_dead and not self.game_over:
+                self.game_over = True
+                self.game_over_menu.show(is_victory=False)
+                resource_manager.play_sound("player_death")
+                return
+        elif self.player and self.player.health <= 0 and not self.game_over:
             self.game_over = True
             self.game_over_menu.show(is_victory=False)
             # 播放游戏结束音效
@@ -738,7 +764,16 @@ class Game:
         self._update_message(dt)
         
         # 确保玩家对象存在再更新
-        if self.player:
+        if self.dual_player_system:
+            # 更新双角色系统
+            self.dual_player_system.update(dt)
+            
+            # 更新相机位置（跟随两个角色的中心）
+            center_x, center_y = self.dual_player_system.get_center_position()
+            self.camera_x = center_x
+            self.camera_y = center_y
+            
+        elif self.player:  # 兼容单角色模式
             # 更新玩家位置（在世界坐标系中）
             self.player.update(dt)
             
@@ -752,21 +787,43 @@ class Game:
             
             # 更新逃生门
             if self.escape_door:
-                self.escape_door.update(self.player)
+                if self.dual_player_system:
+                    # 双角色模式：任一角色到达逃生门即可
+                    self.escape_door.update(self.dual_player_system.ninja_frog)
+                    self.escape_door.update(self.dual_player_system.mystic_swordsman)
+                else:
+                    self.escape_door.update(self.player)
             
-            # 更新弹药补给管理器
-            if self.ammo_supply_manager:
-                self.ammo_supply_manager.update(dt)
-                self.ammo_supply_manager.check_pickup(self.player)
-            
-            # 更新生命补给管理器
-            if self.health_supply_manager:
-                self.health_supply_manager.update(dt)
-                self.health_supply_manager.check_pickup(self.player)
-            
-            # 更新钥匙管理器
-            if self.key_manager:
-                self.key_manager.update(dt, self.game_time)
+            # 更新物品管理器（双角色模式）
+            if self.dual_player_system:
+                # 更新管理器
+                if self.ammo_supply_manager:
+                    self.ammo_supply_manager.update(dt)
+                if self.health_supply_manager:
+                    self.health_supply_manager.update(dt)
+                if self.key_manager:
+                    self.key_manager.update(dt, self.game_time)
+                    
+                # 检查两个角色都可以拾取物品
+                for player in self.dual_player_system.get_players():
+                    if self.ammo_supply_manager:
+                        self.ammo_supply_manager.check_pickup(player)
+                    if self.health_supply_manager:
+                        self.health_supply_manager.check_pickup(player)
+            else:  # 兼容单角色模式
+                # 更新弹药补给管理器
+                if self.ammo_supply_manager:
+                    self.ammo_supply_manager.update(dt)
+                    self.ammo_supply_manager.check_pickup(self.player)
+                
+                # 更新生命补给管理器
+                if self.health_supply_manager:
+                    self.health_supply_manager.update(dt)
+                    self.health_supply_manager.check_pickup(self.player)
+                
+                # 更新钥匙管理器
+                if self.key_manager:
+                    self.key_manager.update(dt, self.game_time)
             
             # Boss生成逻辑
             self._update_boss_spawn(dt)
@@ -813,15 +870,31 @@ class Game:
             
             # 更新物品
             if self.item_manager:
-                self.item_manager.update(dt, self.player)
+                if self.dual_player_system:
+                    # 双角色模式：使用神秘剑士作为主要角色（因为只有他能攻击）
+                    self.item_manager.update(dt, self.dual_player_system.mystic_swordsman)
+                else:
+                    self.item_manager.update(dt, self.player)
             
             # 检测碰撞
             self._check_collisions()
             
-            # 检查是否可以升级
-            if self.player.experience >= self.player.exp_to_next_level:  # 直接检查经验值是否足够升级
-                self.player.level_up()
-                self.upgrade_menu.show(self.player, self)  # 显示升级选择菜单，传入Game实例
+            # 检查是否可以升级（双角色模式）
+            if self.dual_player_system:
+                # 检查两个角色是否都可以升级
+                ninja_can_upgrade = self.dual_player_system.ninja_frog.experience >= self.dual_player_system.ninja_frog.exp_to_next_level
+                mystic_can_upgrade = self.dual_player_system.mystic_swordsman.experience >= self.dual_player_system.mystic_swordsman.exp_to_next_level
+                
+                if ninja_can_upgrade:
+                    self.dual_player_system.ninja_frog.level_up()
+                    self.upgrade_menu.show(self.dual_player_system.ninja_frog, self)
+                elif mystic_can_upgrade:
+                    self.dual_player_system.mystic_swordsman.level_up()
+                    self.upgrade_menu.show(self.dual_player_system.mystic_swordsman, self)
+            elif self.player:  # 兼容单角色模式
+                if self.player.experience >= self.player.exp_to_next_level:
+                    self.player.level_up()
+                    self.upgrade_menu.show(self.player, self)
         
     def render(self):
         """渲染游戏画面"""
@@ -872,8 +945,11 @@ class Game:
             self.escape_door.render(self.screen, self.camera_x, self.camera_y, 
                                   self.screen_center_x, self.screen_center_y)
         
-        # 渲染玩家（始终在屏幕中心）
-        if self.player:
+        # 渲染双角色系统
+        if self.dual_player_system:
+            self.dual_player_system.render(self.screen, self.camera_x, self.camera_y)
+            self.dual_player_system.render_weapons(self.screen, self.camera_x, self.camera_y)
+        elif self.player:  # 兼容单角色模式
             self.player.render(self.screen)
             self.player.render_weapons(self.screen, self.camera_x, self.camera_y)
             self.player.render_melee_attacks(self.screen, self.camera_x, self.camera_y)
@@ -881,21 +957,21 @@ class Game:
             self.player.render_ultimate_cooldown(self.screen)
             
         # 渲染光照系统（在所有游戏对象之后，UI之前）
-        if self.lighting_manager and self.enable_lighting and self.player:
+        if self.lighting_manager and self.enable_lighting:
             try:
-                # 获取鼠标位置
-                mouse_x, mouse_y = pygame.mouse.get_pos()
-                
-                # 渲染光照效果
-                self.lighting_manager.render(
-                    self.screen, 
-                    self.player.world_x, 
-                    self.player.world_y, 
-                    mouse_x, 
-                    mouse_y, 
-                    self.camera_x, 
-                    self.camera_y
-                )
+                # 双角色模式下，光照由双角色系统处理
+                if not self.dual_player_system and self.player:
+                    # 单角色模式的光照渲染
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    self.lighting_manager.render(
+                        self.screen, 
+                        self.player.world_x, 
+                        self.player.world_y, 
+                        mouse_x, 
+                        mouse_y, 
+                        self.camera_x, 
+                        self.camera_y
+                    )
                 
                 # 在光照系统内部渲染补给（确保在光照内可见）
                 if self.ammo_supply_manager:
@@ -1010,9 +1086,199 @@ class Game:
         
     def _check_collisions(self):
         """检测碰撞"""
-        # 确保玩家和敌人管理器存在
-        if not self.player or not self.enemy_manager:
+        # 确保敌人管理器存在
+        if not self.enemy_manager:
             return
+            
+        # 双角色模式
+        if self.dual_player_system:
+            self._check_dual_player_collisions()
+        # 单角色模式
+        elif self.player:
+            self._check_single_player_collisions()
+            
+    def _check_dual_player_collisions(self):
+        """双角色模式的碰撞检测"""
+        # 检测武器碰撞（只有神秘剑士的武器）
+        for weapon in self.dual_player_system.mystic_swordsman.weapons:
+            for projectile in weapon.get_projectiles():
+                for enemy in self.enemy_manager.enemies:
+                    # 首先使用矩形做快速检测
+                    dx = enemy.rect.x - projectile.world_x
+                    dy = enemy.rect.y - projectile.world_y
+                    distance = (dx**2 + dy**2)**0.5
+                    
+                    if distance < enemy.rect.width / 2 + projectile.rect.width / 2:
+                        projectile_rect = projectile.rect.copy()
+                        projectile_rect.centerx = projectile.world_x
+                        projectile_rect.centery = projectile.world_y
+                        
+                        if apply_mask_collision(enemy, projectile):
+                            should_destroy = weapon.handle_collision(projectile, enemy, self.enemy_manager.enemies)
+                            resource_manager.play_sound("hit")
+                            
+                            if enemy.health <= 0:
+                                self.kill_num += 1
+                                if hasattr(enemy, 'config') and 'exp_value' in enemy.config:
+                                    exp_reward = enemy.config['exp_value']
+                                    # 给两个角色都添加经验值
+                                    self.dual_player_system.add_experience_to_both(exp_reward)
+                                    print(f"击杀 {enemy.type} 获得 {exp_reward} 经验值")
+                                if self.item_manager:
+                                    # 使用神秘剑士作为物品生成的目标（因为只有他能攻击）
+                                    self.item_manager.spawn_item(enemy.rect.x, enemy.rect.y, enemy.type, self.dual_player_system.mystic_swordsman)
+                                self.enemy_manager.remove_enemy(enemy)
+                                resource_manager.play_sound("enemy_death")
+                                
+                            if should_destroy:
+                                projectile.kill()
+        
+        # 检测玩家和敌人的碰撞
+        for enemy in self.enemy_manager.enemies:
+            # 检查与忍者蛙的碰撞
+            if not self.dual_player_system.ninja_frog.invincible:
+                player_rect = self.dual_player_system.ninja_frog.rect.copy()
+                player_rect.centerx = self.dual_player_system.ninja_frog.world_x
+                player_rect.centery = self.dual_player_system.ninja_frog.world_y
+                
+                if hasattr(enemy, 'projectiles'):
+                    enemy.attack_player(self.dual_player_system.ninja_frog)
+                
+                if player_rect.colliderect(enemy.rect):
+                    if apply_mask_collision(self.dual_player_system.ninja_frog, enemy):
+                        if enemy.attack_player(self.dual_player_system.ninja_frog):
+                            resource_manager.play_sound("player_hurt")
+                            break
+                            
+            # 检查与神秘剑士的碰撞
+            if not self.dual_player_system.mystic_swordsman.invincible:
+                player_rect = self.dual_player_system.mystic_swordsman.rect.copy()
+                player_rect.centerx = self.dual_player_system.mystic_swordsman.world_x
+                player_rect.centery = self.dual_player_system.mystic_swordsman.world_y
+                
+                if hasattr(enemy, 'projectiles'):
+                    enemy.attack_player(self.dual_player_system.mystic_swordsman)
+                
+                if player_rect.colliderect(enemy.rect):
+                    if apply_mask_collision(self.dual_player_system.mystic_swordsman, enemy):
+                        if enemy.attack_player(self.dual_player_system.mystic_swordsman):
+                            resource_manager.play_sound("player_hurt")
+                            break
+        
+        # 检测敌人子弹和玩家的碰撞
+        if hasattr(self.enemy_manager, 'enemy_projectiles'):
+            for projectile in self.enemy_manager.enemy_projectiles[:]:
+                # 检查与忍者蛙的碰撞
+                dx = self.dual_player_system.ninja_frog.world_x - projectile.world_x
+                dy = self.dual_player_system.ninja_frog.world_y - projectile.world_y
+                distance = (dx**2 + dy**2)**0.5
+                
+                if distance < 30:
+                    if hasattr(projectile, 'damage'):
+                        self.dual_player_system.ninja_frog.take_damage(projectile.damage)
+                        print(f"忍者蛙受到 {projectile.damage} 点伤害")
+                    self.enemy_manager.enemy_projectiles.remove(projectile)
+                    resource_manager.play_sound("player_hurt")
+                    
+                # 检查与神秘剑士的碰撞
+                dx = self.dual_player_system.mystic_swordsman.world_x - projectile.world_x
+                dy = self.dual_player_system.mystic_swordsman.world_y - projectile.world_y
+                distance = (dx**2 + dy**2)**0.5
+                
+                if distance < 30:
+                    if hasattr(projectile, 'damage'):
+                        self.dual_player_system.mystic_swordsman.take_damage(projectile.damage)
+                        print(f"神秘剑士受到 {projectile.damage} 点伤害")
+                    self.enemy_manager.enemy_projectiles.remove(projectile)
+                    resource_manager.play_sound("player_hurt")
+                    
+    def _check_single_player_collisions(self):
+        """单角色模式的碰撞检测"""
+        # 确保玩家存在
+        if not self.player:
+            return
+            
+        # 检测武器碰撞
+        for weapon in self.player.weapons:
+            for projectile in weapon.get_projectiles():
+                for enemy in self.enemy_manager.enemies:
+                    # 首先使用矩形做快速检测
+                    # 计算世界坐标系中的距离
+                    dx = enemy.rect.x - projectile.world_x
+                    dy = enemy.rect.y - projectile.world_y
+                    distance = (dx**2 + dy**2)**0.5
+                    
+                    if distance < enemy.rect.width / 2 + projectile.rect.width / 2:
+                        # 进行更精确的像素级碰撞检测
+                        # 调整projectile的rect以匹配world坐标
+                        projectile_rect = projectile.rect.copy()
+                        projectile_rect.centerx = projectile.world_x
+                        projectile_rect.centery = projectile.world_y
+                        
+                        if apply_mask_collision(enemy, projectile):
+                            # 处理碰撞
+                            should_destroy = weapon.handle_collision(projectile, enemy, self.enemy_manager.enemies)
+                            # 播放击中音效
+                            resource_manager.play_sound("hit")
+                            
+                            if enemy.health <= 0:
+                                self.kill_num += 1
+                                # 给玩家添加经验值奖励
+                                if hasattr(enemy, 'config') and 'exp_value' in enemy.config:
+                                    exp_reward = enemy.config['exp_value']
+                                    self.player.add_experience(exp_reward)
+                                    print(f"击杀 {enemy.type} 获得 {exp_reward} 经验值")
+                                # 在敌人死亡位置生成物品，传递player对象以应用幸运值加成
+                                if self.item_manager:
+                                    self.item_manager.spawn_item(enemy.rect.x, enemy.rect.y, enemy.type, self.player)
+                                self.enemy_manager.remove_enemy(enemy)
+                                # 播放敌人死亡音效
+                                resource_manager.play_sound("enemy_death")
+                                
+                            if should_destroy:
+                                projectile.kill()
+        
+        # 检测玩家和敌人的碰撞
+        for enemy in self.enemy_manager.enemies:
+            if not self.player.invincible:  # 只在玩家不处于无敌状态时检测碰撞
+                # 首先进行矩形快速检测
+                player_rect = self.player.rect.copy()
+                player_rect.centerx = self.player.world_x
+                player_rect.centery = self.player.world_y
+                
+                # 对于Slime等远程攻击敌人，即使不直接碰撞也需要触发attack_player
+                # 这样才能正确生成投射物并处理碰撞逻辑
+                if hasattr(enemy, 'projectiles'):
+                    enemy.attack_player(self.player)
+                
+                # 对于直接碰撞的敌人，进行常规碰撞检测
+                if player_rect.colliderect(enemy.rect):
+                    # 进行像素级碰撞检测
+                    if apply_mask_collision(self.player, enemy):
+                        if enemy.attack_player(self.player):
+                            # 播放受伤音效
+                            resource_manager.play_sound("player_hurt")
+                            break  # 一次只处理一个碰撞
+        
+        # 检测敌人子弹和玩家的碰撞
+        if hasattr(self.enemy_manager, 'enemy_projectiles'):
+            for projectile in self.enemy_manager.enemy_projectiles[:]:  # 使用切片避免在迭代时修改
+                # 计算子弹和玩家的距离
+                dx = self.player.world_x - projectile.world_x
+                dy = self.player.world_y - projectile.world_y
+                distance = (dx**2 + dy**2)**0.5
+                
+                if distance < 30:  # 碰撞检测范围
+                    # 对玩家造成伤害
+                    if hasattr(projectile, 'damage'):
+                        self.player.take_damage(projectile.damage)
+                        print(f"玩家受到 {projectile.damage} 点伤害")
+                    
+                    # 移除子弹
+                    self.enemy_manager.enemy_projectiles.remove(projectile)
+                    
+                    # 播放受伤音效
+                    resource_manager.play_sound("player_hurt")
             
         # 检测武器碰撞
         for weapon in self.player.weapons:

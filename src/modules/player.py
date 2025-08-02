@@ -258,6 +258,9 @@ class Player(pygame.sprite.Sprite):
             # 更新动画状态
             self._update_animation_state()
         
+        # 更新武器（包括投射物移动）
+        self.update_weapons(dt)
+        
         # 更新当前图像
         self.image = self.animation.get_current_frame(not self.movement.facing_right)
         
@@ -367,9 +370,9 @@ class Player(pygame.sprite.Sprite):
         """更新所有武器状态"""
         self.weapon_manager.update(dt)
         
-    def render_weapons(self, screen, camera_x, camera_y):
+    def render_weapons(self, screen, camera_x, camera_y, attack_direction_x=None, attack_direction_y=None):
         """渲染所有武器"""
-        self.weapon_manager.render(screen, camera_x, camera_y)
+        self.weapon_manager.render(screen, camera_x, camera_y, attack_direction_x, attack_direction_y)
         
     def render_melee_attacks(self, screen, camera_x, camera_y):
         """渲染所有武器的近战攻击动画"""

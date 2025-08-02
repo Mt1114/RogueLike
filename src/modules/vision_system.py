@@ -93,6 +93,25 @@ class VisionSystem:
         if self.direction < 0:
             self.direction += 2 * math.pi
             
+    def update_with_independent_direction(self, center_x, center_y, absolute_direction):
+        """
+        更新视野位置和独立方向
+        
+        Args:
+            center_x (int): 视野中心X坐标（通常是玩家位置）
+            center_y (int): 视野中心Y坐标
+            absolute_direction (float): 绝对方向角度（弧度），独立于角色位置
+        """
+        self.center_x = center_x
+        self.center_y = center_y
+        
+        # 直接使用传入的绝对方向
+        self.direction = absolute_direction
+        
+        # 确保方向在0-2π范围内
+        if self.direction < 0:
+            self.direction += 2 * math.pi
+            
     def create_vision_mask(self, screen_width, screen_height):
         """
         创建视野遮罩（消除黑暗区域）- 高度优化版本
@@ -192,9 +211,25 @@ class VisionSystem:
             x = self.center_x + self.radius * math.cos(angle)
             y = self.center_y + self.radius * math.sin(angle)
             
-            # 确保点在屏幕范围内
-            x = max(0, min(x, screen_width))
-            y = max(0, min(y, screen_height))
+            # 检查点是否在屏幕范围内，如果不在则调整半径
+            if x < 0 or x > screen_width or y < 0 or y > screen_height:
+                # 计算到屏幕边界的距离
+                dist_to_left = abs(x - 0)
+                dist_to_right = abs(x - screen_width)
+                dist_to_top = abs(y - 0)
+                dist_to_bottom = abs(y - screen_height)
+                
+                # 找到最近的边界距离
+                min_dist = min(dist_to_left, dist_to_right, dist_to_top, dist_to_bottom)
+                
+                # 调整半径，使点刚好在屏幕边界内
+                adjusted_radius = self.radius - min_dist - 5  # 留5像素边距
+                if adjusted_radius > 0:
+                    x = self.center_x + adjusted_radius * math.cos(angle)
+                    y = self.center_y + adjusted_radius * math.sin(angle)
+                else:
+                    # 如果调整后半径太小，跳过这个点
+                    continue
             
             vertices.append((x, y))
             
@@ -240,9 +275,25 @@ class VisionSystem:
                 # 如果没有被阻挡，使用理论终点
                 x, y = end_x, end_y
             
-            # 确保点在屏幕范围内
-            x = max(0, min(x, screen_width))
-            y = max(0, min(y, screen_height))
+            # 检查点是否在屏幕范围内，如果不在则调整半径
+            if x < 0 or x > screen_width or y < 0 or y > screen_height:
+                # 计算到屏幕边界的距离
+                dist_to_left = abs(x - 0)
+                dist_to_right = abs(x - screen_width)
+                dist_to_top = abs(y - 0)
+                dist_to_bottom = abs(y - screen_height)
+                
+                # 找到最近的边界距离
+                min_dist = min(dist_to_left, dist_to_right, dist_to_top, dist_to_bottom)
+                
+                # 调整半径，使点刚好在屏幕边界内
+                adjusted_radius = self.circle_radius - min_dist - 5  # 留5像素边距
+                if adjusted_radius > 0:
+                    x = self.center_x + adjusted_radius * math.cos(angle)
+                    y = self.center_y + adjusted_radius * math.sin(angle)
+                else:
+                    # 如果调整后半径太小，跳过这个点
+                    continue
             
             vertices.append((x, y))
         
@@ -292,9 +343,25 @@ class VisionSystem:
                 # 如果没有被阻挡，使用理论终点
                 x, y = end_x, end_y
             
-            # 确保点在屏幕范围内
-            x = max(0, min(x, screen_width))
-            y = max(0, min(y, screen_height))
+            # 检查点是否在屏幕范围内，如果不在则调整半径
+            if x < 0 or x > screen_width or y < 0 or y > screen_height:
+                # 计算到屏幕边界的距离
+                dist_to_left = abs(x - 0)
+                dist_to_right = abs(x - screen_width)
+                dist_to_top = abs(y - 0)
+                dist_to_bottom = abs(y - screen_height)
+                
+                # 找到最近的边界距离
+                min_dist = min(dist_to_left, dist_to_right, dist_to_top, dist_to_bottom)
+                
+                # 调整半径，使点刚好在屏幕边界内
+                adjusted_radius = self.radius - min_dist - 5  # 留5像素边距
+                if adjusted_radius > 0:
+                    x = self.center_x + adjusted_radius * math.cos(angle)
+                    y = self.center_y + adjusted_radius * math.sin(angle)
+                else:
+                    # 如果调整后半径太小，跳过这个点
+                    continue
             
             vertices.append((x, y))
         

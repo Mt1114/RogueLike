@@ -179,7 +179,7 @@ class BulletWeapon(Weapon):
             if self.attack_animation_timer >= self.attack_animation_duration:
                 self.is_attacking = False
     
-    def render(self, screen, camera_x, camera_y):
+    def render(self, screen, camera_x, camera_y, attack_direction_x=None, attack_direction_y=None):
         """渲染武器和投射物"""
         # 渲染所有子弹
         for projectile in self.projectiles:
@@ -187,7 +187,7 @@ class BulletWeapon(Weapon):
         
         # 渲染武器（如果正在攻击）
         if self.is_attacking:
-            self._render_weapon_attack(screen, camera_x, camera_y)
+            self._render_weapon_attack(screen, camera_x, camera_y, attack_direction_x, attack_direction_y)
     
     def manual_attack(self, screen):
         """手动攻击（鼠标左键触发）"""
@@ -217,31 +217,36 @@ class BulletWeapon(Weapon):
             # 执行攻击
             self._perform_attack(direction_x, direction_y)
     
-    def _render_weapon_attack(self, screen, camera_x, camera_y):
+    def _render_weapon_attack(self, screen, camera_x, camera_y, attack_direction_x=None, attack_direction_y=None):
         """渲染武器攻击动画"""
         # 获取武器图像
         weapon_image = self.get_weapon_image()
         if not weapon_image:
             return
         
-        # 计算玩家屏幕位置
-        player_screen_x = screen.get_width() // 2
-        player_screen_y = screen.get_height() // 2
+        # 计算神秘剑士的屏幕位置
+        player_screen_x = self.player.world_x - camera_x + screen.get_width() // 2
+        player_screen_y = self.player.world_y - camera_y + screen.get_height() // 2
         
-        # 获取鼠标位置
-        mouse_x, mouse_y = pygame.mouse.get_pos()
+        # 使用传入的攻击方向，如果没有则使用鼠标方向
+        if attack_direction_x is not None and attack_direction_y is not None:
+            direction_x = attack_direction_x
+            direction_y = attack_direction_y
+        else:
+            # 获取鼠标位置
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            
+            # 计算鼠标相对于玩家的方向
+            direction_x = mouse_x - player_screen_x
+            direction_y = mouse_y - player_screen_y
+            
+            # 标准化方向向量
+            length = math.sqrt(direction_x**2 + direction_y**2)
+            if length > 0:
+                direction_x /= length
+                direction_y /= length
         
-        # 计算鼠标相对于玩家的方向
-        direction_x = mouse_x - player_screen_x
-        direction_y = mouse_y - player_screen_y
-        
-        # 标准化方向向量
-        length = math.sqrt(direction_x**2 + direction_y**2)
-        if length > 0:
-            direction_x /= length
-            direction_y /= length
-        
-        # 根据鼠标位置调整枪的位置
+        # 根据攻击方向调整枪的位置
         weapon_distance = 25  # 枪与玩家的距离
         
         # 计算枪的位置
@@ -249,7 +254,7 @@ class BulletWeapon(Weapon):
         weapon_screen_y = player_screen_y + direction_y * weapon_distance
         
         # 根据方向决定是否需要上下翻转
-        # 当鼠标在玩家左侧时（direction_x < 0），需要上下翻转
+        # 当攻击方向在玩家左侧时（direction_x < 0），需要上下翻转
         if direction_x < 0:
             # 当在左侧时，需要调整角度计算
             # 对于左侧，我们需要镜像角度

@@ -142,7 +142,7 @@ class HealthSupply(Item):
             x, y: 补给在世界坐标系中的位置
         """
         # 设置图像（使用吸收图标）
-        self.image = pygame.image.load("../assets/images/passives/max_health_up_32x32.png")
+        self.image = pygame.image.load("assets/images/passives/max_health_up_32x32.png")
         self.image = pygame.transform.scale(self.image, (32, 32))
         
         # 调用父类初始化

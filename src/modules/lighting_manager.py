@@ -127,8 +127,18 @@ class LightingManager:
         # 这个方法在VisionSystem中不需要，因为update方法会自动处理
         pass
 
-    def render(self, screen, player_x, player_y, mouse_x, mouse_y, camera_x=0, camera_y=0):
-        """渲染光照效果"""
+    def render(self, screen, player_x, player_y, mouse_x, mouse_y, camera_x=0, camera_y=0, 
+               additional_lights=None):
+        """
+        渲染光照效果
+        
+        Args:
+            screen: 屏幕表面
+            player_x, player_y: 主光源位置（忍者蛙）
+            mouse_x, mouse_y: 鼠标位置（用于视野方向）
+            camera_x, camera_y: 相机位置
+            additional_lights: 额外光源列表，每个元素为 (x, y, intensity, radius)
+        """
         # 更新相机和屏幕信息
         self.camera_x = camera_x
         self.camera_y = camera_y
@@ -140,12 +150,58 @@ class LightingManager:
             camera_x, camera_y, self.screen_center_x, self.screen_center_y
         )
         
-        # 玩家始终在屏幕中心
-        screen_player_x = self.screen_center_x
-        screen_player_y = self.screen_center_y
+        # 使用传入的玩家位置，而不是屏幕中心
+        screen_player_x = player_x
+        screen_player_y = player_y
         
         # 更新视野系统
         self.vision_system.update(screen_player_x, screen_player_y, mouse_x, mouse_y)
+        
+        # 重新创建黑暗遮罩，确保每次渲染都是干净的
+        self.dark_overlay._create_overlay()
+        
+        # 创建最终的黑暗遮罩
+        final_overlay = self.dark_overlay.get_overlay().copy()
+        
+        # 渲染主视野系统（忍者蛙的光照）到最终遮罩
+        self._render_main_vision(final_overlay)
+        
+        # 渲染额外光源（神秘剑士的光源）到最终遮罩
+        if additional_lights:
+            self._render_additional_lights(final_overlay, additional_lights)
+        
+        # 将最终遮罩渲染到屏幕
+        screen.blit(final_overlay, (0, 0))
+        
+    def render_with_independent_direction(self, screen, player_x, player_y, absolute_direction, camera_x=0, camera_y=0):
+        """
+        渲染光照效果（使用独立方向）
+        
+        Args:
+            screen: 屏幕表面
+            player_x: 玩家屏幕X坐标
+            player_y: 玩家屏幕Y坐标
+            absolute_direction: 绝对方向角度（弧度），独立于角色位置
+            camera_x: 相机X偏移
+            camera_y: 相机Y偏移
+        """
+        # 更新相机和屏幕信息
+        self.camera_x = camera_x
+        self.camera_y = camera_y
+        self.screen_center_x = screen.get_width() // 2
+        self.screen_center_y = screen.get_height() // 2
+        
+        # 更新视野系统的相机和屏幕信息
+        self.vision_system.set_camera_and_screen(
+            camera_x, camera_y, self.screen_center_x, self.screen_center_y
+        )
+        
+        # 使用传入的玩家位置，而不是屏幕中心
+        screen_player_x = player_x
+        screen_player_y = player_y
+        
+        # 更新视野系统（使用独立方向）
+        self.vision_system.update_with_independent_direction(screen_player_x, screen_player_y, absolute_direction)
         
         # 渲染视野系统（这会创建光照效果）
         self.vision_system.render(screen, self.dark_overlay.get_overlay())
@@ -213,3 +269,46 @@ class LightingManager:
     def is_in_light(self, x, y):
         """检查指定点是否在光照范围内"""
         return self.vision_system.is_in_vision(x, y)
+        
+    def _render_main_vision(self, final_overlay):
+        """
+        渲染主视野系统（忍者蛙的光照）到最终遮罩
+        
+        Args:
+            final_overlay: 最终的黑暗遮罩
+        """
+        # 创建视野遮罩
+        vision_mask = self.vision_system.create_vision_mask(
+            self.screen_width, self.screen_height
+        )
+        
+        # 在视野区域清除黑暗（使用减法混合模式）
+        final_overlay.blit(vision_mask, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
+        
+    def _render_additional_lights(self, final_overlay, additional_lights):
+        """
+        渲染额外光源到最终遮罩
+        
+        Args:
+            final_overlay: 最终的黑暗遮罩
+            additional_lights: 额外光源列表，每个元素为 (x, y, intensity, radius)
+        """
+        if not additional_lights:
+            return
+            
+        for light_x, light_y, intensity, radius in additional_lights:
+            # 创建光源遮罩（用于清除黑暗）
+            light_mask = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
+            
+            # 绘制圆形光源遮罩（白色，用于清除黑暗）
+            # 使用统一的透明度，不搞渐进效果
+            alpha = int(255 * intensity)
+            if alpha > 0:
+                # 绘制圆形，颜色为白色，统一透明度
+                color = (255, 255, 255, alpha)
+                pygame.draw.circle(light_mask, color, 
+                                 (int(light_x), int(light_y)), int(radius))
+            
+            # 将光源遮罩应用到最终遮罩上，清除光源区域的黑暗
+            # 使用BLEND_RGBA_SUB混合模式，让光源区域变得透明
+            final_overlay.blit(light_mask, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)

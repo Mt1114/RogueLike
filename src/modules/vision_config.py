@@ -25,7 +25,7 @@ VISION_CONFIG = {
     
     # 黑暗遮罩参数
     "darkness": {
-        "alpha": 225,         # 黑暗程度 (0-255)
+        "alpha": 255,         # 黑暗程度 (0-255) - 完全黑暗
     },
     
     # 键盘控制配置
@@ -67,7 +67,7 @@ VISION_PRESETS = {
         "sector_radius": 640,
         "sector_angle": 30,
         "circle_radius": 80,
-        "darkness_alpha": 200,
+        "darkness_alpha": 255,
         "ray_count": 12,
     },
     "wide": {

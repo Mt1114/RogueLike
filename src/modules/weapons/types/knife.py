@@ -249,7 +249,7 @@ class Knife(Weapon):
         )
         self.projectiles.add(knife)
         
-    def render(self, screen, camera_x, camera_y):
+    def render(self, screen, camera_x, camera_y, attack_direction_x=None, attack_direction_y=None):
         # 渲染攻击特效
         if self.attack_effect and self.effect_playing:
             # 计算特效位置：在玩家当前位置，朝着攻击方向偏移32像素
