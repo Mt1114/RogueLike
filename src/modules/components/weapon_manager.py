@@ -167,8 +167,10 @@ class WeaponManager(Component):
             
         for weapon in self.weapons:
             if hasattr(weapon, 'render_melee_attack') and weapon.melee_attacking:
-                # 获取鼠标方向用于渲染
-                direction_x, direction_y = weapon.get_mouse_direction(screen)
+                # 获取键盘方向用于渲染
+                direction_x, direction_y = weapon.get_keyboard_direction()
+                if direction_x == 0 and direction_y == 0:
+                    direction_x, direction_y = weapon.get_player_direction()
                 weapon.render_melee_attack(screen, camera_x, camera_y, direction_x, direction_y)
     
     def apply_weapon_upgrade(self, weapon_type, level, effects):

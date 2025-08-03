@@ -16,10 +16,11 @@ class AmmoSupply(Item):
         # 加载补给图标
         try:
             self.image = pygame.image.load("assets/images/weapons/bullet_8x8.png").convert_alpha()
+            self.image = pygame.transform.scale(self.image, (32, 32))
         except:
-            # 如果加载失败，创建一个默认的补给图标
-            self.image = pygame.Surface((32, 32))
-            self.image.fill((255, 255, 0))  # 黄色
+            # 如果加载失败，创建一个默认的黄色圆形图标
+            self.image = pygame.Surface((32, 32), pygame.SRCALPHA)
+            pygame.draw.circle(self.image, (255, 255, 0), (16, 16), 16)
         
         # 现在调用父类构造函数
         super().__init__(x, y, "ammo_supply")
@@ -53,6 +54,10 @@ class AmmoSupply(Item):
         
         # 更新浮动动画计时器（只用于渲染效果，不影响世界坐标）
         self.bob_timer += dt * self.bob_speed
+        
+        # 更新碰撞区域位置（使用世界坐标）
+        self.rect.centerx = self.world_x
+        self.rect.centery = self.world_y
         
         # 闪烁效果（最后10秒开始闪烁）
         if self.spawn_timer >= self.lifetime - 10.0:

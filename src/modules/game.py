@@ -56,6 +56,7 @@ class Game:
         self.item_manager = None
         self.ammo_supply_manager = None  # 弹药补给管理器
         self.health_supply_manager = None  # 生命补给管理器
+        self.teleport_manager = None  # 传送道具管理器
         self.escape_door = None  # 逃生门
         self.save_system = SaveSystem()
         self.upgrade_manager = UpgradeManager()
@@ -268,6 +269,13 @@ class Game:
         self.item_manager = ItemManager()
         self.ammo_supply_manager = AmmoSupplyManager(self)  # 初始化弹药补给管理器
         self.health_supply_manager = HealthSupplyManager(self)  # 初始化生命补给管理器
+        
+        # 初始化传送道具管理器
+        from .items.teleport_manager import TeleportManager
+        self.teleport_manager = TeleportManager(self.map_manager)
+        
+        # 生成一个初始传送道具
+        self.teleport_manager.spawn_teleport_item()
         
         # 初始化钥匙管理器
         from .items.key_manager import KeyManager
@@ -710,10 +718,6 @@ class Game:
             self.fps = int(self.fps_counter / self.fps_timer)
             print(f"FPS: {self.fps}")
             
-            # 性能监控：如果帧数低于30，显示性能警告
-            if self.fps < 30:
-                print(f"⚠️  性能警告: 当前帧数 {self.fps} 低于30帧")
-            
             self.fps_counter = 0
             self.fps_timer = 0
         
@@ -773,6 +777,31 @@ class Game:
             self.camera_x = center_x
             self.camera_y = center_y
             
+            # 更新逃生门
+            if self.escape_door:
+                # 双角色模式：任一角色到达逃生门即可
+                self.escape_door.update(self.dual_player_system.ninja_frog)
+                self.escape_door.update(self.dual_player_system.mystic_swordsman)
+            
+            # 更新物品管理器（双角色模式）
+            if self.ammo_supply_manager:
+                self.ammo_supply_manager.update(dt)
+            if self.health_supply_manager:
+                self.health_supply_manager.update(dt)
+            if self.teleport_manager:
+                self.teleport_manager.update(dt, self.dual_player_system.ninja_frog)
+            if self.key_manager:
+                self.key_manager.update(dt, self.game_time)
+                
+            # 检查两个角色都可以拾取物品
+       
+            for player in self.dual_player_system.get_players():
+           
+                if self.ammo_supply_manager:
+                    self.ammo_supply_manager.check_pickup(player)
+                if self.health_supply_manager:
+                    self.health_supply_manager.check_pickup(player)
+                    
         elif self.player:  # 兼容单角色模式
             # 更新玩家位置（在世界坐标系中）
             self.player.update(dt)
@@ -787,43 +816,19 @@ class Game:
             
             # 更新逃生门
             if self.escape_door:
-                if self.dual_player_system:
-                    # 双角色模式：任一角色到达逃生门即可
-                    self.escape_door.update(self.dual_player_system.ninja_frog)
-                    self.escape_door.update(self.dual_player_system.mystic_swordsman)
-                else:
-                    self.escape_door.update(self.player)
+                self.escape_door.update(self.player)
             
-            # 更新物品管理器（双角色模式）
-            if self.dual_player_system:
-                # 更新管理器
-                if self.ammo_supply_manager:
-                    self.ammo_supply_manager.update(dt)
-                if self.health_supply_manager:
-                    self.health_supply_manager.update(dt)
-                if self.key_manager:
-                    self.key_manager.update(dt, self.game_time)
-                    
-                # 检查两个角色都可以拾取物品
-                for player in self.dual_player_system.get_players():
-                    if self.ammo_supply_manager:
-                        self.ammo_supply_manager.check_pickup(player)
-                    if self.health_supply_manager:
-                        self.health_supply_manager.check_pickup(player)
-            else:  # 兼容单角色模式
-                # 更新弹药补给管理器
-                if self.ammo_supply_manager:
-                    self.ammo_supply_manager.update(dt)
-                    self.ammo_supply_manager.check_pickup(self.player)
-                
-                # 更新生命补给管理器
-                if self.health_supply_manager:
-                    self.health_supply_manager.update(dt)
-                    self.health_supply_manager.check_pickup(self.player)
-                
-                # 更新钥匙管理器
-                if self.key_manager:
-                    self.key_manager.update(dt, self.game_time)
+            # 更新物品管理器（单角色模式）
+            if self.ammo_supply_manager:
+                self.ammo_supply_manager.update(dt)
+                self.ammo_supply_manager.check_pickup(self.player)
+            
+            if self.health_supply_manager:
+                self.health_supply_manager.update(dt)
+                self.health_supply_manager.check_pickup(self.player)
+            
+            if self.key_manager:
+                self.key_manager.update(dt, self.game_time)
             
             # Boss生成逻辑
             self._update_boss_spawn(dt)
@@ -871,7 +876,10 @@ class Game:
             # 更新物品
             if self.item_manager:
                 if self.dual_player_system:
-                    # 双角色模式：使用神秘剑士作为主要角色（因为只有他能攻击）
+                    # 双角色模式：检查两个角色都可以拾取物品
+                    # 先检查忍者蛙
+                    self.item_manager.update(dt, self.dual_player_system.ninja_frog)
+                    # 再检查神秘剑士
                     self.item_manager.update(dt, self.dual_player_system.mystic_swordsman)
                 else:
                     self.item_manager.update(dt, self.player)
@@ -955,6 +963,7 @@ class Game:
             self.player.render_melee_attacks(self.screen, self.camera_x, self.camera_y)
             self.player.render_ultimate(self.screen)
             self.player.render_ultimate_cooldown(self.screen)
+            self.player.render_phase_cooldown(self.screen)
             
         # 渲染光照系统（在所有游戏对象之后，UI之前）
         if self.lighting_manager and self.enable_lighting:
@@ -978,8 +987,10 @@ class Game:
                     self.ammo_supply_manager.render(self.screen, self.camera_x, self.camera_y, 
                                                   self.screen_center_x, self.screen_center_y)
                 if self.health_supply_manager:
-                    self.health_supply_manager.render(self.screen, self.camera_x, self.camera_y, 
+                    self.health_supply_manager.render(self.screen, self.camera_x, self.camera_y,
                                                     self.screen_center_x, self.screen_center_y)
+                if self.teleport_manager:
+                    self.teleport_manager.render(self.screen, self.camera_x, self.camera_y)
                     
             except Exception as e:
                 print(f"光照系统渲染错误: {e}")
@@ -993,6 +1004,8 @@ class Game:
             if self.health_supply_manager:
                 self.health_supply_manager.render(self.screen, self.camera_x, self.camera_y,
                                                 self.screen_center_x, self.screen_center_y)
+            if self.teleport_manager:
+                self.teleport_manager.render(self.screen, self.camera_x, self.camera_y)
         # 渲染UI（在视野系统之后）
         if self.player:
             self.ui.render(self.player, self.game_time, self.kill_num)

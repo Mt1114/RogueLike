@@ -40,7 +40,12 @@ class ItemManager:
                 
     def render(self, screen, camera_x, camera_y, screen_center_x, screen_center_y, lighting_manager=None):
         for item in self.items:
-            # 检查物品是否在光照范围内
+            # 钥匙始终可见，不受光照影响
+            if item.item_type == 'key':
+                item.render(screen, camera_x, camera_y, screen_center_x, screen_center_y)
+                continue
+                
+            # 检查其他物品是否在光照范围内
             if lighting_manager and hasattr(lighting_manager, 'is_enabled') and lighting_manager.is_enabled():
                 # 将物品的世界坐标转换为屏幕坐标进行检查
                 item_world_x = item.world_x

@@ -157,6 +157,45 @@ class Weapon(pygame.sprite.Sprite):
             direction_y /= magnitude
         
         return direction_x, direction_y
+        
+    def get_keyboard_direction(self):
+        """获取基于4862键的武器朝向
+        
+        Returns:
+            tuple: (direction_x, direction_y) 标准化后的方向向量
+        """
+        keys = pygame.key.get_pressed()
+        
+        # 初始化方向向量
+        direction_x = 0
+        direction_y = 0
+        
+        # 检查4862键
+        if keys[pygame.K_4]:  # 左
+            direction_x = -1
+            # 更新角色朝向为朝左
+            if hasattr(self.player, 'movement'):
+                self.player.movement.facing_right = False
+        elif keys[pygame.K_6]:  # 右
+            direction_x = 1
+            # 更新角色朝向为朝右
+            if hasattr(self.player, 'movement'):
+                self.player.movement.facing_right = True
+        elif keys[pygame.K_8]:  # 上
+            direction_y = -1
+        elif keys[pygame.K_2]:  # 下
+            direction_y = 1
+            
+        # 如果同时按下多个键，优先选择第一个检测到的方向
+        # 这里我们按照 8(上) -> 2(下) -> 4(左) -> 6(右) 的优先级
+        
+        # 标准化方向向量
+        magnitude = math.sqrt(direction_x ** 2 + direction_y ** 2)
+        if magnitude > 0:
+            direction_x /= magnitude
+            direction_y /= magnitude
+        
+        return direction_x, direction_y
             
     def can_attack(self):
         """检查是否可以攻击"""
@@ -173,8 +212,18 @@ class Weapon(pygame.sprite.Sprite):
         """
         if self.can_attack():
             self.attack_timer = 0
-            # 获取鼠标方向
-            direction_x, direction_y = self.get_mouse_direction(screen)
+            # 获取键盘方向（4862键）
+            direction_x, direction_y = self.get_keyboard_direction()
+            
+            # 如果没有按下方向键，使用玩家朝向
+            if direction_x == 0 and direction_y == 0:
+                direction_x, direction_y = self.get_player_direction()
+            else:
+                # 如果使用了键盘方向，确保角色朝向正确
+                if direction_x < 0:  # 向左攻击
+                    self.player.movement.facing_right = False
+                elif direction_x > 0:  # 向右攻击
+                    self.player.movement.facing_right = True
             
             # 检查穿墙（只有远程武器需要检查）
             if not self.is_melee and not self._check_wall_collision(direction_x, direction_y):
@@ -189,7 +238,7 @@ class Weapon(pygame.sprite.Sprite):
                 print(f"弹药剩余: {self.ammo}")
             
     def melee_attack(self, screen):
-        """近战攻击（鼠标右键触发）
+        """近战攻击（K键触发）
         
         Args:
             screen: pygame屏幕对象，用于获取鼠标位置
@@ -201,8 +250,19 @@ class Weapon(pygame.sprite.Sprite):
             self.melee_attacking = True
             self.melee_attack_timer = 0
             self.melee_attack_progress = 0
-            # 获取鼠标方向
-            direction_x, direction_y = self.get_mouse_direction(screen)
+            # 获取键盘方向（4862键）
+            direction_x, direction_y = self.get_keyboard_direction()
+            
+            # 如果没有按下方向键，使用玩家朝向
+            if direction_x == 0 and direction_y == 0:
+                direction_x, direction_y = self.get_player_direction()
+            else:
+                # 如果使用了键盘方向，确保角色朝向正确
+                if direction_x < 0:  # 向左攻击
+                    self.player.movement.facing_right = False
+                elif direction_x > 0:  # 向右攻击
+                    self.player.movement.facing_right = True
+                
             # 执行近战攻击
             self._perform_melee_attack(direction_x, direction_y)
             
@@ -241,23 +301,13 @@ class Weapon(pygame.sprite.Sprite):
         
     def get_player_direction(self):
         """获取玩家朝向的方向向量"""
-        direction_x = self.player.movement.direction.x
-        direction_y = self.player.movement.direction.y
-        
-        # 如果玩家不在移动（方向为0,0），则使用上一个非零方向或默认朝向右侧
-        if direction_x == 0 and direction_y == 0:
-            if hasattr(self.player.movement, 'last_movement_direction'):
-                direction_x = self.player.movement.last_movement_direction.x
-                direction_y = self.player.movement.last_movement_direction.y
-            else:
-                direction_x = 1  # 默认朝向右侧
-                direction_y = 0
-        
-        # 标准化方向向量
-        magnitude = math.sqrt(direction_x ** 2 + direction_y ** 2)
-        if magnitude > 0:
-            direction_x /= magnitude
-            direction_y /= magnitude
+        # 基于玩家朝向（facing_right）确定方向
+        if self.player.movement.facing_right:
+            direction_x = 1
+            direction_y = 0
+        else:
+            direction_x = -1
+            direction_y = 0
         
         return direction_x, direction_y
     

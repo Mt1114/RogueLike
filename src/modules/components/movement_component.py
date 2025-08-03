@@ -129,8 +129,12 @@ class MovementComponent(Component):
                 self.moving['down'] = True
             elif event.key == pygame.K_a:
                 self.moving['left'] = True
+                # 角色朝向：A键朝左
+                self.facing_right = False
             elif event.key == pygame.K_d:
                 self.moving['right'] = True
+                # 角色朝向：D键朝右
+                self.facing_right = True
                 
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_w:
@@ -155,9 +159,6 @@ class MovementComponent(Component):
         if not self.enabled:
             return
             
-        # 更新鼠标朝向
-        self._update_mouse_direction()
-            
         # 计算速度
         self.velocity = self.direction * self.speed
         
@@ -172,8 +173,22 @@ class MovementComponent(Component):
                 new_x = max(min_x, min(new_x, max_x))
                 new_y = max(min_y, min(new_y, max_y))
             
-            # 检查地图碰撞
-            if not self._check_collision(new_x, new_y):
+            # 检查地图碰撞（如果不在穿墙状态且不在强制拉回状态）
+            is_force_pulling = False
+            if hasattr(self.owner, 'game') and hasattr(self.owner.game, 'dual_player_system'):
+                dual_system = self.owner.game.dual_player_system
+                if hasattr(dual_system, 'is_force_pulling'):
+                    is_force_pulling = dual_system.is_force_pulling
+            
+            if hasattr(self.owner, 'phase_through_walls') and self.owner.phase_through_walls:
+                # 穿墙状态，直接移动
+                self.owner.world_x = new_x
+                self.owner.world_y = new_y
+            elif is_force_pulling:
+                # 强制拉回状态，忽略碰撞直接移动
+                self.owner.world_x = new_x
+                self.owner.world_y = new_y
+            elif not self._check_collision(new_x, new_y):
                 self.owner.world_x = new_x
                 self.owner.world_y = new_y
             else:
@@ -224,6 +239,12 @@ class MovementComponent(Component):
             # 标准化方向向量（如果长度不为0）
             if self.direction.length() > 0:
                 self.direction = self.direction.normalize()
+                
+            # 更新角色朝向：基于移动方向
+            if self.direction.x > 0:
+                self.facing_right = True
+            elif self.direction.x < 0:
+                self.facing_right = False
             
     def is_moving(self):
         """

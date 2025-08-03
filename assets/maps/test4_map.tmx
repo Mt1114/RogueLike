@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="1">
+ <tileset firstgid="1" name="FieldsTileset" tilewidth="32" tileheight="32" tilecount="64" columns="8">
+  <image source="FieldsTileset.png" width="256" height="256"/>
+ </tileset>
+ <tileset firstgid="65" name="FieldsTileset" tilewidth="32" tileheight="32" tilecount="64" columns="8">
+  <image source="FieldsTileset.png" width="256" height="256"/>
+ </tileset>
+ <layer id="1" name="图块层 1" width="10" height="10">
+  <data encoding="csv">
+1,1,1,1,1,1,1,1,1,1,
+1,1,1,102,102,102,102,102,1,1,
+1,1,1,102,102,102,102,102,1,1,
+1,1,102,1,1,1,1,1,1,1,
+1,1,102,1,1,1,1,1,1,1,
+1,1,102,1,1,1,1,1,1,1,
+1,1,102,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1
+</data>
+ </layer>
+ <layer id="2" name="collision" width="10" height="10">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,102,102,102,102,102,0,0,
+0,0,0,102,102,102,102,102,0,0,
+0,0,102,0,0,0,0,0,0,0,
+0,0,102,0,0,0,0,0,0,0,
+0,0,102,0,0,0,0,0,0,0,
+0,0,102,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+</map>

@@ -114,4 +114,11 @@ class KeyManager:
     
     def get_total_spawned(self):
         """获取已生成的总钥匙数量"""
-        return self.spawned_keys 
+        return self.spawned_keys
+        
+    def on_key_collected(self):
+        """当钥匙被拾取时调用，生成新的钥匙"""
+        # 生成新的钥匙
+        self._spawn_key()
+        self.spawned_keys += 1
+        print(f"钥匙被拾取，生成新的钥匙，当前已生成: {self.spawned_keys}") 

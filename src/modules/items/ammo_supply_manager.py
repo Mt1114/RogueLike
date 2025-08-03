@@ -150,20 +150,32 @@ class AmmoSupplyManager:
         Args:
             player: 玩家实例
         """
+       
+        
+        # 弹药补给只能由神秘剑士拾取
+        if not hasattr(player, 'hero_type') or player.hero_type != "role2":
+            
+            return
+            
         for supply in self.supplies[:]:
             # 检查玩家是否与补给重叠
             # 使用玩家的碰撞区域和补给的碰撞区域进行检测
             if hasattr(player, 'collision_rect') and hasattr(supply, 'rect'):
+                # 添加调试信息
+                
+                
                 if player.collision_rect.colliderect(supply.rect):
+                    
                     if supply.on_pickup(player):
                         # 拾取成功，移除补给
                         self.supplies.remove(supply)
-                        print("拾取弹药补给成功！")
+                       
                         return  # 一次只能拾取一个补给
                 else:
                     # 计算距离
                     distance = ((player.world_x - supply.world_x) ** 2 + 
                               (player.world_y - supply.world_y) ** 2) ** 0.5
+                   
                     
                     # 如果距离很近但碰撞检测失败，尝试扩大检测范围
                     if distance < 50:  # 如果距离小于50像素
@@ -172,7 +184,7 @@ class AmmoSupplyManager:
                         if expanded_player_rect.colliderect(supply.rect):
                             if supply.on_pickup(player):
                                 self.supplies.remove(supply)
-                                print("拾取弹药补给成功！")
+                               
                                 return
                     
     def render(self, screen, camera_x, camera_y, screen_center_x=None, screen_center_y=None):

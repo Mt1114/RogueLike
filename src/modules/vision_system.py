@@ -551,95 +551,17 @@ class VisionSystem:
         self.screen_center_y = screen_center_y
         
     def ray_cast(self, start_x, start_y, end_x, end_y):
-        """光线追踪（高度优化版本）
+        """光线追踪（无碰撞版本）
         
         Args:
             start_x, start_y: 起始点坐标（屏幕坐标）
             end_x, end_y: 终点坐标（屏幕坐标）
             
         Returns:
-            tuple: (是否被阻挡, 阻挡点坐标)
+            tuple: (是否被阻挡, 阻挡点坐标) - 总是返回False表示无阻挡
         """
-        if not self.walls:
-            return False, (end_x, end_y)
-            
-        # 计算光线方向
-        dx = end_x - start_x
-        dy = end_y - start_y
-        distance = math.sqrt(dx * dx + dy * dy)
-        
-        if distance == 0:
-            return False, (end_x, end_y)
-            
-        # 归一化方向向量
-        dx /= distance
-        dy /= distance
-        
-        # 性能优化：增加步长以减少计算量
-        # 距离越远，步长越大，但不超过图块大小
-        step_size = min(max(8, self.tile_size // 4), 32)  # 增加步长
-        current_x = start_x
-        current_y = start_y
-        
-        # 预计算世界坐标转换
-        camera_offset_x = self.camera_x - self.screen_center_x
-        camera_offset_y = self.camera_y - self.screen_center_y
-        
-        # 性能优化：使用更高效的碰撞检测
-        # 只检查在视野范围内的墙壁
-        vision_rect = pygame.Rect(
-            self.center_x - self.radius, 
-            self.center_y - self.radius,
-            self.radius * 2, 
-            self.radius * 2
-        )
-        
-        # 筛选可能碰撞的墙壁
-        relevant_walls = []
-        for wall in self.walls:
-            # 将墙壁转换到屏幕坐标
-            screen_wall = pygame.Rect(
-                wall.x - camera_offset_x,
-                wall.y - camera_offset_y,
-                wall.width,
-                wall.height
-            )
-            if screen_wall.colliderect(vision_rect):
-                relevant_walls.append(screen_wall)
-        
-        # 如果没有相关墙壁，直接返回
-        if not relevant_walls:
-            return False, (end_x, end_y)
-        
-        # 逐步检查（减少检查频率）
-        check_interval = 2  # 每2步检查一次碰撞
-        step_count = 0
-        
-        while True:
-            # 移动到下一个检查点
-            current_x += dx * step_size
-            current_y += dy * step_size
-            step_count += 1
-            
-            # 检查是否超出目标距离
-            check_distance = math.sqrt((current_x - start_x) ** 2 + (current_y - start_y) ** 2)
-            if check_distance >= distance:
-                return False, (end_x, end_y)
-                
-            # 减少碰撞检测频率
-            if step_count % check_interval == 0:
-                # 检查是否与墙壁碰撞（使用屏幕坐标）
-                for wall in relevant_walls:
-                    if wall.collidepoint(current_x, current_y):
-                        return True, (current_x, current_y)
-                        
-                # 检查是否超出地图边界（使用世界坐标）
-                world_x = current_x + camera_offset_x
-                world_y = current_y + camera_offset_y
-                
-                if (world_x < 0 or world_x >= self.map_width or 
-                    world_y < 0 or world_y >= self.map_height):
-                    return True, (current_x, current_y)
+        # 无碰撞版本：光源可以穿透所有墙壁
+        return False, (end_x, end_y)
 
 
 class DarkOverlay:

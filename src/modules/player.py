@@ -72,6 +72,14 @@ class Player(pygame.sprite.Sprite):
         self.ultimate_cooldown_timer = 0  # 大招CD计时器
         self.ultimate_icon = None  # 大招图标
         
+        # 穿墙技能相关（仅对忍者蛙）
+        self.phase_through_walls = False  # 是否处于穿墙状态
+        self.phase_timer = 0  # 穿墙持续时间计时器
+        self.phase_duration = 2.0  # 穿墙持续时间2秒
+        self.phase_cooldown = 15.0  # 穿墙CD时间
+        self.phase_cooldown_timer = 0  # 穿墙CD计时器
+        self.phase_icon = None  # 穿墙技能图标
+        
         # 添加初始武器
         starting_weapon = self.hero_config.get("starting_weapon", "bullet")
         self.add_weapon(starting_weapon)  # 添加远程武器（手枪）
@@ -80,6 +88,10 @@ class Player(pygame.sprite.Sprite):
         # 加载大招图标（仅对role2角色）
         if self.hero_type == "role2":
             self._load_ultimate_icon()
+        
+        # 加载穿墙技能图标（仅对忍者蛙）
+        if self.hero_type == "ninja_frog":
+            self._load_phase_icon()
         
     def _init_components(self):
         """初始化所有组件"""
@@ -221,22 +233,27 @@ class Player(pygame.sprite.Sprite):
         """处理输入事件"""
         self.movement.handle_event(event)
         
-        # 处理鼠标左键攻击（远程攻击）
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # 左键
+        # 处理U键远程攻击
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_u:
             # 获取屏幕对象（从游戏实例获取）
             if self.game and hasattr(self.game, 'screen'):
                 self.weapon_manager.manual_attack(self.game.screen)
                 
-        # 处理鼠标右键攻击（近战攻击）
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:  # 右键
+        # 处理K键近战攻击
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_k:
             # 获取屏幕对象（从游戏实例获取）
             if self.game and hasattr(self.game, 'screen'):
                 self.weapon_manager.melee_attack(self.game.screen)
         
-        # 处理空格键大招（仅对role2角色）
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+        # 处理小键盘5键大招（仅对role2角色）
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_KP5:
             if self.hero_type == "role2" and not self.ultimate_active:
                 self.activate_ultimate()
+        
+        # 处理穿墙技能（仅对忍者蛙）
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            if self.hero_type == "ninja_frog" and not self.phase_through_walls and self.phase_cooldown_timer <= 0:
+                self.activate_phase_through_walls()
         
     def update(self, dt):
         """更新玩家状态"""
@@ -246,16 +263,25 @@ class Player(pygame.sprite.Sprite):
             if self.ultimate_cooldown_timer < 0:
                 self.ultimate_cooldown_timer = 0
         
+        # 更新穿墙技能CD计时器
+        if self.phase_cooldown_timer > 0:
+            self.phase_cooldown_timer -= dt
+            if self.phase_cooldown_timer < 0:
+                self.phase_cooldown_timer = 0
+        
+        # 更新各组件（始终更新）
+        self.movement.update(dt)
+        self.animation.update(dt)
+        self.health_component.update(dt)
+        
         # 更新大招状态
         if self.ultimate_active:
             self.update_ultimate(dt)
+        # 更新穿墙技能状态
+        elif self.phase_through_walls:
+            self.update_phase_through_walls(dt)
         else:
-            # 更新各组件
-            self.movement.update(dt)
-            self.animation.update(dt)
-            self.health_component.update(dt)
-            
-            # 更新动画状态
+            # 更新动画状态（仅在非大招和非穿墙状态下）
             self._update_animation_state()
         
         # 更新武器（包括投射物移动）
@@ -297,8 +323,13 @@ class Player(pygame.sprite.Sprite):
     def render(self, screen):
         """渲染玩家"""
         if not self.health_component.invincible or self.animation.visible:
-            # 获取当前动画帧
-            current_frame = self.animation.get_current_frame(not self.movement.facing_right)
+            # 如果在穿墙状态，使用特殊动画
+            if hasattr(self, 'phase_through_walls') and self.phase_through_walls and hasattr(self, 'phase_animation_image') and self.phase_animation_image:
+                # 使用穿墙动画图片
+                current_frame = self.phase_animation_image
+            else:
+                # 获取当前动画帧
+                current_frame = self.animation.get_current_frame(not self.movement.facing_right)
             
             if current_frame:
                 # 图像已经是64x64像素，不需要缩放
@@ -524,4 +555,93 @@ class Player(pygame.sprite.Sprite):
             cd_text = f"{self.ultimate_cooldown_timer:.1f}"
             text_surface = font.render(cd_text, True, (255, 255, 255))
             text_rect = text_surface.get_rect(center=(x + icon_size // 2, y + icon_size // 2))
-            screen.blit(text_surface, text_rect) 
+            screen.blit(text_surface, text_rect)
+    
+    def activate_phase_through_walls(self):
+        """激活穿墙技能"""
+        if self.phase_through_walls or self.phase_cooldown_timer > 0:
+            return
+            
+        self.phase_through_walls = True
+        self.phase_timer = 0
+        print("激活穿墙技能！")
+        
+        # 加载穿墙时的特殊动画
+        self._load_phase_animation()
+    
+    def update_phase_through_walls(self, dt):
+        """更新穿墙技能状态"""
+        if not self.phase_through_walls:
+            return
+            
+        self.phase_timer += dt
+        
+        # 检查穿墙技能是否结束
+        if self.phase_timer >= self.phase_duration:
+            self.phase_through_walls = False
+            self.phase_cooldown_timer = self.phase_cooldown  # 开始CD
+            print("穿墙技能结束")
+    
+    def _load_phase_icon(self):
+        """加载穿墙技能图标"""
+        # 用户要求不改变图标，因此不加载特定图片，让render方法使用默认圆形图标
+        self.phase_icon = None
+    
+    def render_phase_cooldown(self, screen):
+        """渲染穿墙技能CD显示"""
+        if self.hero_type != "ninja_frog":
+            return
+            
+        # 计算CD显示位置（右侧中央）
+        icon_size = 48
+        margin = 20
+        x = screen.get_width() - margin - icon_size
+        y = screen.get_height() // 2 - icon_size // 2
+        
+        # 如果没有图标，创建一个默认的蓝色圆形图标
+        if not self.phase_icon:
+            self.phase_icon = pygame.Surface((icon_size, icon_size), pygame.SRCALPHA)
+            pygame.draw.circle(self.phase_icon, (0, 255, 255), (icon_size // 2, icon_size // 2), icon_size // 2)
+        
+        # 创建带黄色边框的图标
+        bordered_icon = pygame.Surface((icon_size + 4, icon_size + 4), pygame.SRCALPHA)
+        # 绘制黄色边框
+        pygame.draw.rect(bordered_icon, (255, 255, 0), (0, 0, icon_size + 4, icon_size + 4), 2)
+        # 绘制图标
+        bordered_icon.blit(self.phase_icon, (2, 2))
+        
+        # 渲染图标
+        screen.blit(bordered_icon, (x - 2, y - 2))
+        
+        # 如果CD中，渲染半透明遮罩和CD时间
+        if self.phase_cooldown_timer > 0:
+            # 创建半透明遮罩
+            overlay = pygame.Surface((icon_size, icon_size), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 128))  # 半透明黑色
+            screen.blit(overlay, (x, y))
+            
+            # 渲染CD时间
+            font = pygame.font.Font(None, 24)
+            cd_text = f"{self.phase_cooldown_timer:.1f}"
+            text_surface = font.render(cd_text, True, (255, 255, 255))
+            text_rect = text_surface.get_rect(center=(x + icon_size // 2, y + icon_size // 2))
+            screen.blit(text_surface, text_rect)
+    
+    def _load_phase_animation(self):
+        """加载穿墙时的特殊动画"""
+        try:
+            from .resource_manager import resource_manager
+            # 加载穿墙时的特殊动画图片
+            phase_image = resource_manager.load_image(
+                "phase_animation", 
+                "images/roles/finder/img_v3_02om_fdf9a462-f814-427b-9cb2-8d43bdad2c6g.png"
+            )
+            # 缩放图片到合适大小
+            if phase_image and phase_image.get_size() != (1, 1):
+                self.phase_animation_image = pygame.transform.scale(phase_image, (64, 64))
+            else:
+                print("穿墙动画图片加载失败")
+                self.phase_animation_image = None
+        except Exception as e:
+            print(f"无法加载穿墙动画图片: {e}")
+            self.phase_animation_image = None 

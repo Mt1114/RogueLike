@@ -33,12 +33,17 @@ class Item(pygame.sprite.Sprite):
                                                          frame_duration=0.1).get_current_frame()
             self.value = 20  # 恢复血量
         elif item_type == 'key':
-            # 使用金币图像作为钥匙的临时图像
-            spritesheet = resource_manager.load_spritesheet('money_spritesheet', 'images/items/money.png')
-            self.image = resource_manager.create_animation('key', spritesheet,
-                                                         frame_width=16, frame_height=16,
-                                                         frame_count=1, row=0,
-                                                         frame_duration=0.1).get_current_frame()
+            # 使用指定的钥匙图标
+            try:
+                spritesheet = resource_manager.load_spritesheet('key_icon', 'images/passives/damage_up_96x96.png')
+                self.image = resource_manager.create_animation('key_icon', spritesheet,
+                                                             frame_width=32, frame_height=32,
+                                                             frame_count=1, row=0,
+                                                             frame_duration=0.1).get_current_frame()
+            except:
+                # 如果加载失败，创建绿色圆圈作为备用
+                self.image = pygame.Surface((16, 16), pygame.SRCALPHA)
+                pygame.draw.circle(self.image, (0, 255, 0), (8, 8), 8)
             self.value = 0  # 钥匙没有数值
         # 杀boss掉落，开宝箱抽奖(武器、被动升级卡片，组合超武升级只能通过宝箱)
         elif item_type == 'chest':
@@ -92,14 +97,34 @@ class Item(pygame.sprite.Sprite):
         elif self.item_type == 'health':
             player.heal(self.value)
         elif self.item_type == 'key':
-            player.keys_collected += 1
-            # 显示获得钥匙的提示
-            if hasattr(player, 'game') and player.game:
-                remaining_keys = player.total_keys_needed - player.keys_collected
+            # 双人模式下，钥匙共用
+            if hasattr(player, 'game') and player.game and hasattr(player.game, 'dual_player_system'):
+                # 双人模式：给两个角色都增加钥匙
+                dual_system = player.game.dual_player_system
+                dual_system.ninja_frog.keys_collected += 1
+                dual_system.mystic_swordsman.keys_collected += 1
+                
+                # 显示获得钥匙的提示（使用任一角色的钥匙数量）
+                remaining_keys = dual_system.ninja_frog.total_keys_needed - dual_system.ninja_frog.keys_collected
                 if remaining_keys > 0:
-                    player.game.show_message(f"获得钥匙！还需要 {remaining_keys} 把钥匙", 3.0)
+                    player.game.show_message(f"You need {remaining_keys} more key(s) to open the escape door!", 3.0)
+                    # 通知钥匙管理器钥匙被拾取，生成新的钥匙
+                    if hasattr(player.game, 'key_manager') and player.game.key_manager:
+                        player.game.key_manager.on_key_collected()
                 else:
-                    player.game.show_message("收集完所有钥匙！现在可以开门了！", 3.0)
+                    player.game.show_message("You have collected all keys! Now you can open the escape door!", 3.0)
+            else:
+                # 单人模式
+                player.keys_collected += 1
+                if hasattr(player, 'game') and player.game:
+                    remaining_keys = player.total_keys_needed - player.keys_collected
+                    if remaining_keys > 0:
+                        player.game.show_message(f"You need {remaining_keys} more key(s) to open the escape door!", 3.0)
+                        # 通知钥匙管理器钥匙被拾取，生成新的钥匙
+                        if hasattr(player.game, 'key_manager') and player.game.key_manager:
+                            player.game.key_manager.on_key_collected()
+                    else:
+                        player.game.show_message("You have collected all keys! Now you can open the escape door!", 3.0)
             
             # 从钥匙管理器中移除钥匙（在标记为已收集之后）
             if hasattr(player, 'game') and player.game and hasattr(player.game, 'key_manager'):
