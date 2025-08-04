@@ -50,20 +50,23 @@ class AnimationComponent(Component):
         """
         from ..resource_manager import resource_manager
         
+        # 获取角色类型作为唯一标识符
+        hero_type = getattr(self.owner, 'hero_type', 'default')
+        
         for anim_name, anim_info in animation_data.items():
             # 检查是否使用单独的帧文件
             if anim_info.get('use_sprite_sheet', True) == False:
                 # 使用单独的帧文件
-                self._load_separate_frames(anim_name, anim_info)
+                self._load_separate_frames(anim_name, anim_info, hero_type)
             else:
                 # 使用精灵表
                 sprite_sheet = resource_manager.load_spritesheet(
-                    f"{anim_name}_sprite", 
+                    f"{hero_type}_{anim_name}_sprite", 
                     anim_info['sprite_sheet']
                 )
                 
                 self.animations[anim_name] = resource_manager.create_animation(
-                    f"{anim_name}_anim",
+                    f"{hero_type}_{anim_name}_anim",
                     sprite_sheet,
                     frame_width=anim_info.get('frame_width', 32),
                     frame_height=anim_info.get('frame_height', 32),
@@ -73,13 +76,14 @@ class AnimationComponent(Component):
                     frame_duration=anim_info.get('frame_duration', 0.1)
                 )
     
-    def _load_separate_frames(self, anim_name, anim_info):
+    def _load_separate_frames(self, anim_name, anim_info, hero_type):
         """
         加载单独的帧文件
         
         Args:
             anim_name: 动画名称
             anim_info: 动画信息
+            hero_type: 角色类型
         """
         from ..resource_manager import resource_manager
         
@@ -95,13 +99,13 @@ class AnimationComponent(Component):
         for i in range(1, frame_count + 1):
             frame_path = os.path.join(base_dir, f"{base_name}_{i:02d}.png")
             try:
-                frame = resource_manager.load_image(f"{anim_name}_frame_{i}", frame_path)
+                frame = resource_manager.load_image(f"{hero_type}_{anim_name}_frame_{i}", frame_path)
                 frames.append(frame)
             except:
                 print(f"无法加载帧文件: {frame_path}")
                 # 如果加载失败，使用第一帧作为替代
                 if i == 1:
-                    frame = resource_manager.load_image(f"{anim_name}_frame_{i}", base_path)
+                    frame = resource_manager.load_image(f"{hero_type}_{anim_name}_frame_{i}", base_path)
                     frames.append(frame)
                 else:
                     frames.append(frames[0])  # 使用第一帧作为替代

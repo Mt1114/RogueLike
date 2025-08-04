@@ -2,7 +2,6 @@ import pygame
 import random
 import math
 from .types import Ghost, Radish, Bat, Slime
-from .types.soul_boss import SoulBoss
 from .spawn_marker import SpawnMarker
 import time
 
@@ -10,7 +9,7 @@ class EnemyManager:
     def __init__(self):
         self.enemies = []
         self.spawn_timer = 0
-        self.spawn_interval = 3.0  # 每3秒生成一个敌人（减慢生成速度）
+        self.spawn_interval = 1.5  # 每1.5秒生成一个敌人（加快生成速度）
         self.difficulty = "normal"  # 默认难度为normal
         self.difficulty_level = 1   # 难度等级，随游戏时间增长
         self.game_time = 0  # 游戏进行时间
@@ -66,8 +65,6 @@ class EnemyManager:
             enemy = Bat(x, y, enemy_type, self.difficulty, self.difficulty_level)
         elif enemy_type == 'slime':
             enemy = Slime(x, y, enemy_type, self.difficulty, self.difficulty_level)
-        elif enemy_type == 'soul_boss':
-            enemy = SoulBoss(x, y, enemy_type, self.difficulty, self.difficulty_level)
             
         # 应用波次属性加成
         if enemy and hasattr(self, 'health_multiplier') and hasattr(self, 'damage_multiplier'):
@@ -85,11 +82,14 @@ class EnemyManager:
             enemy.max_health = health
             
         if enemy:
+            # 设置敌人的game属性，以便访问游戏对象
+            if hasattr(self, 'game'):
+                enemy.game = self.game
             self.enemies.append(enemy)
             
         return enemy
         
-    def update(self, dt, player):
+    def update(self, dt, player, second_player=None):
         self.game_time += dt
         self.spawn_timer += dt
         self.message_timer += dt
@@ -137,31 +137,31 @@ class EnemyManager:
         
         # 更新所有敌人
         for enemy in self.enemies[:]:  # 使用切片创建副本以避免在迭代时修改列表
-            enemy.update(dt, player)
+            enemy.update(dt, player, second_player)
             
     def _update_round_system(self, dt, player):
         """更新波次系统"""
         game_time_minutes = self.game_time / 60.0
         
-        # 第一波：0:00-0:30，5秒生成一个，四个点位总共24个
+        # 第一波：0:00-0:30，2.5秒生成一个，四个点位总共24个
         if game_time_minutes >= 0 and game_time_minutes < 0.5 and self.current_round == 0:
-            self._start_round(1, "Round 1", 5.0, 1.0, 1.0, 24)
+            self._start_round(1, "第1波", 2.5, 1.0, 1.0, 24)
             
         # 第一波结束，进入休息期：0:30-1:30
         elif game_time_minutes >= 0.5 and game_time_minutes < 1.5 and self.current_round == 1:
             self._end_round()
             
-        # 第二波：1:30-3:00，3秒生成一个，四个点位总共40个
+        # 第二波：1:30-3:00，1.5秒生成一个，四个点位总共40个
         elif game_time_minutes >= 1.5 and game_time_minutes < 3.0 and self.current_round == 0:
-            self._start_round(2, "Round 2", 3.0, 1.2, 1.2, 40)  # 生成速度加快，属性提升20%
+            self._start_round(2, "第2波", 1.5, 1.2, 1.2, 40)  # 生成速度加快，属性提升20%
             
         # 第二波结束，进入休息期：3:00-4:00
         elif game_time_minutes >= 3.0 and game_time_minutes < 4.0 and self.current_round == 2:
             self._end_round()
             
-        # 第三波：4:00-5:00，2秒生成一个，四个点位总共120个
+        # 第三波：4:00-5:00，1秒生成一个，四个点位总共120个
         elif game_time_minutes >= 4.0 and game_time_minutes < 5.0 and self.current_round == 0:
-            self._start_round(3, "Round 3", 2.0, 1.0, 1.5, 120)  # 生成速度加快，攻击力提升50%
+            self._start_round(3, "第3波", 1.0, 1.0, 1.5, 120)  # 生成速度加快，攻击力提升50%
             
         # 游戏结束：5:00后
         elif game_time_minutes >= 5.0 and self.current_round != -1:
@@ -196,12 +196,12 @@ class EnemyManager:
         """游戏结束"""
         self.current_round = -1
         self.round_messages.append({
-            'text': "You are safe!!!!",
+            'text': "你安全了！",
             'timer': 0,
             'duration': 5.0,
             'color': (0, 255, 0)  # 绿色
         })
-        print("游戏结束！You are safe!!!!")
+        print("游戏结束！你安全了！")
         
     def _render_round_messages(self, screen):
         """渲染波次消息"""
@@ -215,7 +215,7 @@ class EnemyManager:
                 continue
                 
             # 渲染消息
-            font = pygame.font.Font(None, 48)
+            font = pygame.font.SysFont('simHei', 48)
             text_surface = font.render(message['text'], True, message['color'])
             
             # 计算消息位置（屏幕中央）
@@ -270,44 +270,64 @@ class EnemyManager:
                     # 性能优化：减少光照检测频率
                     # 只在敌人移动或光照系统变化时检测
                     if (not hasattr(enemy, '_last_light_check') or
-                        abs(enemy.rect.x - getattr(enemy, '_last_light_x', 0)) > 10 or
-                        abs(enemy.rect.y - getattr(enemy, '_last_light_y', 0)) > 10):
+                        abs(enemy.rect.centerx - getattr(enemy, '_last_light_x', 0)) > 10 or
+                        abs(enemy.rect.centery - getattr(enemy, '_last_light_y', 0)) > 10):
                         
-                        enemy_world_x = enemy.rect.x
-                        enemy_world_y = enemy.rect.y
+                        # 使用敌人的实际世界坐标进行光照检测
+                        enemy_world_x = enemy.rect.centerx
+                        enemy_world_y = enemy.rect.centery
                         enemy_screen_x = screen_center_x + (enemy_world_x - camera_x)
                         enemy_screen_y = screen_center_y + (enemy_world_y - camera_y)
                         
                         # 检查敌人是否在光照范围内
+                        # 注意：光照系统使用的是屏幕坐标，所以需要转换
                         current_in_light = lighting_manager.is_in_light(enemy_screen_x, enemy_screen_y)
                         
                         # 调试信息（可选）
-                        if hasattr(self, 'debug_vision') and self.debug_vision:
-                            print(f"敌人 {enemy.type} 在光照内: {current_in_light}, 曾经被看到: {enemy.has_been_seen}")
+                        # print(f"敌人 {enemy.type} 位置: ({enemy_world_x}, {enemy_world_y})")
+                        # print(f"敌人屏幕坐标: ({enemy_screen_x}, {enemy_screen_y})")
+                        # print(f"在光照内: {current_in_light}, 曾经被看到: {enemy.has_been_seen}")
+                        # print(f"光照系统启用: {lighting_manager.is_enabled()}")
+                        # print("---")
                         
-                        if current_in_light:
-                            # 在光照内时，标记为已看到，显示怪物和血条
-                            enemy.has_been_seen = True
-                            enemy.render(screen, screen_x, screen_y, show_health_bar=True)
-                        elif enemy.has_been_seen:
-                            # 曾经被看到过但当前不在光照内，显示怪物和血条
-                            enemy.render(screen, screen_x, screen_y, show_health_bar=True)
-                        # 如果从未被看到过且当前不在光照内，则不渲染
+                        # 临时修复：强制显示血条，直到光照系统问题解决
+                        enemy.has_been_seen = True
+                        enemy.render(screen, screen_x, screen_y, show_health_bar=True)
+                        
+                        # 原始逻辑（暂时注释掉）
+                        # if current_in_light:
+                        #     # 在光照内时，标记为已看到，显示怪物和血条
+                        #     enemy.has_been_seen = True
+                        #     enemy.render(screen, screen_x, screen_y, show_health_bar=True)
+                        # elif enemy.has_been_seen:
+                        #     # 曾经被看到过但当前不在光照内，显示怪物和血条
+                        #     enemy.render(screen, screen_x, screen_y, show_health_bar=True)
+                        # else:
+                        #     # 如果从未被看到过且当前不在光照内，仍然渲染敌人（但可能半透明）
+                        #     # 这样可以避免"看不见但能攻击"的问题
+                        #     enemy.render(screen, screen_x, screen_y, show_health_bar=False)
                         
                         # 记录最后检测位置和光照状态
                         enemy._last_light_check = time.time()
-                        enemy._last_light_x = enemy.rect.x
-                        enemy._last_light_y = enemy.rect.y
+                        enemy._last_light_x = enemy.rect.centerx
+                        enemy._last_light_y = enemy.rect.centery
                         enemy._last_in_light = current_in_light
                     else:
-                        # 使用上次的光照状态
-                        if enemy._last_in_light:
-                            # 上次在光照内，显示血条
-                            enemy.render(screen, screen_x, screen_y, show_health_bar=True)
-                        elif enemy.has_been_seen:
-                            # 曾经被看到过但当前不在光照内，显示怪物和血条
-                            enemy.render(screen, screen_x, screen_y, show_health_bar=True)
-                        # 如果从未被看到过且当前不在光照内，则不渲染
+                        # 临时修复：强制显示血条
+                        enemy.has_been_seen = True
+                        enemy.render(screen, screen_x, screen_y, show_health_bar=True)
+                        
+                        # 原始逻辑（暂时注释掉）
+                        # if enemy._last_in_light:
+                        #     # 上次在光照内，显示血条
+                        #     enemy.render(screen, screen_x, screen_y, show_health_bar=True)
+                        # elif enemy.has_been_seen:
+                        #     # 曾经被看到过但当前不在光照内，显示怪物和血条
+                        #     enemy.render(screen, screen_x, screen_y, show_health_bar=True)
+                        # else:
+                        #     # 如果从未被看到过且当前不在光照内，仍然渲染敌人（但可能半透明）
+                        #     # 这样可以避免"看不见但能攻击"的问题
+                        #     enemy.render(screen, screen_x, screen_y, show_health_bar=False)
                 else:
                     # 如果没有光照系统或光照系统被禁用，正常渲染（包括血条）
                     enemy.render(screen, screen_x, screen_y, show_health_bar=True)
@@ -404,14 +424,23 @@ class EnemyManager:
         """更新敌人子弹"""
         for projectile in self.enemy_projectiles[:]:  # 使用切片避免在迭代时修改
             # 更新子弹位置
-            projectile.world_x += projectile.direction_x * projectile.speed * dt
-            projectile.world_y += projectile.direction_y * projectile.speed * dt
+            # 使用正确的属性名（x, y 而不是 world_x, world_y）
+            if hasattr(projectile, 'world_x'):
+                projectile.world_x += projectile.direction_x * projectile.speed * dt
+                projectile.world_y += projectile.direction_y * projectile.speed * dt
+            elif hasattr(projectile, 'x'):
+                projectile.x += projectile.direction_x * projectile.speed * dt
+                projectile.y += projectile.direction_y * projectile.speed * dt
             
             # 检查子弹是否超出地图边界
             if self.map_boundaries:
                 min_x, min_y, max_x, max_y = self.map_boundaries
-                if (projectile.world_x < min_x or projectile.world_x > max_x or
-                    projectile.world_y < min_y or projectile.world_y > max_y):
+                # 使用正确的属性名
+                projectile_x = getattr(projectile, 'world_x', getattr(projectile, 'x', 0))
+                projectile_y = getattr(projectile, 'world_y', getattr(projectile, 'y', 0))
+                
+                if (projectile_x < min_x or projectile_x > max_x or
+                    projectile_y < min_y or projectile_y > max_y):
                     self.enemy_projectiles.remove(projectile)
                     continue
             
@@ -425,8 +454,12 @@ class EnemyManager:
         """渲染敌人子弹"""
         for projectile in self.enemy_projectiles:
             # 计算子弹在屏幕上的位置
-            screen_x = screen_center_x + (projectile.world_x - camera_x)
-            screen_y = screen_center_y + (projectile.world_y - camera_y)
+            # 使用正确的属性名（x, y 而不是 world_x, world_y）
+            projectile_x = getattr(projectile, 'world_x', getattr(projectile, 'x', 0))
+            projectile_y = getattr(projectile, 'world_y', getattr(projectile, 'y', 0))
+            
+            screen_x = screen_center_x + (projectile_x - camera_x)
+            screen_y = screen_center_y + (projectile_y - camera_y)
             
             # 渲染子弹
             if hasattr(projectile, 'image'):

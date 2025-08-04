@@ -64,9 +64,9 @@ class Slime(Enemy):
             )
         }
         
-    def update(self, dt, player):
+    def update(self, dt, player, second_player=None):
         # 首先调用父类更新方法
-        super().update(dt, player)
+        super().update(dt, player, second_player)
         
         # 更新冷却时间
         if self.attack_cooldown > 0:
@@ -94,30 +94,34 @@ class Slime(Enemy):
                       (projectile_screen_x - projectile.image.get_width()//2, 
                        projectile_screen_y - projectile.image.get_height()//2))
         
-    def attack(self, player, dt):
+    def attack(self, player, dt, second_player=None):
         """
         实现基类的抽象方法，远程攻击逻辑
         
         Args:
             player: 攻击目标（玩家）
             dt: 时间增量
+            second_player: 第二个玩家（可选）
             
         Returns:
             bool: 攻击是否命中
         """
+        # 选择最近的目标
+        target_player = self._get_nearest_player(player, second_player)
+        
         # 更新所有投射物
         hit = False
         for projectile in list(self.projectiles):
             # 检查投射物是否击中玩家
-            if self._check_projectile_hit(projectile, player):
+            if self._check_projectile_hit(projectile, target_player):
                 projectile.kill()
                 hit = True
                 
         # 如果冷却完成，检查是否可以进行新的攻击
         if self.attack_cooldown <= 0:
-            # 计算到玩家的距离
-            dx = player.world_x - self.rect.centerx
-            dy = player.world_y - self.rect.centery
+            # 计算到目标玩家的距离
+            dx = target_player.world_x - self.rect.centerx
+            dy = target_player.world_y - self.rect.centery
             distance = math.sqrt(dx * dx + dy * dy)
             
             # 如果在攻击范围内但不是太近
@@ -128,6 +132,7 @@ class Slime(Enemy):
                     direction_y = dy / distance
                     
                     # 发射投射物
+                    print(f"Slime 发射投射物，目标: {target_player.hero_type}")
                     self._fire_projectile(direction_x, direction_y)
                     
                     # 重置攻击冷却
@@ -153,6 +158,13 @@ class Slime(Enemy):
             self.projectile_speed
         )
         self.projectiles.add(projectile)
+        
+        # 同时添加到敌人管理器的投射物列表中
+        if hasattr(self, 'game') and hasattr(self.game, 'enemy_manager'):
+            self.game.enemy_manager.enemy_projectiles.append(projectile)
+            print(f"投射物已添加到enemy_projectiles，当前数量: {len(self.game.enemy_manager.enemy_projectiles)}")
+        else:
+            print(f"无法添加投射物到enemy_projectiles，game或enemy_manager不存在")
         
     def _check_projectile_hit(self, projectile, player):
         """

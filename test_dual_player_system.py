@@ -103,8 +103,7 @@ def main():
     game.kill_num = 0
     game.level = 1
     
-    # Boss相关状态
-    game.boss_spawned = False
+
     
     # 设置相机位置为两个角色的中心位置
     center_x, center_y = game.dual_player_system.get_center_position()

@@ -559,7 +559,7 @@ class Player(pygame.sprite.Sprite):
             screen.blit(overlay, (x, y))
             
             # 渲染CD时间
-            font = pygame.font.Font(None, 24)
+            font = pygame.font.SysFont('simHei', 24)
             cd_text = f"{self.ultimate_cooldown_timer:.1f}"
             text_surface = font.render(cd_text, True, (255, 255, 255))
             text_rect = text_surface.get_rect(center=(x + icon_size // 2, y + icon_size // 2))
@@ -629,7 +629,7 @@ class Player(pygame.sprite.Sprite):
             screen.blit(overlay, (x, y))
             
             # 渲染CD时间
-            font = pygame.font.Font(None, 24)
+            font = pygame.font.SysFont('simHei', 24)
             cd_text = f"{self.phase_cooldown_timer:.1f}"
             text_surface = font.render(cd_text, True, (255, 255, 255))
             text_rect = text_surface.get_rect(center=(x + icon_size // 2, y + icon_size // 2))

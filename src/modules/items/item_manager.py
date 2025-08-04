@@ -13,10 +13,7 @@ class ItemManager:
         # 必定掉落经验球
         self.items.append(Item(x, y, 'exp'))
 
-        # 如果是boss，必定掉落宝箱
-        if enemy_type == 'bat':
-            self.items.append(Item(x, y, 'chest'))
-            return
+
         
         # 如果没有提供player参数，使用基础掉落概率
         luck_multiplier = player.luck if player else 1.0

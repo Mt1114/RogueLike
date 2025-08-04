@@ -46,7 +46,7 @@ DEFAULT_HERO_CONFIG = {
 
 # 新的忍者蛙配置（使用角色图片）
 NINJA_FROG_NEW_CONFIG = {
-    "name": "忍者蛙",
+    "name": "光源小子",
     "description": "平衡型英雄，适合初学者",
     "animations": {
         "idle": {
@@ -126,42 +126,70 @@ NINJA_FROG_NEW_CONFIG = {
     "starting_weapon": "bullet",
     "unlock_condition": None  # 默认解锁
 }
-
+# ROLE2_CONFIG = {
+#     "name": "神秘剑客",
+#     "description": "平衡型英雄，适合初学者",
+#     "animations": {
+#         "idle": {
+#             "sprite_sheet": "images/roles/role2/normal.png",
+#             "frame_count": 4,
+#             "frame_duration": 0.25,
+#             "frame_width": 80,
+#             "frame_height": 80
+#         },
+#         "run": {
+#             "sprite_sheet": "images/roles/role2/run.png",
+#             "frame_count": 4,
+#             "frame_duration": 0.2,
+#             "frame_width": 80,
+#             "frame_height": 80
+#         },
+#         "hurt": {
+#             "sprite_sheet": "images/roles/role2/hurt.png",
+#             "frame_count": 4,
+#             "frame_duration": 0.2,
+#             "frame_width": 80,
+#             "frame_height": 80
+#         }
+#     },
+#     "base_stats": {
+#         "max_health": 100,
+#         "speed": 200,
+#         "defense": 0,
+#         "health_regen": 0,
+#         "exp_multiplier": 1.0,
+#         "pickup_range": 50,
+#         "attack_power": 1.0,
+#         "luck": 1.0
+#     },
+#     "starting_weapon": "bullet",
+#     "unlock_condition": None  # 默认解锁
+# }
 # 新角色配置（role2）
 ROLE2_CONFIG = {
-    "name": "神秘剑士",
-    "description": "神秘的剑士，拥有强大的战斗能力",
+    "name": "神秘剑客",
+    "description": "平衡型英雄，适合初学者",
     "animations": {
         "idle": {
-            "sprite_sheet": "images/roles/role2/normal_frames/frame_01.png",
+            "sprite_sheet": "images/roles/role2/normal.png",
             "frame_count": 4,
-            "frame_duration": 0.2,
-            "frame_width": 96,
-            "frame_height": 96,
-            "use_sprite_sheet": False  # 使用单独的帧文件
+            "frame_duration": 0.25,
+            "frame_width": 80,
+            "frame_height": 80
         },
         "run": {
-            "sprite_sheet": "images/roles/role2/run_frames/frame_01.png",
+            "sprite_sheet": "images/roles/role2/run.png",
             "frame_count": 4,
-            "frame_duration": 0.15,
-            "frame_width": 96,
-            "frame_height": 96,
-            "use_sprite_sheet": False  # 使用单独的帧文件
+            "frame_duration": 0.2,
+            "frame_width": 80,
+            "frame_height": 80
         },
         "hurt": {
-            "sprite_sheet": "images/roles/role2/attacked.png",
-            "frame_count": 1,
-            "frame_duration": 0.2,
-            "frame_width": 96,
-            "frame_height": 96
-        },
-        "ultimate": {
-            "sprite_sheet": "images/roles/role2/attack_frames/frame_01.png",
+            "sprite_sheet": "images/roles/role2/hurt.png",
             "frame_count": 4,
-            "frame_duration": 0.25,  # 1秒内播放完4帧
-            "frame_width": 96,
-            "frame_height": 96,
-            "use_sprite_sheet": False  # 使用单独的帧文件
+            "frame_duration": 0.2,
+            "frame_width": 80,
+            "frame_height": 80
         }
     },
     "base_stats": {

@@ -13,7 +13,7 @@ VISION_CONFIG = {
         "radius": 640,        # 扇形视野半径（像素）- 覆盖半个窗口宽度
         "angle": 30,          # 扇形视野角度（度）
         "color": (255, 255, 255, 128),  # 扇形区域透明度 (R, G, B, A)
-        "ray_count": 24,      # 光线数量（影响扇形的平滑度）
+        "ray_count": 64,      # 光线数量（影响扇形的平滑度）
     },
     
     # 圆形光源配置
@@ -44,7 +44,7 @@ VISION_CONFIG = {
         "sector_radius_step": 50,     # 扇形视野半径调整步长
         "sector_angle_step": 15,      # 扇形视野角度调整步长（度）
         "circle_radius_step": 20,     # 圆形区域半径调整步长
-        "darkness_step": 20,          # 黑暗程度调整步长
+        "darkness_step": 64,          # 黑暗程度调整步长
     },
     
     # 限制范围

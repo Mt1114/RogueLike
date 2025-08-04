@@ -7,8 +7,8 @@ class UI:
     def __init__(self, screen):
         self.screen = screen
         pygame.font.init()
-        self.font = FontManager.get_font(24)
-        self.small_font = FontManager.get_font(24)  # 较小的字体用于时间显示
+        self.font = pygame.font.SysFont('simHei', 24)
+        self.small_font = pygame.font.SysFont('simHei', 20)  # 较小的字体用于时间显示
         
         # UI颜色
         self.exp_bar_color = (0, 255, 255)    # 青色
@@ -36,7 +36,7 @@ class UI:
         self.upgrade_manager = UpgradeManager()
         
         # 武器模式显示相关
-        self.weapon_mode_font = FontManager.get_font(20)
+        self.weapon_mode_font = pygame.font.SysFont('simHei', 20)
         
     def _render_ammo_info(self, player):
         """渲染弹药信息
@@ -59,7 +59,7 @@ class UI:
         if not has_ranged_weapon:
             return
         
-        ammo_text = f"{total_ammo}"
+        ammo_text = f"弹药: {total_ammo}"
         
         # 渲染弹药文本
         ammo_surface = self.font.render(ammo_text, True, (255, 255, 255))
@@ -100,7 +100,7 @@ class UI:
         if not hasattr(player, 'keys_collected') or not hasattr(player, 'total_keys_needed'):
             return
             
-        key_text = f"{player.keys_collected}/{player.total_keys_needed}"
+        key_text = f"钥匙: {player.keys_collected}/{player.total_keys_needed}"
         
         # 渲染钥匙文本
         key_surface = self.font.render(key_text, True, (255, 255, 0))  # 黄色
@@ -134,7 +134,7 @@ class UI:
         if not hasattr(player, 'is_ranged_mode'):
             return
             
-        # 确定当前模式文本
+        # 确定当前模式文本（中文）
         if player.is_ranged_mode:
             mode_text = "远程模式"
             mode_color = (0, 255, 0)  # 绿色
@@ -175,8 +175,8 @@ class UI:
         pygame.draw.rect(self.screen, self.exp_bar_color,
                         (0, 0, exp_width, self.bar_height))
         
-        # 渲染等级文本（嵌入在经验条中间）
-        level_text = f"Lv.{player.level}"
+        # 渲染等级文本（嵌入在经验条中间，中文）
+        level_text = f"等级 {player.level}"
         
         # 创建文本对象以获取尺寸
         text = self.font.render(level_text, True, self.text_color)

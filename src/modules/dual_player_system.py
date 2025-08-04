@@ -39,8 +39,8 @@ class DualPlayerSystem:
         self.light_mode = 1  # 当前光照类型：1-默认，2-战斗，3-探索，4-低能耗
         self.light_modes = {
             1: {"name": "default", "radius": 640, "angle": 60, "circle_radius": 160, "energy_drain": -1},
-            2: {"name": "battle", "radius": 640, "angle": 60, "circle_radius": 165, "energy_drain": -1}, 
-            3: {"name": "explore", "radius": 1000, "angle": 30, "circle_radius": 85, "energy_drain": -1},
+            2: {"name": "battle", "radius": 640, "angle": 180, "circle_radius": 160, "energy_drain": -2}, 
+            3: {"name": "explore", "radius": 1000, "angle": 30, "circle_radius": 85, "energy_drain": -2},
             4: {"name": "low_energy", "radius": 80, "angle": 30, "circle_radius": 80, "energy_drain": 4}
         }
         
@@ -583,33 +583,33 @@ class DualPlayerSystem:
             return
         
         # 计算显示位置（左侧中央）
-        icon_size = 48
-        margin = 20
+        icon_size = 36
+        margin = 80
         x = margin
         y = screen.get_height() // 2 - icon_size // 2 + 100  # 稍微偏下，避免与技能图标重叠
         
-        # 加载子弹图标
-        try:
-            bullet_icon = pygame.image.load("assets/images/weapons/bullet_8x8.png").convert_alpha()
-            bullet_icon = pygame.transform.scale(bullet_icon, (icon_size, icon_size))
-        except:
-            # 如果加载失败，创建一个默认的子弹图标
-            bullet_icon = pygame.Surface((icon_size, icon_size), pygame.SRCALPHA)
-            pygame.draw.circle(bullet_icon, (255, 255, 0), (icon_size // 2, icon_size // 2), icon_size // 2)
+        # # 加载子弹图标
+        # try:
+        #     bullet_icon = pygame.image.load("images/weapons/bullet_8x8.png").convert_alpha()
+        #     bullet_icon = pygame.transform.scale(bullet_icon, (icon_size, icon_size))
+        # except:
+        #     # 如果加载失败，创建一个默认的子弹图标
+        #     bullet_icon = pygame.Surface((icon_size, icon_size), pygame.SRCALPHA)
+        #     pygame.draw.circle(bullet_icon, (255, 255, 0), (icon_size // 2, icon_size // 2), icon_size // 2)
         
-        # 创建带红色边框的图标
-        bordered_icon = pygame.Surface((icon_size + 4, icon_size + 4), pygame.SRCALPHA)
-        # 绘制红色边框
-        pygame.draw.rect(bordered_icon, (255, 0, 0), (0, 0, icon_size + 4, icon_size + 4), 2)
-        # 绘制图标
-        bordered_icon.blit(bullet_icon, (2, 2))
+        # # 创建带红色边框的图标
+        # bordered_icon = pygame.Surface((icon_size + 4, icon_size + 4), pygame.SRCALPHA)
+        # # 绘制红色边框
+        # pygame.draw.rect(bordered_icon, (255, 0, 0), (0, 0, icon_size + 4, icon_size + 4), 2)
+        # # 绘制图标
+        # bordered_icon.blit(bullet_icon, (2, 2))
         
-        # 渲染图标
-        screen.blit(bordered_icon, (x - 2, y - 2))
+        # # 渲染图标
+        # screen.blit(bordered_icon, (x - 2, y - 2))
         
-        # 渲染子弹数量
-        font = pygame.font.Font(None, 24)
-        ammo_text = f"{bullet_weapon.ammo}/{bullet_weapon.max_ammo}"
+        # 渲染子弹数量（中文）
+        font = pygame.font.SysFont('simHei', 20)
+        ammo_text = f"子弹: {bullet_weapon.ammo}/{bullet_weapon.max_ammo}"
         text_surface = font.render(ammo_text, True, (255, 255, 255))
         text_rect = text_surface.get_rect(center=(x + icon_size // 2, y + icon_size + 15))
         screen.blit(text_surface, text_rect)
@@ -618,10 +618,10 @@ class DualPlayerSystem:
         """渲染当前光照类型显示"""
         current_mode = self.light_modes[self.light_mode]
         
-        # 显示位置（屏幕右上角）
+        # 显示位置（右下方，角色血条上面）
         margin = 20
         x = screen.get_width() - 200
-        y = margin
+        y = screen.get_height() - 120  # 距离底部120像素
         
         # 创建背景
         bg_surface = pygame.Surface((180, 60), pygame.SRCALPHA)
@@ -630,17 +630,24 @@ class DualPlayerSystem:
         # 渲染背景
         screen.blit(bg_surface, (x, y))
         
-        # 渲染文本
-        font = pygame.font.Font(None, 20)
+        # 渲染文本（使用中文字体）
+        font = pygame.font.SysFont('simHei', 16)
         
-        # 模式名称
-        mode_text = f"mode:{current_mode['name']}"
+        # 模式名称（中文）
+        mode_name_map = {
+            "default": "默认模式",
+            "battle": "战斗模式", 
+            "explore": "探索模式",
+            "low_energy": "节能模式"
+        }
+        mode_name = mode_name_map.get(current_mode['name'], current_mode['name'])
+        mode_text = f"模式: {mode_name}"
         mode_surface = font.render(mode_text, True, (255, 255, 255))
         mode_rect = mode_surface.get_rect(topleft=(x + 10, y + 10))
         screen.blit(mode_surface, mode_rect)
         
-        # 参数信息
-        param_text = f"radius: {current_mode['radius']}px, angle: {current_mode['angle']}°"
+        # 参数信息（中文）
+        param_text = f"范围: {current_mode['radius']}px, 角度: {current_mode['angle']}°"
         param_surface = font.render(param_text, True, (200, 200, 200))
         param_rect = param_surface.get_rect(topleft=(x + 10, y + 35))
         screen.blit(param_surface, param_rect)
@@ -659,11 +666,11 @@ class DualPlayerSystem:
         # 渲染背景
         screen.blit(bg_surface, (x, y))
         
-        # 渲染文本
-        font = pygame.font.Font(None, 24)
+        # 渲染文本（使用中文字体）
+        font = pygame.font.SysFont('simHei', 20)
         
-        # 电量标题
-        energy_title = "ENERGY"
+        # 电量标题（中文）
+        energy_title = "电量"
         title_surface = font.render(energy_title, True, (255, 255, 255))
         title_rect = title_surface.get_rect(center=(x + 50, y + 20))
         screen.blit(title_surface, title_rect)
@@ -700,11 +707,11 @@ class DualPlayerSystem:
         # 渲染背景
         screen.blit(bg_surface, (x, y))
         
-        # 渲染文本
-        font = pygame.font.Font(None, 20)
+        # 渲染文本（使用中文字体）
+        font = pygame.font.SysFont('simHei', 16)
         
-        # 传送道具标题
-        teleport_title = "TELEPORT"
+        # 传送道具标题（中文）
+        teleport_title = "传送道具"
         title_surface = font.render(teleport_title, True, (255, 255, 255))
         title_rect = title_surface.get_rect(center=(x + 50, y + 15))
         screen.blit(title_surface, title_rect)

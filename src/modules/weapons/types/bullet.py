@@ -36,7 +36,7 @@ class BulletProjectile(pygame.sprite.Sprite):
         self.age = 0.0
         
         # 距离限制（640像素）
-        self.max_distance = 640.0
+        self.max_distance = 480.0
         self.distance_traveled = 0.0
         
         # 碰撞相关
@@ -44,6 +44,9 @@ class BulletProjectile(pygame.sprite.Sprite):
         self.max_penetration = stats.get(WeaponStatType.PENETRATION, 1)
         self.can_penetrate = self.max_penetration > 1
         self.penetration_damage_reduction = 0.3  # 穿透后伤害减少30%
+        
+        # 增加碰撞体积
+        self.collision_radius = 12  # 碰撞半径（像素）
         
         # 旋转图像以匹配飞行方向
         self._update_image_rotation()

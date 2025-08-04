@@ -13,11 +13,11 @@ class Minimap:
         self.map_width = map_width
         self.map_height = map_height
         
-        # 小地图尺寸和位置
-        self.minimap_width = 200
-        self.minimap_height = 150
-        self.minimap_x = screen_width - self.minimap_width - 20  # 右上角
-        self.minimap_y = 20
+        # 小地图尺寸和位置（调整以避免遮挡）
+        self.minimap_width = 180  # 稍微增加宽度以容纳图例
+        self.minimap_height = 120  # 保持高度
+        self.minimap_x = screen_width - self.minimap_width - 60  # 右上角，增加更多右边距
+        self.minimap_y = 50  # 距离顶部50像素，避免与其他UI重叠
         
         # 缩放比例
         self.scale_x = self.minimap_width / map_width
@@ -191,58 +191,65 @@ class Minimap:
         screen.blit(self.surface, (self.minimap_x, self.minimap_y))
         
         # 绘制小地图标题
-        font = pygame.font.Font(None, 24)
-        title_text = font.render("map", True, (255, 255, 255))
+        font = pygame.font.SysFont('simHei', 24)
+        title_text = font.render("小地图", True, (255, 255, 255))
         title_rect = title_text.get_rect()
         title_rect.centerx = self.minimap_x + self.minimap_width // 2
         title_rect.y = self.minimap_y - 25
         screen.blit(title_text, title_rect)
         
-        # 绘制图例
+        # 绘制图例（优化布局，避免遮挡）
         legend_y = self.minimap_y + self.minimap_height + 5
         legend_x = self.minimap_x
         
         # 使用更小的字体
-        legend_font = pygame.font.Font(None, 16)  # 从24改为16
+        legend_font = pygame.font.SysFont('simHei', 14)  # 进一步减小字体
         
+        # 第一行图例
         # 玩家图例
-        pygame.draw.circle(screen, self.player_color, (legend_x + 10, legend_y + 8), 3)
-        player_text = legend_font.render("ninja", True, (255, 255, 255))
-        screen.blit(player_text, (legend_x + 20, legend_y))
+        pygame.draw.circle(screen, self.player_color, (legend_x +7, legend_y + 5), 2)
+        player_text = legend_font.render("忍者", True, (255, 255, 255))
+        screen.blit(player_text, (legend_x + 15, legend_y))
         
         # 神秘剑客图例
         pygame.draw.polygon(screen, self.mystic_color, [
-            (legend_x + 60, legend_y + 5),
-            (legend_x + 55, legend_y + 11),
-            (legend_x + 65, legend_y + 11)
+            (legend_x + 47, legend_y + 3),
+            (legend_x + 44, legend_y + 7),
+            (legend_x + 50, legend_y + 7)
         ])
-        mystic_text = legend_font.render("mystic", True, (255, 255, 255))
-        screen.blit(mystic_text, (legend_x + 70, legend_y))
+        mystic_text = legend_font.render("剑客", True, (255, 255, 255))
+        screen.blit(mystic_text, (legend_x + 55, legend_y))
         
         # 钥匙图例
-        pygame.draw.circle(screen, self.key_color, (legend_x + 60, legend_y + 8), 3)
-        key_text = legend_font.render("key", True, (255, 255, 255))
-        screen.blit(key_text, (legend_x + 70, legend_y))
+        pygame.draw.circle(screen, self.key_color, (legend_x + 87, legend_y + 5), 2)
+        key_text = legend_font.render("钥匙", True, (255, 255, 255))
+        screen.blit(key_text, (legend_x + 95, legend_y))
         
         # 逃生门图例
-        pygame.draw.circle(screen, self.door_color, (legend_x + 110, legend_y + 8), 3)
-        door_text = legend_font.render("door", True, (255, 255, 255))
-        screen.blit(door_text, (legend_x + 120, legend_y))
+        pygame.draw.circle(screen, self.door_color, (legend_x + 127, legend_y + 5), 2)
+        door_text = legend_font.render("出口", True, (255, 255, 255))
+        screen.blit(door_text, (legend_x + 135, legend_y))
         
+        # 第二行图例
+        legend_y2 = legend_y + 12
         # 弹药补给图例
-        pygame.draw.circle(screen, self.ammo_supply_color, (legend_x + 160, legend_y + 8), 3)
-        ammo_text = legend_font.render("ammo", True, (255, 255, 255))
-        screen.blit(ammo_text, (legend_x + 170, legend_y))
+        pygame.draw.circle(screen, self.ammo_supply_color, (legend_x+7, legend_y2 + 5), 2)
+        ammo_text = legend_font.render("弹药", True, (255, 255, 255))
+        screen.blit(ammo_text, (legend_x + 15, legend_y2))
+        
+        # 生命补给图例
+        pygame.draw.circle(screen, self.health_supply_color, (legend_x + 47, legend_y2 + 5), 2)
+        health_text = legend_font.render("生命", True, (255, 255, 255))
+        screen.blit(health_text, (legend_x + 55, legend_y2))
         
         # 传送道具图例
-        pygame.draw.circle(screen, self.teleport_color, (legend_x + 210, legend_y + 8), 3)
-        teleport_text = legend_font.render("teleport", True, (255, 255, 255))
-        screen.blit(teleport_text, (legend_x + 220, legend_y))
+        pygame.draw.circle(screen, self.teleport_color, (legend_x + 87, legend_y2 + 5), 2)
+        teleport_text = legend_font.render("传送", True, (255, 255, 255))
+        screen.blit(teleport_text, (legend_x + 95, legend_y2))
         
-        # 墙壁图例（第二行）
-        legend_y2 = legend_y + 20
-        pygame.draw.rect(screen, self.wall_color, (legend_x + 10, legend_y2 + 5, 6, 6))
-        wall_text = legend_font.render("wall", True, (255, 255, 255))
-        screen.blit(wall_text, (legend_x + 20, legend_y2))
+        # 墙壁图例
+        pygame.draw.rect(screen, self.wall_color, (legend_x + 127, legend_y2 + 4, 4, 4))
+        wall_text = legend_font.render("墙壁", True, (255, 255, 255))
+        screen.blit(wall_text, (legend_x + 135, legend_y2))
         
  

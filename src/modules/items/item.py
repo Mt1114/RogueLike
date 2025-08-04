@@ -45,7 +45,7 @@ class Item(pygame.sprite.Sprite):
                 self.image = pygame.Surface((16, 16), pygame.SRCALPHA)
                 pygame.draw.circle(self.image, (0, 255, 0), (8, 8), 8)
             self.value = 0  # 钥匙没有数值
-        # 杀boss掉落，开宝箱抽奖(武器、被动升级卡片，组合超武升级只能通过宝箱)
+
         elif item_type == 'chest':
             spritesheet = resource_manager.load_spritesheet('chest_spritesheet', 'images/items/chests_bundled_16x16.png')
             self.image = resource_manager.create_animation('chest', spritesheet,
@@ -107,24 +107,24 @@ class Item(pygame.sprite.Sprite):
                 # 显示获得钥匙的提示（使用任一角色的钥匙数量）
                 remaining_keys = dual_system.ninja_frog.total_keys_needed - dual_system.ninja_frog.keys_collected
                 if remaining_keys > 0:
-                    player.game.show_message(f"You need {remaining_keys} more key(s) to open the escape door!", 3.0)
+                    player.game.show_message(f"还需要 {remaining_keys} 把钥匙才能打开逃生门！", 3.0)
                     # 通知钥匙管理器钥匙被拾取，生成新的钥匙
                     if hasattr(player.game, 'key_manager') and player.game.key_manager:
                         player.game.key_manager.on_key_collected()
                 else:
-                    player.game.show_message("You have collected all keys! Now you can open the escape door!", 3.0)
+                    player.game.show_message("已收集所有钥匙！现在可以打开逃生门了！", 3.0)
             else:
                 # 单人模式
                 player.keys_collected += 1
                 if hasattr(player, 'game') and player.game:
                     remaining_keys = player.total_keys_needed - player.keys_collected
                     if remaining_keys > 0:
-                        player.game.show_message(f"You need {remaining_keys} more key(s) to open the escape door!", 3.0)
+                        player.game.show_message(f"还需要 {remaining_keys} 把钥匙才能打开逃生门！", 3.0)
                         # 通知钥匙管理器钥匙被拾取，生成新的钥匙
                         if hasattr(player.game, 'key_manager') and player.game.key_manager:
                             player.game.key_manager.on_key_collected()
                     else:
-                        player.game.show_message("You have collected all keys! Now you can open the escape door!", 3.0)
+                        player.game.show_message("已收集所有钥匙！现在可以打开逃生门了！", 3.0)
             
             # 从钥匙管理器中移除钥匙（在标记为已收集之后）
             if hasattr(player, 'game') and player.game and hasattr(player.game, 'key_manager'):

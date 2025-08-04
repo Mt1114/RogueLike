@@ -110,7 +110,7 @@ class GameEngine:
             
     def _render_debug_info(self):
         """渲染调试信息"""
-        font = pygame.font.Font(None, 24)
+        font = pygame.font.SysFont('simHei', 24)
         
         # FPS
         fps_text = font.render(f"FPS: {self.fps}", True, (255, 255, 255))

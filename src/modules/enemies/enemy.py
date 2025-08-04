@@ -184,20 +184,50 @@ class Enemy(pygame.sprite.Sprite, ABC):
                 self.speed = self.original_speed
                 del self.status_effects['slow']
         
-    def attack(self, player, dt):
+    def _get_nearest_player(self, player1, player2=None):
+        """
+        获取最近的玩家
+        
+        Args:
+            player1: 第一个玩家
+            player2: 第二个玩家（可选）
+            
+        Returns:
+            Player: 最近的玩家
+        """
+        if player2 is None:
+            return player1
+            
+        # 计算到两个玩家的距离
+        dx1 = player1.world_x - self.rect.x
+        dy1 = player1.world_y - self.rect.y
+        distance1 = math.sqrt(dx1 * dx1 + dy1 * dy1)
+        
+        dx2 = player2.world_x - self.rect.x
+        dy2 = player2.world_y - self.rect.y
+        distance2 = math.sqrt(dx2 * dx2 + dy2 * dy2)
+        
+        # 返回距离更近的玩家
+        # 注意：即使神秘剑客是最近的目标，伤害仍然会转移给忍者蛙
+        return player1 if distance1 <= distance2 else player2
+        
+    def attack(self, player, dt, second_player=None):
         """
         敌人默认使用近战碰撞攻击
         
         Args:
             player: 攻击目标（玩家）
             dt: 时间增量
+            second_player: 第二个玩家（可选）
             
         Returns:
             bool: 攻击是否命中
         """
-        return self.melee_attack(player) 
+        # 选择最近的目标进行攻击
+        target_player = self._get_nearest_player(player, second_player)
+        return self.melee_attack(target_player) 
         
-    def update(self, dt, player):
+    def update(self, dt, player, second_player=None):
         # 更新状态效果
         self.update_status_effects(dt)
         
@@ -220,9 +250,12 @@ class Enemy(pygame.sprite.Sprite, ABC):
                 if self.current_animation in self.animations:
                     self.animations[self.current_animation].reset()
         
-        # 计算到玩家的方向（使用世界坐标）
-        dx = player.world_x - self.rect.x
-        dy = player.world_y - self.rect.y
+        # 选择最近的目标
+        target_player = self._get_nearest_player(player, second_player)
+        
+        # 计算到目标玩家的方向（使用世界坐标）
+        dx = target_player.world_x - self.rect.x
+        dy = target_player.world_y - self.rect.y
         distance = math.sqrt(dx * dx + dy * dy)
         
         # 更新朝向
@@ -361,18 +394,27 @@ class Enemy(pygame.sprite.Sprite, ABC):
         if show_health_bar:
             health_bar_width = 32 * self.scale
             health_bar_height = 5 * self.scale
-            health_ratio = self.health / self.max_health
+            health_ratio = max(0, self.health / self.max_health)  # 确保比例不为负数
             
-            # 调整血条位置，使其位于敌人上方
-            bar_x = screen_x
-            bar_y = screen_y - 10 * self.scale
+            # 调整血条位置，使其位于敌人正上方
+            bar_x = screen_x - health_bar_width // 2+20  # 居中显示
+            bar_y = screen_y - 20 * self.scale  # 稍微高一点，确保在敌人正上方
             
+            # 绘制血条背景（红色）
             pygame.draw.rect(screen, (255, 0, 0),  # 红色背景
                             (bar_x, bar_y,
                              health_bar_width, health_bar_height))
-            pygame.draw.rect(screen, (0, 255, 0),  # 绿色血条
+            
+            # 绘制血条（绿色）
+            if health_ratio > 0:
+                pygame.draw.rect(screen, (0, 255, 0),  # 绿色血条
+                                (bar_x, bar_y,
+                                 health_bar_width * health_ratio, health_bar_height))
+            
+            # 绘制血条边框（白色）
+            pygame.draw.rect(screen, (255, 255, 255),  # 白色边框
                             (bar_x, bar_y,
-                             health_bar_width * health_ratio, health_bar_height))
+                             health_bar_width, health_bar_height), 1)
         
     def take_damage(self, amount):
         """受到伤害
@@ -415,14 +457,42 @@ class Enemy(pygame.sprite.Sprite, ABC):
         Returns:
             bool: 攻击是否命中
         """
+        print(f"敌人 {self.type} 近战攻击 {player.hero_type}")
+        
+        # 在双人模式下，如果神秘剑客被攻击，伤害转移给忍者蛙
+        if hasattr(player, 'hero_type') and (player.hero_type == "mystic_swordsman" or player.hero_type == "role2"):
+            print(f"检测到神秘剑客被近战攻击，准备转移伤害给忍者蛙")
+            # 检查是否有双人系统
+            if hasattr(player, 'game') and hasattr(player.game, 'dual_player_system'):
+                # 获取忍者蛙并转移伤害
+                ninja_frog = player.game.dual_player_system.ninja_frog
+                # 计算与忍者蛙的距离
+                dx = self.rect.x - ninja_frog.world_x
+                dy = self.rect.y - ninja_frog.world_y
+                distance = (dx**2 + dy**2)**0.5
+                
+                print(f"与忍者蛙距离: {distance:.1f}")
+                
+                # 如果在攻击范围内
+                if distance < self.rect.width / 2 + ninja_frog.rect.width / 2:
+                    ninja_frog.take_damage(self.damage)
+                    print(f"神秘剑客受到近战攻击，忍者蛙受到 {self.damage} 点伤害")
+                    return True
+                else:
+                    print(f"忍者蛙不在攻击范围内")
+                return False
+        
         # 计算与玩家的距离
         dx = self.rect.x - player.world_x
         dy = self.rect.y - player.world_y
         distance = (dx**2 + dy**2)**0.5
         
+        print(f"与 {player.hero_type} 距离: {distance:.1f}")
+        
         # 如果在攻击范围内
         if distance < self.rect.width / 2 + player.rect.width / 2:
             player.take_damage(self.damage)
+            print(f"{player.hero_type} 受到 {self.damage} 点伤害")
             return True
         return False
         
@@ -437,6 +507,21 @@ class Enemy(pygame.sprite.Sprite, ABC):
         Returns:
             bool: 攻击是否命中
         """
+        print(f"敌人 {self.type} 攻击 {player.hero_type}")
+        
+        # 在双人模式下，如果神秘剑客被攻击，伤害转移给忍者蛙
+        if hasattr(player, 'hero_type') and (player.hero_type == "mystic_swordsman" or player.hero_type == "role2"):
+            print(f"检测到神秘剑客被攻击，准备转移伤害给忍者蛙")
+            # 检查是否有双人系统
+            if hasattr(player, 'game') and hasattr(player.game, 'dual_player_system'):
+                # 获取忍者蛙并转移伤害
+                ninja_frog = player.game.dual_player_system.ninja_frog
+                print(f"找到忍者蛙，转移攻击目标")
+                # 调用attack方法，但传入忍者蛙作为目标
+                return self.attack(ninja_frog, 0.016)
+            else:
+                print(f"未找到双人系统，使用原始攻击逻辑")
+        
         # 使用一个很小的时间增量，保持现有行为一致
         return self.attack(player, 0.016)  # 约等于60fps的时间增量
 

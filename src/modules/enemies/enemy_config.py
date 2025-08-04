@@ -82,21 +82,7 @@ ENEMY_CONFIGS = {
         "projectile_speed": 180, # 投射物速度
     },
     
-    # Soul Boss - 强大的boss敌人
-    "soul_boss": {
-        "health": 1000,         # Boss血量
-        "damage": 80,           # 子弹伤害
-        "speed": 100,           # 移动速度
-        "score_value": 500,     # 击败后获得的分数
-        "exp_value": 100,       # 击败后获得的经验值
-        "animation_speed": 0.0333,
-        "scale": 1.5,           # Boss更大
-        "attack_range": 1000,   # 攻击范围
-        "min_attack_range": 200, # 最小攻击距离
-        "attack_cooldown": 1.0,  # 攻击冷却时间(秒) - 1秒1发
-        "projectile_speed": 200, # 投射物速度
-        "is_boss": True,        # 标记为boss
-    }
+
 }
 
 def get_enemy_config(enemy_type, difficulty="normal", level=1):

@@ -318,7 +318,7 @@ class VisionSystem:
         end_angle = self.direction + self.half_angle
         
         # 使用配置的光线数量来确保平滑的扇形
-        num_points = getattr(self, 'ray_count', 12)  # 使用配置的光线数量
+        num_points = getattr(self, 'ray_count', 64)  # 使用配置的光线数量
         
         # 使用更高效的角度生成
         angles = []

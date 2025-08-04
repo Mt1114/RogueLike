@@ -117,7 +117,7 @@ class AmmoSupply(Item):
         # 绘制剩余时间指示器
         remaining_time = max(0, self.lifetime - self.spawn_timer)
         if remaining_time <= 10.0:  # 最后10秒显示倒计时
-            font = pygame.font.Font(None, 20)
+            font = pygame.font.SysFont('simHei', 20)
             time_text = font.render(f"{remaining_time:.1f}s", True, (255, 255, 255))
             text_rect = time_text.get_rect()
             text_rect.centerx = screen_x
