@@ -30,7 +30,7 @@ class Enemy(pygame.sprite.Sprite, ABC):
         self.current_animation = 'idle'
         
         # 设置敌人在世界坐标系中的位置
-        self.rect = pygame.Rect(x, y, 44 * self.scale, 30 * self.scale)  # 根据缩放调整碰撞箱大小
+        self.rect = pygame.Rect(x, y, 80 * self.scale, 80 * self.scale)  # 增大碰撞箱大小，从44x30增加到60x40
         
         # 存活状态
         self._alive = True

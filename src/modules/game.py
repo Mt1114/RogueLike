@@ -731,11 +731,10 @@ class Game:
             
         # 检查玩家是否死亡
         if self.dual_player_system:
-            # 双角色模式：两个角色都死亡才算游戏结束
+            # 双角色模式：忍者蛙体力为零就判负
             ninja_dead = self.dual_player_system.ninja_frog.health <= 0
-            mystic_dead = self.dual_player_system.mystic_swordsman.health <= 0
             
-            if ninja_dead and mystic_dead and not self.game_over:
+            if ninja_dead and not self.game_over:
                 self.game_over = True
                 self.game_over_menu.show(is_victory=False)
                 resource_manager.play_sound("player_death")
@@ -1298,7 +1297,7 @@ class Game:
                 dy = self.player.world_y - projectile.world_y
                 distance = (dx**2 + dy**2)**0.5
                 
-                if distance < 30:  # 碰撞检测范围
+                if distance < 80:  # 增大碰撞检测范围从30到80像素
                     # 对玩家造成伤害
                     if hasattr(projectile, 'damage'):
                         self.player.take_damage(projectile.damage)
