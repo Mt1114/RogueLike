@@ -1,6 +1,6 @@
 import pygame
 from .item import Item
-from ..resource_manager import ResourceManager
+from ..resource_manager import resource_manager
 
 class TeleportItem(Item):
     """传送道具，可以将神秘剑客传送到忍者蛙身边"""
@@ -10,8 +10,8 @@ class TeleportItem(Item):
         # 加载传送道具图标
         try:
             # 尝试加载传送图标，如果没有则创建一个默认的蓝色圆圈
-            spritesheet = ResourceManager.load_spritesheet('teleport_icon', 'assets/images/passives/speed_up_32x32.png')
-            self.image = ResourceManager.create_animation('teleport_icon', spritesheet,
+            spritesheet = resource_manager.load_spritesheet('teleport_icon', 'assets/images/passives/speed_up_32x32.png')
+            self.image = resource_manager.create_animation('teleport_icon', spritesheet,
                                                          frame_width=32, frame_height=32,
                                                          frame_count=1, row=0,
                                                          frame_duration=0.1).get_current_frame()
@@ -35,7 +35,7 @@ class TeleportItem(Item):
         if hasattr(player, 'hero_type') and player.hero_type == "ninja_frog":
             # 只有忍者蛙可以收集传送道具
             if hasattr(player, 'game') and player.game:
-                player.game.show_message("获得传送道具！按小键盘0使用", 3.0)
+                
                 
                 # 将道具添加到忍者蛙的道具栏
                 if not hasattr(player, 'teleport_items'):

@@ -19,6 +19,10 @@ class BulletProjectile(pygame.sprite.Sprite):
         self.rect.centerx = self.world_x
         self.rect.centery = self.world_y
         
+        # 记录起始位置（用于距离计算）
+        self.start_x = float(x)
+        self.start_y = float(y)
+        
         # 方向信息（直线飞行）
         self.direction_x = float(direction_x)
         self.direction_y = float(direction_y)
@@ -30,6 +34,10 @@ class BulletProjectile(pygame.sprite.Sprite):
         # 存活时间
         self.lifetime = stats.get(WeaponStatType.LIFETIME, 3.0)
         self.age = 0.0
+        
+        # 距离限制（640像素）
+        self.max_distance = 640.0
+        self.distance_traveled = 0.0
         
         # 碰撞相关
         self.hit_count = 0
@@ -66,6 +74,14 @@ class BulletProjectile(pygame.sprite.Sprite):
         distance = self.speed * dt
         self.world_x += self.direction_x * distance
         self.world_y += self.direction_y * distance
+        
+        # 更新已飞行距离
+        self.distance_traveled += distance
+        
+        # 检查距离限制
+        if self.distance_traveled >= self.max_distance:
+            self.kill()
+            return
         
         # 更新矩形位置
         self.rect.centerx = int(self.world_x)
@@ -116,8 +132,8 @@ class BulletWeapon(Weapon):
         self.is_attacking = False
         
         # 子弹系统
-        self.ammo = 30  # 初始子弹数量
-        self.max_ammo = 30  # 最大子弹数量
+        self.ammo = 300  # 初始子弹数量
+        self.max_ammo = 3000  # 最大子弹数量
         self.is_melee = False  # 标记为远程武器
         
     def get_weapon_image(self):
@@ -129,9 +145,9 @@ class BulletWeapon(Weapon):
         if not self.can_attack():
             return
         
-        # 检查子弹数量
-        if self.ammo <= 0:
-            print("没有子弹了！")
+        # 检查子弹数量（每次射击需要5颗子弹）
+        if self.ammo < 5:
+            print("no bullet")
             return
         
         # 开始攻击动画
@@ -141,26 +157,46 @@ class BulletWeapon(Weapon):
         # 创建子弹
         self._create_bullet(direction_x, direction_y)
         
-        # 消耗子弹
-        self.ammo -= 1
+        # 消耗子弹（每次射击发射5束子弹）
+        self.ammo -= 5
         
         # 重置攻击计时器
         self.attack_timer = 0
     
     def _create_bullet(self, direction_x, direction_y):
-        """创建子弹"""
+        """创建扇形子弹"""
         # 获取玩家位置
         player_x = self.player.world_x
         player_y = self.player.world_y
         
-        # 计算子弹起始位置（稍微偏移以避免与玩家碰撞）
-        offset_distance = 30
-        start_x = player_x + direction_x * offset_distance
-        start_y = player_y + direction_y * offset_distance
+        # 计算主方向的角度
+        main_angle = math.atan2(direction_y, direction_x)
         
-        # 创建子弹
-        bullet = BulletProjectile(start_x, start_y, direction_x, direction_y, self.current_stats)
-        self.projectiles.add(bullet)
+        # 扇形参数
+        spread_angle = math.radians(30)  # 30度扇形
+        bullet_count = 5  # 5束子弹
+        angle_step = spread_angle / (bullet_count - 1)  # 每束子弹之间的角度间隔
+        
+        # 计算起始角度（扇形中心向左偏移）
+        start_angle = main_angle - spread_angle / 2
+        
+        # 创建5束子弹
+        for i in range(bullet_count):
+            # 计算当前子弹的角度
+            current_angle = start_angle + i * angle_step
+            
+            # 计算子弹方向
+            bullet_direction_x = math.cos(current_angle)
+            bullet_direction_y = math.sin(current_angle)
+            
+            # 计算子弹起始位置（稍微偏移以避免与玩家碰撞）
+            offset_distance = 30
+            start_x = player_x + bullet_direction_x * offset_distance
+            start_y = player_y + bullet_direction_y * offset_distance
+            
+            # 创建子弹
+            bullet = BulletProjectile(start_x, start_y, bullet_direction_x, bullet_direction_y, self.current_stats)
+            self.projectiles.add(bullet)
     
     def update(self, dt):
         """更新武器状态"""
@@ -194,9 +230,9 @@ class BulletWeapon(Weapon):
         if not self.can_attack():
             return
         
-        # 检查子弹数量
-        if self.ammo <= 0:
-            print("没有子弹了！")
+        # 检查子弹数量（每次射击需要5颗子弹）
+        if self.ammo < 5:
+            print("子弹不足！需要5颗子弹进行扇形射击。")
             return
         
         # 获取鼠标位置

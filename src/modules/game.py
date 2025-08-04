@@ -60,7 +60,7 @@ class Game:
         self.escape_door = None  # 逃生门
         self.save_system = SaveSystem()
         self.upgrade_manager = UpgradeManager()
-        self.map_manager = MapManager(screen)  # 创建地图管理器
+        self.map_manager = MapManager(screen, scale_factor=1.0)  # 创建地图管理器，使用1倍缩放
         
         # 消息提示系统
         self.message = ""
@@ -957,6 +957,9 @@ class Game:
         if self.dual_player_system:
             self.dual_player_system.render(self.screen, self.camera_x, self.camera_y)
             self.dual_player_system.render_weapons(self.screen, self.camera_x, self.camera_y)
+            
+            # 为神秘剑客添加绿色三角形标记
+            self._render_mystic_triangle()
         elif self.player:  # 兼容单角色模式
             self.player.render(self.screen)
             self.player.render_weapons(self.screen, self.camera_x, self.camera_y)
@@ -1025,12 +1028,18 @@ class Game:
             # 添加补给物品到小地图
             ammo_supplies = None
             health_supplies = None
+            teleport_items = None
+            collision_tiles = None
             if self.ammo_supply_manager:
                 ammo_supplies = self.ammo_supply_manager.get_supplies_for_minimap()
             if self.health_supply_manager:
                 health_supplies = self.health_supply_manager.get_supplies_for_minimap()
+            if self.teleport_manager:
+                teleport_items = self.teleport_manager.get_items()
+            if self.map_manager:
+                collision_tiles = self.map_manager.get_collision_tiles()
             
-            self.minimap.render(self.screen, self.player, key_items, self.escape_door, ammo_supplies, health_supplies)
+            self.minimap.render(self.screen, self.player, key_items, self.escape_door, ammo_supplies, health_supplies, teleport_items, collision_tiles, self.dual_player_system)
             
         # 如果游戏暂停，渲染暂停菜单
         if self.paused:
@@ -1389,4 +1398,33 @@ class Game:
         
         # 确保敌人管理器存在再更新难度
         if self.enemy_manager:
-            self.enemy_manager.difficulty_level = self.level  # 更新敌人管理器中的难度等级 
+            self.enemy_manager.difficulty_level = self.level  # 更新敌人管理器中的难度等级
+    
+    def _render_mystic_triangle(self):
+        """为神秘剑客渲染绿色三角形标记"""
+        if not self.dual_player_system:
+            return
+            
+        mystic = self.dual_player_system.mystic_swordsman
+        
+        # 计算神秘剑客在屏幕上的位置
+        screen_x = mystic.world_x - self.camera_x + self.screen_center_x
+        screen_y = mystic.world_y - self.camera_y + self.screen_center_y
+        
+        # 三角形参数
+        triangle_size = 12
+        triangle_color = (0, 200, 0)  # 深绿色
+        border_color = (255, 255, 255)  # 白色边框
+        
+        # 计算三角形的三个顶点（向上指向的三角形）
+        points = [
+            (screen_x, screen_y - triangle_size),  # 顶点
+            (screen_x - triangle_size//2, screen_y + triangle_size//2),  # 左下角
+            (screen_x + triangle_size//2, screen_y + triangle_size//2)   # 右下角
+        ]
+        
+        # 绘制三角形
+        pygame.draw.polygon(self.screen, triangle_color, points)
+        
+        # 绘制边框
+        pygame.draw.polygon(self.screen, border_color, points, 2) 

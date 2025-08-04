@@ -38,9 +38,9 @@ class DualPlayerSystem:
         # 光照类型管理
         self.light_mode = 1  # 当前光照类型：1-默认，2-战斗，3-探索，4-低能耗
         self.light_modes = {
-            1: {"name": "default", "radius": 640, "angle": 30, "circle_radius": 80, "energy_drain": -4},
-            2: {"name": "battle", "radius": 640, "angle": 60, "circle_radius": 165, "energy_drain": -10}, 
-            3: {"name": "explore", "radius": 1000, "angle": 30, "circle_radius": 85, "energy_drain": -10},
+            1: {"name": "default", "radius": 640, "angle": 60, "circle_radius": 160, "energy_drain": -1},
+            2: {"name": "battle", "radius": 640, "angle": 60, "circle_radius": 165, "energy_drain": -1}, 
+            3: {"name": "explore", "radius": 1000, "angle": 30, "circle_radius": 85, "energy_drain": -1},
             4: {"name": "low_energy", "radius": 80, "angle": 30, "circle_radius": 80, "energy_drain": 4}
         }
         
@@ -136,6 +136,14 @@ class DualPlayerSystem:
             elif event.key == pygame.K_KP0:  # 小键盘0键使用传送道具
                 # 使用传送道具
                 self.use_teleport_item()
+            elif event.key == pygame.K_KP1:  # 小键盘1键武器切换（仅对神秘剑士）
+                # 神秘剑士的武器切换
+                print("调试 - 检测到小键盘1键按下")
+                if self.mystic_swordsman.hero_type == "role2":
+                    print("调试 - 调用神秘剑士的武器切换")
+                    self.mystic_swordsman.toggle_weapon_mode()
+                else:
+                    print(f"调试 - 神秘剑士hero_type不是role2: {self.mystic_swordsman.hero_type}")
                 
         elif event.type == pygame.KEYUP:
             if event.key in [pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d]:
@@ -205,7 +213,7 @@ class DualPlayerSystem:
                 self.mystic_swordsman.movement.facing_right = True
                 
             if attack_direction:
-                # 优先使用远程武器（bullet），如果没有弹药则使用近战武器（knife）
+                # 根据当前武器模式选择攻击类型
                 bullet_weapon = None
                 knife_weapon = None
                 
@@ -219,32 +227,36 @@ class DualPlayerSystem:
                 # 保存攻击方向用于武器渲染
                 self.mystic_attack_direction = attack_direction
                 
-                # 优先使用子弹攻击
-                if bullet_weapon and hasattr(bullet_weapon, '_perform_attack'):
-                    if bullet_weapon.ammo > 0:
-                        print(f"执行子弹攻击，方向: {attack_direction}")
+                # 根据当前武器模式执行相应攻击
+                if hasattr(self.mystic_swordsman, 'is_ranged_mode') and self.mystic_swordsman.is_ranged_mode:
+                    # 远程模式：使用子弹攻击
+                    if bullet_weapon and hasattr(bullet_weapon, '_perform_attack'):
+                        if bullet_weapon.ammo >= 5:  # 需要5发子弹
+                            print(f"远程模式 - 执行子弹攻击，方向: {attack_direction}")
+                            # 重置攻击计时器以允许立即攻击
+                            bullet_weapon.attack_timer = bullet_weapon.attack_interval
+                            bullet_weapon._perform_attack(attack_direction[0], attack_direction[1])
+                            
+                            # 激活神秘剑士的临时光圈
+                            self.mystic_flashlight_active = True
+                            self.mystic_flashlight_timer = self.mystic_flashlight_duration
+                        else:
+                            print("远程模式 - 子弹不足，无法攻击")
+                    else:
+                        print("远程模式 - 没有子弹武器")
+                else:
+                    # 近战模式：使用近战攻击
+                    if knife_weapon and hasattr(knife_weapon, '_perform_melee_attack'):
+                        print(f"近战模式 - 执行近战攻击，方向: {attack_direction}")
                         # 重置攻击计时器以允许立即攻击
-                        bullet_weapon.attack_timer = bullet_weapon.attack_interval
-                        bullet_weapon._perform_attack(attack_direction[0], attack_direction[1])
+                        knife_weapon.attack_timer = knife_weapon.attack_interval
+                        knife_weapon._perform_melee_attack(attack_direction[0], attack_direction[1])
                         
-                        # 激活神秘剑士的临时光圈
+                        # 激活神秘剑士的临时光圈（近战攻击也触发）
                         self.mystic_flashlight_active = True
                         self.mystic_flashlight_timer = self.mystic_flashlight_duration
-                        
-                        return  # 只执行一次攻击
-                
-                # 如果没有子弹或无法攻击，使用近战攻击
-                if knife_weapon and hasattr(knife_weapon, '_perform_melee_attack'):
-                    print(f"执行近战攻击，方向: {attack_direction}")
-                    # 重置攻击计时器以允许立即攻击
-                    knife_weapon.attack_timer = knife_weapon.attack_interval
-                    knife_weapon._perform_melee_attack(attack_direction[0], attack_direction[1])
-                    
-                    # 激活神秘剑士的临时光圈（近战攻击也触发）
-                    self.mystic_flashlight_active = True
-                    self.mystic_flashlight_timer = self.mystic_flashlight_duration
-                    
-                    return  # 只执行一次攻击
+                    else:
+                        print("近战模式 - 没有近战武器")
                 
     def update(self, dt):
         """更新双角色系统"""

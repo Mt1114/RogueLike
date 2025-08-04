@@ -290,8 +290,8 @@ class EnemyManager:
                             enemy.has_been_seen = True
                             enemy.render(screen, screen_x, screen_y, show_health_bar=True)
                         elif enemy.has_been_seen:
-                            # 曾经被看到过但当前不在光照内，只显示怪物，不显示血条
-                            enemy.render(screen, screen_x, screen_y, show_health_bar=False)
+                            # 曾经被看到过但当前不在光照内，显示怪物和血条
+                            enemy.render(screen, screen_x, screen_y, show_health_bar=True)
                         # 如果从未被看到过且当前不在光照内，则不渲染
                         
                         # 记录最后检测位置和光照状态
@@ -305,8 +305,8 @@ class EnemyManager:
                             # 上次在光照内，显示血条
                             enemy.render(screen, screen_x, screen_y, show_health_bar=True)
                         elif enemy.has_been_seen:
-                            # 曾经被看到过但当前不在光照内，只显示怪物，不显示血条
-                            enemy.render(screen, screen_x, screen_y, show_health_bar=False)
+                            # 曾经被看到过但当前不在光照内，显示怪物和血条
+                            enemy.render(screen, screen_x, screen_y, show_health_bar=True)
                         # 如果从未被看到过且当前不在光照内，则不渲染
                 else:
                     # 如果没有光照系统或光照系统被禁用，正常渲染（包括血条）
@@ -326,8 +326,8 @@ class EnemyManager:
             
         min_x, min_y, max_x, max_y = self.map_boundaries
         
-        # 定义四个角落的生成区域（距离边界400像素，考虑4倍缩放）
-        corner_offset = 400
+        # 定义四个角落的生成区域（距离边界100像素，调整为1倍缩放）
+        corner_offset = 100
         corners = [
             (min_x + corner_offset, min_y + corner_offset),  # 左上角
             (max_x - corner_offset, min_y + corner_offset),  # 右上角
@@ -374,8 +374,8 @@ class EnemyManager:
             
         min_x, min_y, max_x, max_y = self.map_boundaries
         
-        # 定义四个角落的生成区域（距离边界400像素，考虑4倍缩放）
-        corner_offset = 400
+        # 定义四个角落的生成区域（距离边界100像素，调整为1倍缩放）
+        corner_offset = 100
         corners = [
             (min_x + corner_offset, min_y + corner_offset),  # 左上角
             (max_x - corner_offset, min_y + corner_offset),  # 右上角

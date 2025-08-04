@@ -80,6 +80,9 @@ class Player(pygame.sprite.Sprite):
         self.phase_cooldown_timer = 0  # 穿墙CD计时器
         self.phase_icon = None  # 穿墙技能图标
         
+        # 武器切换相关（仅对神秘剑士）
+        self.is_ranged_mode = True  # True为远程模式，False为近战模式
+        
         # 添加初始武器
         starting_weapon = self.hero_config.get("starting_weapon", "bullet")
         self.add_weapon(starting_weapon)  # 添加远程武器（手枪）
@@ -254,6 +257,11 @@ class Player(pygame.sprite.Sprite):
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
             if self.hero_type == "ninja_frog" and not self.phase_through_walls and self.phase_cooldown_timer <= 0:
                 self.activate_phase_through_walls()
+        
+        # 处理武器切换（仅对神秘剑士）
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_1:
+            if self.hero_type == "role2":  # 神秘剑士
+                self.toggle_weapon_mode()
         
     def update(self, dt):
         """更新玩家状态"""
@@ -644,4 +652,19 @@ class Player(pygame.sprite.Sprite):
                 self.phase_animation_image = None
         except Exception as e:
             print(f"无法加载穿墙动画图片: {e}")
-            self.phase_animation_image = None 
+            self.phase_animation_image = None
+    
+    def toggle_weapon_mode(self):
+        """切换武器模式（仅对神秘剑士）"""
+        print(f"调试 - toggle_weapon_mode被调用，hero_type={self.hero_type}")
+        if self.hero_type != "role2":
+            print("调试 - 不是神秘剑士，退出")
+            return
+            
+        self.is_ranged_mode = not self.is_ranged_mode
+        print(f"调试 - 武器模式切换为: {'远程' if self.is_ranged_mode else '近战'}")
+        
+        if self.is_ranged_mode:
+            print("切换到远程模式")
+        else:
+            print("切换到近战模式") 

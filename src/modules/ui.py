@@ -35,6 +35,9 @@ class UI:
         # 创建升级管理器实例用于获取图标
         self.upgrade_manager = UpgradeManager()
         
+        # 武器模式显示相关
+        self.weapon_mode_font = FontManager.get_font(20)
+        
     def _render_ammo_info(self, player):
         """渲染弹药信息
         
@@ -116,6 +119,48 @@ class UI:
         
         # 渲染文本
         self.screen.blit(key_surface, key_rect)
+    
+    def _render_weapon_mode(self, player):
+        """渲染武器模式信息（仅对神秘剑士）
+        
+        Args:
+            player: 玩家实例
+        """
+        # 检查是否是神秘剑士
+        if not hasattr(player, 'hero_type') or player.hero_type != "role2":
+            return
+            
+        # 检查是否有武器模式属性
+        if not hasattr(player, 'is_ranged_mode'):
+            return
+            
+        # 确定当前模式文本
+        if player.is_ranged_mode:
+            mode_text = "远程模式"
+            mode_color = (0, 255, 0)  # 绿色
+        else:
+            mode_text = "近战模式"
+            mode_color = (255, 165, 0)  # 橙色
+        
+        # 渲染模式文本
+        mode_surface = self.weapon_mode_font.render(mode_text, True, mode_color)
+        mode_rect = mode_surface.get_rect()
+        
+        # 位置：右上角，在弹药信息下方
+        screen_width = self.screen.get_width()
+        screen_height = self.screen.get_height()
+        mode_rect.topright = (screen_width - 10, screen_height - 50)
+        
+        # 添加背景
+        bg_rect = pygame.Rect(mode_rect.left - 5, mode_rect.top - 2, 
+                             mode_rect.width + 10, mode_rect.height + 4)
+        bg_surface = pygame.Surface((bg_rect.width, bg_rect.height))
+        bg_surface.set_alpha(128)
+        bg_surface.fill((0, 0, 0))
+        self.screen.blit(bg_surface, bg_rect)
+        
+        # 渲染模式文本
+        self.screen.blit(mode_surface, mode_rect)
         
     def render(self, player, game_time, game_kill_num):
         screen_width = self.screen.get_width()
@@ -163,6 +208,9 @@ class UI:
         
         # 显示钥匙数量（在左上角）
         self._render_key_info(player)
+        
+        # 显示武器模式（仅对神秘剑士）
+        self._render_weapon_mode(player)
         
         # 计算技能图标框的总宽度（每排3个）
         total_icons_width = 3 * (self.icon_size + self.icon_spacing) - self.icon_spacing
