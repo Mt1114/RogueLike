@@ -82,7 +82,7 @@ class MapHeroSelectMenu:
         
         self.maps = [
             {"id": "simple_map", "name": "森林", "unlocked": True},
-            {"id": "test1_map", "name": "测试地图1", "unlocked": True},
+            {"id": "小地图", "name": "小地图", "unlocked": True},
             {"id": "test3_map", "name": "测试地图3", "unlocked": True},
             {"id": "test2_map", "name": "测试地图2", "unlocked": True},
             {"id": "test4_map", "name": "测试地图4", "unlocked": True},
