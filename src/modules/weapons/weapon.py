@@ -35,6 +35,13 @@ class Weapon(pygame.sprite.Sprite):
         # 攻击状态
         self.attack_timer = 0
         self.attack_interval = 1.0 / self.current_stats.get(WeaponStatType.ATTACK_SPEED, 1.0)
+        # 确保攻击间隔不低于0.5秒
+        self.attack_interval = max(self.attack_interval, 0.5)
+        
+        # 攻击后摇系统
+        self.attack_recovery_timer = 0
+        self.attack_recovery_duration = 0.5 if not self.is_melee else 0.3  # 枪械0.5秒，刀0.3秒
+        self.is_in_recovery = False  # 是否处于攻击后摇状态
         
         # 近战攻击状态
         self.melee_attacking = False
@@ -199,6 +206,9 @@ class Weapon(pygame.sprite.Sprite):
             
     def can_attack(self):
         """检查是否可以攻击"""
+        # 检查是否处于攻击后摇状态
+        if self.is_in_recovery:
+            return False
         # 检查弹药（只有远程武器需要弹药）
         if not self.is_melee and self.ammo <= 0:
             return False
@@ -232,6 +242,10 @@ class Weapon(pygame.sprite.Sprite):
             # 执行攻击
             self._perform_attack(direction_x, direction_y)
             
+            # 启动攻击后摇
+            self.is_in_recovery = True
+            self.attack_recovery_timer = 0
+            
             # 消耗弹药（只有远程武器）
             if not self.is_melee:
                 self.ammo -= 1
@@ -243,8 +257,8 @@ class Weapon(pygame.sprite.Sprite):
         Args:
             screen: pygame屏幕对象，用于获取鼠标位置
         """
-        # 近战攻击不受弹药限制，只检查攻击间隔
-        if self.attack_timer >= self.attack_interval and not self.melee_attacking:
+        # 近战攻击不受弹药限制，只检查攻击间隔和后摇
+        if self.can_attack():
             self.attack_timer = 0
             # 开始近战攻击动画
             self.melee_attacking = True
@@ -265,6 +279,10 @@ class Weapon(pygame.sprite.Sprite):
                 
             # 执行近战攻击
             self._perform_melee_attack(direction_x, direction_y)
+            
+            # 启动攻击后摇
+            self.is_in_recovery = True
+            self.attack_recovery_timer = 0
             
     def _perform_melee_attack(self, direction_x, direction_y):
         """执行近战攻击的具体实现，由子类重写
@@ -287,6 +305,13 @@ class Weapon(pygame.sprite.Sprite):
     def update(self, dt):
         """更新武器状态"""
         self.attack_timer += dt
+        
+        # 更新攻击后摇计时器
+        if self.is_in_recovery:
+            self.attack_recovery_timer += dt
+            if self.attack_recovery_timer >= self.attack_recovery_duration:
+                self.is_in_recovery = False
+                self.attack_recovery_timer = 0
         
         # 更新近战攻击动画
         if self.melee_attacking:

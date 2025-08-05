@@ -526,17 +526,12 @@ class DualPlayerSystem:
         # 渲染忍者蛙的穿墙技能CD
         self.ninja_frog.render_phase_cooldown(screen)
         
-        # 渲染神秘剑士的子弹数量显示
-        self.render_ammo_display(screen)
-        
-        # 渲染当前光照类型显示
-        self.render_light_mode_display(screen)
-        
-        # 渲染电量显示
-        self.render_energy_display(screen)
-        
-        # 渲染传送道具数量显示
-        self.render_teleport_display(screen)
+        # 注意：以下UI渲染在双人模式下由主UI系统处理，这里不再渲染
+        # 以避免与主UI冲突
+        # self.render_ammo_display(screen)
+        # self.render_light_mode_display(screen)
+        # self.render_energy_display(screen)
+        # self.render_teleport_display(screen)
         
     def get_players(self):
         """获取两个角色"""

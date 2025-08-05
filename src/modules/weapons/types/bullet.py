@@ -139,13 +139,32 @@ class BulletWeapon(Weapon):
         self.max_ammo = 3000  # 最大子弹数量
         self.is_melee = False  # 标记为远程武器
         
+        # 装弹系统
+        self.shots_fired = 0  # 已发射的子弹数
+        self.shots_before_reload = 30  # 装弹前可发射的子弹数
+        self.is_reloading = False  # 是否正在装弹
+        self.reload_timer = 0  # 装弹计时器
+        self.reload_duration = 2.0  # 装弹持续时间（秒）
+    
     def get_weapon_image(self):
         """获取武器图像"""
         return resource_manager.load_image('weapon_gun', 'images/weapons/gun.png')
     
+    def can_attack(self):
+        """检查是否可以攻击"""
+        # 检查是否正在装弹
+        if self.is_reloading:
+            return False
+        # 调用父类的can_attack方法
+        return super().can_attack()
+    
     def _perform_attack(self, direction_x, direction_y):
         """执行远程攻击"""
         if not self.can_attack():
+            return
+        
+        # 检查是否正在装弹
+        if self.is_reloading:
             return
         
         # 检查子弹数量（每次射击需要5颗子弹）
@@ -162,6 +181,16 @@ class BulletWeapon(Weapon):
         
         # 消耗子弹（每次射击发射5束子弹）
         self.ammo -= 5
+        
+        # 增加已发射子弹计数
+        self.shots_fired += 5
+        
+        # 检查是否需要装弹
+        if self.shots_fired >= self.shots_before_reload:
+            self.is_reloading = True
+            self.reload_timer = 0
+            self.shots_fired = 0  # 重置已发射子弹计数
+            print("开始装弹")
         
         # 重置攻击计时器
         self.attack_timer = 0
@@ -217,6 +246,14 @@ class BulletWeapon(Weapon):
             self.attack_animation_timer += dt
             if self.attack_animation_timer >= self.attack_animation_duration:
                 self.is_attacking = False
+        
+        # 更新装弹计时器
+        if self.is_reloading:
+            self.reload_timer += dt
+            if self.reload_timer >= self.reload_duration:
+                self.is_reloading = False
+                self.reload_timer = 0
+                print("装弹完成")
     
     def render(self, screen, camera_x, camera_y, attack_direction_x=None, attack_direction_y=None):
         """渲染武器和投射物"""

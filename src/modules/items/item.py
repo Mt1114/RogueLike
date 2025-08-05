@@ -35,7 +35,7 @@ class Item(pygame.sprite.Sprite):
         elif item_type == 'key':
             # 使用指定的钥匙图标
             try:
-                spritesheet = resource_manager.load_spritesheet('key_icon', 'images/passives/damage_up_96x96.png')
+                spritesheet = resource_manager.load_spritesheet('key_icon', 'images/ui/key.png')
                 self.image = resource_manager.create_animation('key_icon', spritesheet,
                                                              frame_width=32, frame_height=32,
                                                              frame_count=1, row=0,

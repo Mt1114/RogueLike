@@ -15,7 +15,7 @@ class AmmoSupply(Item):
         # 先设置图像，再调用父类构造函数
         # 加载补给图标
         try:
-            self.image = pygame.image.load("assets/images/weapons/bullet_8x8.png").convert_alpha()
+            self.image = pygame.image.load("assets/images/ui/bullet.png").convert_alpha()
             self.image = pygame.transform.scale(self.image, (32, 32))
         except:
             # 如果加载失败，创建一个默认的黄色圆形图标

@@ -19,7 +19,7 @@ class HealthSupply(Item):
         """
         # 设置图像（使用吸收图标）
         try:
-            self.image = pygame.image.load("assets/images/passives/absorb_up_32x32.png")
+            self.image = pygame.image.load("assets/images/ui/heart.png")
             self.image = pygame.transform.scale(self.image, (32, 32))
         except:
             # 如果加载失败，创建一个默认的红色圆形图标

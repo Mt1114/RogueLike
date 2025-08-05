@@ -188,7 +188,7 @@ class Knife(Weapon):
             return
             
         enemies = self.player.game.enemy_manager.enemies
-        attack_range = 80  # 扩大攻击范围
+        attack_range = 95  # 扩大攻击范围（增加15像素）
         attack_damage = self.current_stats.get(WeaponStatType.DAMAGE, 10) * 1.5  # 1.5倍伤害
         
         # 设置攻击状态

@@ -8,34 +8,60 @@ class MainMenu:
         self.is_active = True
         
         # 菜单选项和对应的动作
-        self.options = ["开始新游戏", "读取存档", "设置", "退出游戏"]
-        self.actions = ["start", "load", "settings", "quit"]
+        self.options = ["开始新游戏", "设置", "退出游戏"]
+        self.actions = ["start", "settings", "quit"]
         self.selected_index = 0
         
         # 加载字体
         self.title_font = FontManager.get_font(74)
-        self.option_font = FontManager.get_font(50)
         
         # 颜色设置
         self.title_color = (255, 255, 255)
-        self.text_color = (200, 200, 200)
-        self.hover_color = (255, 255, 0)
         
         # 计算菜单位置
         self.screen_center_x = self.screen.get_width() // 2
         self.title_y = 100
-        self.first_option_y = 300
-        self.option_padding = 60
+        self.first_button_y = 350
+        self.button_padding = 180
         
-        # 存储选项的矩形区域（用于检测鼠标点击）
-        self.option_rects = []
+        # 存储按钮的矩形区域（用于检测鼠标点击）
+        self.button_rects = []
         
-        # 加载背景图片（如果有的话）
+        # 加载背景图片
         try:
-            self.background = resource_manager.load_image('menu_background', 'images/menu/background.png')
+            self.background = resource_manager.load_image('menu_background', 'images/ui/Home_page.png')
             self.background = pygame.transform.scale(self.background, (screen.get_width(), screen.get_height()))
         except:
             self.background = None
+            
+        # 加载按钮图片
+        try:
+            self.start_button = resource_manager.load_image('start_button', 'images/ui/Start.png')
+            self.options_button = resource_manager.load_image('options_button', 'images/ui/Options.png')
+            self.back_button = resource_manager.load_image('back_button', 'images/ui/Back.png')
+            
+            # 调整按钮大小
+            button_width = 300  # 放大1.5倍：200 * 1.5 = 300
+            button_height = 120  # 放大1.5倍：80 * 1.5 = 120
+            self.start_button = pygame.transform.scale(self.start_button, (button_width, button_height))
+            self.options_button = pygame.transform.scale(self.options_button, (button_width, button_height))
+            self.back_button = pygame.transform.scale(self.back_button, (button_width, button_height))
+        except Exception as e:
+            print(f"加载按钮图片失败: {e}")
+            self.start_button = None
+            self.options_button = None
+            self.back_button = None
+            
+        # 加载logo图片
+        try:
+            self.logo = resource_manager.load_image('logo', 'images/ui/logo_white.png')
+            # 调整logo大小
+            logo_width = 600
+            logo_height = 300
+            self.logo = pygame.transform.scale(self.logo, (logo_width, logo_height))
+        except Exception as e:
+            print(f"加载logo图片失败: {e}")
+            self.logo = None
             
     def handle_event(self, event):
         """处理输入事件"""
@@ -52,14 +78,14 @@ class MainMenu:
                 
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mouse_pos = pygame.mouse.get_pos()
-            for i, rect in enumerate(self.option_rects):
+            for i, rect in enumerate(self.button_rects):
                 if rect.collidepoint(mouse_pos):
                     resource_manager.play_sound("menu_select")
                     return self.actions[i]
                     
         elif event.type == pygame.MOUSEMOTION:
             mouse_pos = pygame.mouse.get_pos()
-            for i, rect in enumerate(self.option_rects):
+            for i, rect in enumerate(self.button_rects):
                 if rect.collidepoint(mouse_pos):
                     if self.selected_index != i:
                         self.selected_index = i
@@ -76,21 +102,36 @@ class MainMenu:
         else:
             self.screen.fill((0, 0, 0))
             
-        # 绘制标题
-        title_text = self.title_font.render("像素生存", True, self.title_color)
-        title_rect = title_text.get_rect(center=(self.screen_center_x, self.title_y))
-        self.screen.blit(title_text, title_rect)
+        # 清空之前的按钮矩形
+        self.button_rects.clear()
         
-        # 清空之前的选项矩形
-        self.option_rects.clear()
+        # 绘制按钮
+        buttons = [self.start_button, self.options_button, self.back_button]
         
-        # 绘制选项
-        for i, option in enumerate(self.options):
-            color = self.hover_color if i == self.selected_index else self.text_color
-            text = self.option_font.render(option, True, color)
-            rect = text.get_rect(center=(self.screen_center_x, self.first_option_y + i * self.option_padding))
-            self.screen.blit(text, rect)
-            self.option_rects.append(rect)
+        for i, button_img in enumerate(buttons):
+            if button_img:
+                # 计算按钮位置（垂直居中排列）
+                button_y = self.first_button_y + i * self.button_padding
+                button_rect = button_img.get_rect(center=(self.screen_center_x, button_y))
+                
+                # 如果被选中，添加高亮效果
+                if i == self.selected_index:
+                    # 创建高亮版本的按钮（稍微放大）
+                    highlighted_button = pygame.transform.scale(button_img, 
+                        (int(button_img.get_width() * 1.1), int(button_img.get_height() * 1.1)))
+                    highlighted_rect = highlighted_button.get_rect(center=(self.screen_center_x, button_y))
+                    self.screen.blit(highlighted_button, highlighted_rect)
+                    self.button_rects.append(highlighted_rect)
+                else:
+                    self.screen.blit(button_img, button_rect)
+                    self.button_rects.append(button_rect)
+        
+        # 绘制logo（调整位置）
+        if self.logo:
+            logo_rect = self.logo.get_rect()
+            logo_rect.centerx = self.screen_center_x - 700 # 向左移动600像素
+            logo_rect.y = 50  # 距离顶部150像素（向下移动100像素）
+            self.screen.blit(self.logo, logo_rect)
             
         # 更新显示
         pygame.display.flip() 

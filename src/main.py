@@ -13,8 +13,8 @@ def main():
         print(f"音频系统初始化失败: {e}")
         print("游戏将继续运行，但没有声音")
     
-    screen_width = 1280
-    screen_height = 720
+    screen_width = 1920
+    screen_height = 1280
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("像素生存")
     

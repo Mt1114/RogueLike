@@ -57,8 +57,8 @@ class MapHeroSelectMenu:
         
     def _calculate_layout(self):
         """计算界面布局参数"""
-        # 地图选择区域
-        self.map_section_y = 120
+        # 地图选择区域（向下移动100像素，使其更居中）
+        self.map_section_y = 220
         self.map_section_height = 200
         self.map_icon_size = 150
         self.map_icon_margin = 20
@@ -81,9 +81,7 @@ class MapHeroSelectMenu:
         # 暂时使用硬编码示例数据
         
         self.maps = [
-            {"id": "simple_map", "name": "森林", "unlocked": True},
-            {"id": "test1_map", "name": "测试地图1", "unlocked": True},
-            {"id": "test3_map", "name": "测试地图3", "unlocked": True},
+            {"id": "small_map", "name": "小型地图", "unlocked": True},
             {"id": "test2_map", "name": "测试地图2", "unlocked": True},
             {"id": "test4_map", "name": "测试地图4", "unlocked": True},
             {"id": "desert_map", "name": "沙漠", "unlocked": False},

@@ -8,12 +8,12 @@ from .resource_manager import resource_manager
 class MapManager:
     """地图管理器类，用于加载和渲染TMX地图文件"""
     
-    def __init__(self, screen, scale_factor=4.0):
+    def __init__(self, screen, scale_factor=5.0):
         """初始化地图管理器
         
         Args:
             screen: pygame显示屏幕
-            scale_factor: 地图缩放因子，默认为4.0（4倍放大）
+            scale_factor: 地图缩放因子，默认为5.0（5倍放大）
         """
         self.screen = screen
         self.scale_factor = scale_factor  # 地图缩放因子

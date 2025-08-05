@@ -17,6 +17,8 @@ from .map_manager import MapManager
 from .menus.map_hero_select_menu import MapHeroSelectMenu
 from .lighting_manager import LightingManager
 from .dual_player_system import DualPlayerSystem
+from .game_buttons import GameButtons
+from .game_result_ui import GameResultUI
 
 from .minimap import Minimap
 import time
@@ -60,7 +62,7 @@ class Game:
         self.escape_door = None  # 逃生门
         self.save_system = SaveSystem()
         self.upgrade_manager = UpgradeManager()
-        self.map_manager = MapManager(screen, scale_factor=1.0)  # 创建地图管理器，使用1倍缩放
+        self.map_manager = MapManager(screen, scale_factor=5.0)  # 创建地图管理器，使用5倍缩放
         
         # 消息提示系统
         self.message = ""
@@ -82,6 +84,12 @@ class Game:
             on_start_game=self._start_game_with_selection,
             on_back=self._back_to_main_menu
         )
+        
+        # 创建游戏按钮管理器
+        self.game_buttons = GameButtons(screen)
+        
+        # 创建游戏结果UI
+        self.game_result_ui = GameResultUI(screen)
         
         # 游戏状态
         self.game_time = 0
@@ -254,11 +262,11 @@ class Game:
         center_x = map_width // 2
         center_y = map_height // 2
         
-        # 忍者蛙稍微偏左，神秘剑士稍微偏右
+        # 忍者蛙稍微偏左，神秘剑士稍微偏右，都往下移动32像素
         self.dual_player_system.ninja_frog.world_x = center_x - 100
-        self.dual_player_system.ninja_frog.world_y = center_y
+        self.dual_player_system.ninja_frog.world_y = center_y + 32
         self.dual_player_system.mystic_swordsman.world_x = center_x + 100
-        self.dual_player_system.mystic_swordsman.world_y = center_y
+        self.dual_player_system.mystic_swordsman.world_y = center_y + 32
         
         # 为了兼容性，设置player为忍者蛙（主要角色）
         self.player = self.dual_player_system.ninja_frog
@@ -333,6 +341,16 @@ class Game:
         self.in_main_menu = False
         self.in_map_hero_select = True
         self.map_hero_select_menu.show()
+    
+    def _restart_game(self):
+        """重启游戏"""
+        # 重置游戏状态
+        self.game_over = False
+        self.game_victory = False
+        self.game_result_ui.is_active = False
+        
+        # 重新开始游戏
+        self.start_new_game()
             
     def load_map(self, map_name):
         """加载指定名称的地图"""
@@ -540,9 +558,9 @@ class Game:
             action = self.main_menu.handle_event(event)
             if action == "start":
                 self.start_new_game()
-            elif action == "load":
-                print("显示读取菜单")  # 调试信息
-                self.load_menu.show()
+            elif action == "settings":
+                # TODO: 实现设置菜单功能
+                print("设置功能待实现")
             elif action == "quit":
                 self.running = False  # 设置running为False以退出游戏
             return
@@ -572,8 +590,8 @@ class Game:
                 self.save_menu.hide()
             return
             
-        # 处理游戏结束菜单事件
-        if self.game_over:
+        # 处理游戏结束菜单事件（只在没有游戏结果UI时处理）
+        if self.game_over and not self.game_result_ui.is_active:
             action = self.game_over_menu.handle_event(event)
             if action == "restart":
                 self.start_new_game()
@@ -610,6 +628,50 @@ class Game:
                 self._apply_upgrade(selected_upgrade)
                 self.upgrade_menu.hide()  # 关闭升级菜单，让游戏继续
             return True
+            
+        # 处理游戏结果UI事件
+        if self.game_result_ui.is_active:
+            print(f"游戏类: 游戏结果UI激活，处理事件类型: {event.type}")
+            result_action = self.game_result_ui.handle_event(event)
+            if result_action:
+                print(f"游戏类: 游戏结果UI返回动作: {result_action}")
+                if result_action == 'restart':
+                    self._restart_game()
+                    return True
+                elif result_action == 'main_menu':
+                    self.in_main_menu = True
+                    self.paused = False
+                    self.game_over = False
+                    self.game_victory = False
+                    self.game_result_ui.is_active = False
+                    resource_manager.stop_music()
+                    return True
+                elif result_action == 'quit':
+                    self.running = False
+                    return True
+            else:
+                # 如果游戏结果UI激活但没有处理事件，也要消费掉事件，防止传递给其他系统
+                print(f"游戏类: 游戏结果UI消费事件类型: {event.type}")
+                return True
+        
+        # 处理游戏按钮事件（暂停时也能响应，但不在游戏结果UI激活时）
+        if not self.game_over and not self.game_result_ui.is_active:
+            button_action = self.game_buttons.handle_event(event)
+            if button_action == 'pause':
+                self.toggle_pause()
+                return True
+            elif button_action == 'restart_confirmed':
+                self._restart_game()
+                return True
+            elif button_action == 'home_confirmed':
+                self.in_main_menu = True
+                self.paused = False
+                resource_manager.stop_music()
+                return True
+            elif button_action == 'setup':
+                # TODO: 实现设置功能
+                print("设置功能待实现")
+                return True
             
         # ESC键暂停游戏
         if event.type == pygame.KEYDOWN:
@@ -736,12 +798,12 @@ class Game:
             
             if ninja_dead and not self.game_over:
                 self.game_over = True
-                self.game_over_menu.show(is_victory=False)
+                self.game_result_ui.show(is_victory=False)
                 resource_manager.play_sound("player_death")
                 return
         elif self.player and self.player.health <= 0 and not self.game_over:
             self.game_over = True
-            self.game_over_menu.show(is_victory=False)
+            self.game_result_ui.show(is_victory=False)
             # 播放游戏结束音效
             resource_manager.play_sound("player_death")
             return
@@ -749,12 +811,12 @@ class Game:
         # 检查游戏胜利
         if self.game_victory and not self.game_over:
             self.game_over = True
-            self.game_over_menu.show(is_victory=True)
+            self.game_result_ui.show(is_victory=True)
             return
             
-        # 如果游戏结束，更新游戏结束菜单
+        # 如果游戏结束，更新游戏结果UI
         if self.game_over:
-            self.game_over_menu.update(pygame.mouse.get_pos())
+            self.game_result_ui.update(dt)
             return
             
         # 如果暂停或者正在选择升级，不更新游戏状态
@@ -762,6 +824,9 @@ class Game:
             return
             
         self.game_time += dt
+        
+        # 更新游戏按钮
+        self.game_buttons.update(dt)
         
         # 更新消息提示
         self._update_message(dt)
@@ -1016,7 +1081,13 @@ class Game:
                 self.teleport_manager.render(self.screen, self.camera_x, self.camera_y)
         # 渲染UI（在视野系统之后）
         if self.player:
-            self.ui.render(self.player, self.game_time, self.kill_num)
+            # 在双人模式下，传递双人系统参数给UI
+            if self.dual_player_system:
+                # 使用神秘剑士来渲染武器选择UI，并传递双人系统
+                self.ui.render(self.dual_player_system.mystic_swordsman, self.game_time, self.kill_num, self.dual_player_system)
+            else:
+                # 单角色模式使用普通玩家
+                self.ui.render(self.player, self.game_time, self.kill_num)
             
         # 渲染消息提示（在UI之后）
         self._render_message()
@@ -1058,9 +1129,13 @@ class Game:
         if self.upgrade_menu.is_active:
             self.upgrade_menu.render()
             
-        # 如果游戏结束，渲染游戏结束菜单
-        if self.game_over:
-            self.game_over_menu.render()
+        # 渲染游戏按钮（在所有UI之后，最后渲染，暂停时也显示）
+        if not self.game_over or self.game_result_ui.is_active:
+            self.game_buttons.render()
+            
+        # 如果游戏结果UI激活，渲染游戏结果UI（在所有UI之上）
+        if self.game_result_ui.is_active:
+            self.game_result_ui.render()
             
         # 更新显示
         pygame.display.flip()
