@@ -270,4 +270,10 @@ class WeaponManager(Component):
         if hasattr(self.owner, 'hero_config'):
             starting_weapon = self.owner.hero_config.get("starting_weapon", "bullet")
             self.add_weapon(starting_weapon)
-            self.add_weapon("knife") 
+            self.add_weapon("knife")
+    
+    def reset(self):
+        """重置武器管理器状态"""
+        self.weapons.clear()
+        self.weapon_levels.clear()
+        print("武器管理器已重置") 

@@ -19,6 +19,7 @@ from .lighting_manager import LightingManager
 from .dual_player_system import DualPlayerSystem
 from .game_buttons import GameButtons
 from .game_result_ui import GameResultUI
+from .main_menu_animation import MainMenuAnimation
 
 from .minimap import Minimap
 import time
@@ -91,6 +92,18 @@ class Game:
         # 创建游戏结果UI
         self.game_result_ui = GameResultUI(screen)
         
+        # 创建关卡过渡动画
+        from .level_transition import LevelTransition
+        self.level_transition = LevelTransition(screen)
+        
+        # 创建波次UI
+        from .round_ui import RoundUI
+        self.round_ui = RoundUI(screen)
+        
+        # 创建主页动画
+        self.main_menu_animation = MainMenuAnimation(screen)
+        self.showing_main_menu_animation = True  # 是否正在显示主页动画
+        
         # 游戏状态
         self.game_time = 0
         self.kill_num = 0 # 击杀数
@@ -112,11 +125,30 @@ class Game:
         self.fps_counter = 0
         self.fps_update_interval = 1.0  # 每1秒更新一次FPS
         
+        # 鼠标光标相关
+        self.light_cursor = None
+        self._load_light_cursor()
+        
         # 小地图
         self.minimap = None
         
         # 初始化光照系统
         self._init_lighting_system()
+    
+    def _load_light_cursor(self):
+        """加载战斗中的鼠标光标"""
+        try:
+            from .resource_manager import resource_manager
+            self.light_cursor = resource_manager.load_image('light_cursor', 'images/ui/light.png')
+            if self.light_cursor:
+                # 缩放光标到合适大小
+                self.light_cursor = pygame.transform.scale(self.light_cursor, (32, 32))
+                print("战斗鼠标光标加载成功")
+            else:
+                print("战斗鼠标光标加载失败")
+        except Exception as e:
+            print(f"无法加载战斗鼠标光标: {e}")
+            self.light_cursor = None
         
     def _init_lighting_system(self):
         """初始化光照系统"""
@@ -222,7 +254,12 @@ class Game:
         max_y = map_height - fence_width
         
         # 设置玩家移动边界
-        if self.player:
+        if self.dual_player_system:
+            # 双人模式：设置两个角色的边界
+            self.dual_player_system.ninja_frog.movement.set_boundaries(min_x, min_y, max_x, max_y)
+            self.dual_player_system.mystic_swordsman.movement.set_boundaries(min_x, min_y, max_x, max_y)
+        elif self.player:
+            # 单人模式：设置单个玩家的边界
             self.player.movement.set_boundaries(min_x, min_y, max_x, max_y)
             
         # 设置敌人生成边界
@@ -275,6 +312,8 @@ class Game:
         self.enemy_manager = EnemyManager()
         self.enemy_manager.game = self  # 设置敌人管理器对游戏对象的引用
         self.enemy_manager.set_difficulty("normal")  # 设置初始难度
+        # 设置波次UI回调函数
+        self.enemy_manager.on_round_start = self._on_round_start
         self.item_manager = ItemManager()
         self.ammo_supply_manager = AmmoSupplyManager(self)  # 初始化弹药补给管理器
         self.health_supply_manager = HealthSupplyManager(self)  # 初始化生命补给管理器
@@ -328,13 +367,34 @@ class Game:
         self.camera_x = center_x
         self.camera_y = center_y
         
+        # 设置战斗中的鼠标光标
+        if self.light_cursor:
+            pygame.mouse.set_visible(False)  # 隐藏默认鼠标光标
+            print("设置战斗鼠标光标")
+        
         # 播放背景音乐
         resource_manager.play_music("background", loops=-1)
+    
+    def _on_round_start(self, round_number):
+        """波次开始时的回调函数
+        
+        Args:
+            round_number: 波次编号（1、2、3）
+        """
+        print(f"波次开始回调: Round{round_number}")
+        if self.round_ui:
+            self.round_ui.show_round(round_number)
         
     def _back_to_main_menu(self):
         """从地图和英雄选择界面返回主菜单"""
         self.in_map_hero_select = False
         self.in_main_menu = True
+        self.showing_main_menu_animation = True  # 重新显示主页动画
+        self.main_menu_animation = MainMenuAnimation(self.screen)  # 重新创建动画
+        
+        # 恢复默认鼠标光标
+        pygame.mouse.set_visible(True)
+        print("恢复默认鼠标光标")
         
     def start_new_game(self):
         """显示地图和英雄选择界面"""
@@ -351,6 +411,168 @@ class Game:
         
         # 重新开始游戏
         self.start_new_game()
+    
+    def _start_next_level(self, next_map):
+        """开始下一关
+        
+        Args:
+            next_map: 下一关的地图名称
+        """
+        print(f"开始下一关: {next_map}")
+        
+        # 重置游戏状态
+        self.game_over = False
+        self.game_victory = False
+        self.game_result_ui.is_active = False
+        
+        # 加载下一关地图
+        print(f"开始加载下一关地图: {next_map}")
+        self.load_map(next_map)
+        
+        # 重置游戏时间和其他状态
+        self.game_time = 0
+        self.kill_num = 0
+        
+        # 重新初始化游戏管理器
+        if self.dual_player_system:
+            # 双人模式：重置两个角色的位置到地图中心
+            map_width, map_height = self.map_manager.get_map_size()
+            center_x = map_width // 2
+            center_y = map_height // 2
+            
+            self.dual_player_system.ninja_frog.world_x = center_x - 100
+            self.dual_player_system.ninja_frog.world_y = center_y + 32
+            self.dual_player_system.mystic_swordsman.world_x = center_x + 100
+            self.dual_player_system.mystic_swordsman.world_y = center_y + 32
+            
+            # 重置角色状态
+            self.dual_player_system.ninja_frog.health = self.dual_player_system.ninja_frog.max_health
+            self.dual_player_system.mystic_swordsman.health = self.dual_player_system.mystic_swordsman.max_health
+            
+            # 重置双人系统的能量
+            self.dual_player_system.energy = 100.0
+            
+            # 重置角色经验值和等级
+            self.dual_player_system.ninja_frog.progression.level = 1
+            self.dual_player_system.ninja_frog.progression.experience = 0
+            self.dual_player_system.mystic_swordsman.progression.level = 1
+            self.dual_player_system.mystic_swordsman.progression.experience = 0
+            
+            # 重置角色金币
+            self.dual_player_system.ninja_frog.progression.coins = 0
+            self.dual_player_system.mystic_swordsman.progression.coins = 0
+            
+            # 重置角色钥匙状态
+            self.dual_player_system.ninja_frog.keys_collected = 0
+            self.dual_player_system.mystic_swordsman.keys_collected = 0
+            
+            # 重置角色移动状态
+            self.dual_player_system.ninja_frog.movement.moving = {
+                'up': False, 'down': False, 'left': False, 'right': False
+            }
+            self.dual_player_system.mystic_swordsman.movement.moving = {
+                'up': False, 'down': False, 'left': False, 'right': False
+            }
+            # 重置移动方向和速度
+            self.dual_player_system.ninja_frog.movement.direction = pygame.math.Vector2(0, 0)
+            self.dual_player_system.ninja_frog.movement.velocity = pygame.math.Vector2(0, 0)
+            self.dual_player_system.mystic_swordsman.movement.direction = pygame.math.Vector2(0, 0)
+            self.dual_player_system.mystic_swordsman.movement.velocity = pygame.math.Vector2(0, 0)
+            print("双人模式移动状态已重置")
+            
+        elif self.player:
+            # 单人模式：重置玩家位置
+            map_width, map_height = self.map_manager.get_map_size()
+            self.player.world_x = map_width // 2
+            self.player.world_y = map_height // 2
+            self.player.health = self.player.max_health
+            
+            # 重置玩家经验值和等级
+            self.player.progression.level = 1
+            self.player.progression.experience = 0
+            self.player.progression.coins = 0
+            
+            # 重置玩家钥匙状态
+            self.player.keys_collected = 0
+            
+            # 重置玩家移动状态
+            self.player.movement.moving = {
+                'up': False, 'down': False, 'left': False, 'right': False
+            }
+            # 重置移动方向和速度
+            self.player.movement.direction = pygame.math.Vector2(0, 0)
+            self.player.movement.velocity = pygame.math.Vector2(0, 0)
+            print("单人模式移动状态已重置")
+        
+        # 重置敌人管理器
+        if self.enemy_manager:
+            self.enemy_manager.enemies.clear()
+            self.enemy_manager.current_round = 0
+            self.enemy_manager.game_time = 0
+            print("敌人管理器已重置")
+        
+        # 重置物品管理器
+        if self.item_manager:
+            self.item_manager.items.clear()
+            print("物品管理器已重置")
+        
+        # 重置钥匙管理器
+        if self.key_manager:
+            self.key_manager.keys.clear()
+            self.key_manager.spawned_keys_set.clear()
+            print("钥匙管理器已重置")
+        
+        # 重置逃生门状态
+        if self.escape_door:
+            self.escape_door.reset()
+            print("逃生门已重置")
+        
+        # 重置弹药补给管理器
+        if self.ammo_supply_manager:
+            self.ammo_supply_manager.supplies.clear()
+            print("弹药补给管理器已重置")
+        
+        # 重置生命补给管理器
+        if self.health_supply_manager:
+            self.health_supply_manager.supplies.clear()
+            print("生命补给管理器已重置")
+        
+        # 小地图已在load_map中重新创建，无需额外处理
+        
+        # 重置升级系统
+        if self.upgrade_manager:
+            self.upgrade_manager.reset()
+            print("升级系统已重置")
+        
+        # 重置武器管理器
+        if hasattr(self, 'weapon_manager') and self.weapon_manager:
+            self.weapon_manager.reset()
+            print("武器管理器已重置")
+        
+        # 重置被动技能管理器
+        if hasattr(self, 'passive_manager') and self.passive_manager:
+            self.passive_manager.reset()
+            print("被动技能管理器已重置")
+        
+        # 重置相机位置
+        if self.dual_player_system:
+            # 双人模式：相机跟随两个角色的中心
+            center_x = (self.dual_player_system.ninja_frog.world_x + self.dual_player_system.mystic_swordsman.world_x) // 2
+            center_y = (self.dual_player_system.ninja_frog.world_y + self.dual_player_system.mystic_swordsman.world_y) // 2
+        elif self.player:
+            # 单人模式：相机跟随玩家
+            center_x = self.player.world_x
+            center_y = self.player.world_y
+        
+        self.camera_x = center_x
+        self.camera_y = center_y
+        
+        # 设置战斗中的鼠标光标
+        if self.light_cursor:
+            pygame.mouse.set_visible(False)  # 隐藏默认鼠标光标
+            print("设置战斗鼠标光标")
+        
+        print(f"下一关 {next_map} 初始化完成")
             
     def load_map(self, map_name):
         """加载指定名称的地图"""
@@ -360,6 +582,20 @@ class Game:
             
             # 获取地图尺寸
             map_width, map_height = self.map_manager.get_map_size()
+            
+            # 重新创建小地图以适应新地图尺寸
+            if self.minimap:
+                screen_width = self.screen.get_width()
+                screen_height = self.screen.get_height()
+                self.minimap = Minimap(map_width, map_height, screen_width, screen_height)
+                print(f"小地图已重新创建，适应新地图尺寸: {map_width}x{map_height}")
+            
+            # 重新创建逃生门
+            from .items.escape_door import EscapeDoor
+            door_x = map_width - 100  # 地图右上角X坐标
+            door_y = 100  # 地图右上角Y坐标
+            self.escape_door = EscapeDoor(door_x, door_y)
+            print(f"逃生门已重新创建，位置: ({door_x}, {door_y})")
             
             # 根据地图尺寸设置玩家的起始位置和边界
             if self.player:
@@ -373,6 +609,24 @@ class Game:
                 
                 # 设置玩家和敌人边界
                 self._set_map_boundaries()
+            
+            # 重新设置碰撞数据
+            if self.map_manager and self.map_manager.current_map:
+                walls = self.map_manager.get_collision_tiles()
+                tile_width, tile_height = self.map_manager.get_tile_size()
+                
+                # 设置双人模式的碰撞数据
+                if self.dual_player_system:
+                    if hasattr(self.dual_player_system.ninja_frog, 'movement'):
+                        self.dual_player_system.ninja_frog.movement.set_collision_tiles(walls, tile_width, tile_height)
+                    if hasattr(self.dual_player_system.mystic_swordsman, 'movement'):
+                        self.dual_player_system.mystic_swordsman.movement.set_collision_tiles(walls, tile_width, tile_height)
+                    print("双人模式碰撞数据已更新")
+                
+                # 设置单人模式的碰撞数据
+                elif self.player and hasattr(self.player, 'movement'):
+                    self.player.movement.set_collision_tiles(walls, tile_width, tile_height)
+                    print("单人模式碰撞数据已更新")
             
         else:
             print(f"加载地图 '{map_name}' 失败")
@@ -488,6 +742,9 @@ class Game:
             
             # 初始化游戏管理器
             self.enemy_manager = EnemyManager()
+            self.enemy_manager.game = self  # 设置敌人管理器对游戏对象的引用
+            # 设置波次UI回调函数
+            self.enemy_manager.on_round_start = self._on_round_start
             self.item_manager = ItemManager()
             
             # 恢复游戏状态
@@ -533,6 +790,17 @@ class Game:
             return False
         
     def handle_event(self, event):
+        # 如果正在显示主页动画，只处理退出事件
+        if self.showing_main_menu_animation:
+            if event.type == pygame.QUIT:
+                self.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE or event.key == pygame.K_ESCAPE:
+                    # 允许跳过动画
+                    self.showing_main_menu_animation = False
+                    self.main_menu_animation.is_playing = False
+            return
+            
         # 如果在地图和英雄选择界面
         if self.in_map_hero_select:
             result = self.map_hero_select_menu.handle_event(event)
@@ -598,6 +866,8 @@ class Game:
             elif action == "main_menu":
                 self.in_main_menu = True
                 self.game_over = False
+                self.showing_main_menu_animation = True  # 重新显示主页动画
+                self.main_menu_animation = MainMenuAnimation(self.screen)  # 重新创建动画
                 resource_manager.stop_music()  # 停止游戏音乐
             elif action == "exit":
                 self.running = False  # 退出游戏
@@ -616,6 +886,8 @@ class Game:
             elif action == "main_menu":  # 返回主菜单
                 self.in_main_menu = True
                 self.paused = False
+                self.showing_main_menu_animation = True  # 重新显示主页动画
+                self.main_menu_animation = MainMenuAnimation(self.screen)  # 重新创建动画
                 resource_manager.stop_music()  # 停止游戏音乐
             elif action == "exit":  # 退出游戏
                 self.running = False  # 直接退出游戏
@@ -644,10 +916,17 @@ class Game:
                     self.game_over = False
                     self.game_victory = False
                     self.game_result_ui.is_active = False
+                    self.showing_main_menu_animation = True  # 重新显示主页动画
+                    self.main_menu_animation = MainMenuAnimation(self.screen)  # 重新创建动画
                     resource_manager.stop_music()
                     return True
                 elif result_action == 'quit':
                     self.running = False
+                    return True
+                elif result_action == 'next_level':
+                    # 进入下一关
+                    if self.game_result_ui.next_map:
+                        self._start_next_level(self.game_result_ui.next_map)
                     return True
             else:
                 # 如果游戏结果UI激活但没有处理事件，也要消费掉事件，防止传递给其他系统
@@ -666,6 +945,8 @@ class Game:
             elif button_action == 'home_confirmed':
                 self.in_main_menu = True
                 self.paused = False
+                self.showing_main_menu_animation = True  # 重新显示主页动画
+                self.main_menu_animation = MainMenuAnimation(self.screen)  # 重新创建动画
                 resource_manager.stop_music()
                 return True
             elif button_action == 'setup':
@@ -773,6 +1054,13 @@ class Game:
         
     def update(self, dt):
         """更新游戏状态"""
+        # 更新主页动画
+        if self.showing_main_menu_animation:
+            self.main_menu_animation.update(dt)
+            if self.main_menu_animation.is_finished():
+                self.showing_main_menu_animation = False
+            return
+            
         # 更新帧数计算
         self.fps_counter += 1
         self.fps_timer += dt
@@ -800,24 +1088,69 @@ class Game:
                 self.game_over = True
                 self.game_result_ui.show(is_victory=False)
                 resource_manager.play_sound("player_death")
+                # 恢复默认鼠标光标
+                pygame.mouse.set_visible(True)
                 return
         elif self.player and self.player.health <= 0 and not self.game_over:
             self.game_over = True
             self.game_result_ui.show(is_victory=False)
             # 播放游戏结束音效
             resource_manager.play_sound("player_death")
+            # 恢复默认鼠标光标
+            pygame.mouse.set_visible(True)
             return
             
         # 检查游戏胜利
         if self.game_victory and not self.game_over:
             self.game_over = True
-            self.game_result_ui.show(is_victory=True)
+            print(f"游戏胜利！当前地图: {self.current_map}")
+            
+            # 确定下一关地图
+            next_map = None
+            is_final_level = False
+            
+            if self.current_map == "small_map":
+                next_map = "test2_map"
+                is_final_level = False
+            elif self.current_map == "test2_map":
+                next_map = "test3_map"
+                is_final_level = False
+            elif self.current_map == "test3_map":
+                next_map = None
+                is_final_level = True
+            else:
+                next_map = None
+                is_final_level = False
+            
+            # 如果不是最终关卡且有下一关，直接开始关卡过渡动画
+            if next_map and not is_final_level:
+                print(f"开始关卡过渡动画，下一关: {next_map}")
+                self.level_transition.start(next_map)
+            else:
+                # 最终关卡或失败，显示游戏结果UI
+                self.game_result_ui.show(is_victory=True, current_map=self.current_map)
+                # 恢复默认鼠标光标
+                pygame.mouse.set_visible(True)
             return
             
-        # 如果游戏结束，更新游戏结果UI
+        # 更新波次UI
+        if self.round_ui.is_active:
+            self.round_ui.update(dt)
+        
+        # 如果游戏结束，更新游戏结果UI或关卡过渡动画
         if self.game_over:
-            self.game_result_ui.update(dt)
-            return
+            # 检查是否正在显示关卡过渡动画
+            if self.level_transition.is_active:
+                result = self.level_transition.update(dt)
+                if result == "next_level":
+                    # 关卡过渡动画结束，进入下一关
+                    print(f"关卡过渡动画结束，进入下一关: {self.level_transition.next_map}")
+                    self._start_next_level(self.level_transition.next_map)
+                return
+            else:
+                # 更新游戏结果UI
+                self.game_result_ui.update(dt)
+                return
             
         # 如果暂停或者正在选择升级，不更新游戏状态
         if self.paused or self.upgrade_menu.is_active or self.save_menu.is_active:
@@ -979,6 +1312,12 @@ class Game:
         # 清屏
         self.screen.fill((0, 0, 0))  # 黑色背景
         
+        # 如果正在显示主页动画
+        if self.showing_main_menu_animation:
+            self.main_menu_animation.render()
+            pygame.display.flip()
+            return
+        
         # 如果在主菜单
         if self.in_main_menu:
             # 如果读取菜单激活，只渲染读取菜单
@@ -1133,10 +1472,26 @@ class Game:
         if not self.game_over or self.game_result_ui.is_active:
             self.game_buttons.render()
             
+        # 如果波次UI激活，渲染波次UI（在所有UI之上）
+        if self.round_ui.is_active:
+            self.round_ui.render()
+        # 如果关卡过渡动画激活，渲染关卡过渡动画（在所有UI之上）
+        elif self.level_transition.is_active:
+            self.level_transition.render()
         # 如果游戏结果UI激活，渲染游戏结果UI（在所有UI之上）
-        if self.game_result_ui.is_active:
+        elif self.game_result_ui.is_active:
             self.game_result_ui.render()
             
+        # 渲染自定义鼠标光标（在游戏进行中且不在菜单时）
+        if (not self.in_main_menu and not self.in_map_hero_select and 
+            not self.showing_main_menu_animation and not self.game_over and 
+            self.light_cursor and not pygame.mouse.get_visible()):
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            # 计算光标位置（光标中心对齐鼠标位置）
+            cursor_rect = self.light_cursor.get_rect()
+            cursor_rect.center = (mouse_x, mouse_y)
+            self.screen.blit(self.light_cursor, cursor_rect)
+        
         # 更新显示
         pygame.display.flip()
         
@@ -1274,7 +1629,7 @@ class Game:
                 
                 print(f"目标玩家: {target_player.hero_type}, 距离: {distance:.1f}")
                 
-                if distance < 150:  # 增加碰撞距离到150像素
+                if distance < 50:  # 减小碰撞距离到50像素
                     print(f"检测到碰撞！目标: {target_player.hero_type}")
                     print(f"投射物伤害: {getattr(projectile, 'damage', '无')}")
                     if hasattr(projectile, 'damage'):

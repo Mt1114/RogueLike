@@ -30,6 +30,9 @@ class EnemyManager:
         # 敌人子弹列表
         self.enemy_projectiles = []
         
+        # 波次UI回调函数
+        self.on_round_start = None
+        
     def set_map_boundaries(self, min_x, min_y, max_x, max_y):
         """设置地图边界
         
@@ -186,6 +189,10 @@ class EnemyManager:
         })
         
         print(f"开始第{round_num}波！生成间隔: {spawn_interval}秒, 生命值倍数: {health_multiplier}, 攻击力倍数: {damage_multiplier}, 最大敌人数: {max_enemies}")
+        
+        # 触发波次UI显示
+        if self.on_round_start:
+            self.on_round_start(round_num)
         
     def _end_round(self):
         """结束当前波次"""

@@ -32,6 +32,10 @@ class UI:
         self.kill_icon = resource_manager.load_image('kill_count', 'images/enemy/enemy_kill_32x32.png')
         self.kill_icon = pygame.transform.scale(self.kill_icon, (24, 24))  # 调整击杀图标大小
         
+        # 加载电量图标
+        self.energy_icon = resource_manager.load_image('energy_icon', 'images/ui/light_icon.png')
+        self.energy_icon = pygame.transform.scale(self.energy_icon, (24, 24))  # 调整电量图标大小
+        
         # 加载武器选择图标
         self.knife_black = resource_manager.load_image('knife_black', 'images/ui/knife_black.png')
         self.knife_white = resource_manager.load_image('knife_white', 'images/ui/knife_white.png')
@@ -207,46 +211,60 @@ class UI:
         # 武器选择UI位置：血条正上方160像素
         weapon_ui_y = health_bar_y - 160
         
-        # 计算两个图标的位置（居中显示）
-        icon_spacing = 20  # 图标之间的间距
-        total_width = self.weapon_icon_size * 2 + icon_spacing
-        start_x = (screen_width - total_width) // 2
+        # 计算两个图标的位置（居中靠左分布）
+        # 计算屏幕中心位置
+        screen_center_x = screen_width // 2
         
-        # 刀图标位置
+        # 图标间距
+        icon_spacing = 20
+        
+        # 计算两个图标的总宽度
+        total_width = self.weapon_icon_size * 2 + icon_spacing
+        
+        # 计算起始位置（居中靠左）
+        start_x = screen_center_x - total_width+50  # 从中心向左偏移，再往右移动100像素
+        
+        # 刀图标位置（左侧）
         knife_x = start_x
         knife_y = weapon_ui_y
         
-        # 枪图标位置
+        # 枪图标位置（右侧）
         gun_x = start_x + self.weapon_icon_size + icon_spacing
         gun_y = weapon_ui_y
         
         # 根据当前武器模式选择显示的图标
         if player.is_ranged_mode:
-            # 远程模式：显示枪的白色图标（放大），刀的黑色图标
-            knife_icon = self.knife_black
-            gun_icon = self.gun_white
+            # 远程模式：枪在左边（白色，放大2.5倍），刀在右边（灰色）
+            # 放大枪的图标到2.5倍
+            gun_icon_large = pygame.transform.scale(self.gun_white, 
+                (int(self.weapon_icon_size * 2.5), int(self.weapon_icon_size * 2.5)))
+            gun_x_large = knife_x - (gun_icon_large.get_width() - self.weapon_icon_size) // 2
+            gun_y_large = knife_y - (gun_icon_large.get_height() - self.weapon_icon_size) // 2
             
-            # 放大枪的图标
-            gun_icon_large = pygame.transform.scale(self.gun_white, (int(self.weapon_icon_size * 1.2), int(self.weapon_icon_size * 1.2)))
-            gun_x_large = gun_x - (gun_icon_large.get_width() - self.weapon_icon_size) // 2
-            gun_y_large = gun_y - (gun_icon_large.get_height() - self.weapon_icon_size) // 2
+            # 创建灰色的刀图标
+            knife_gray = self.knife_black.copy()
+            # 将黑色图标转换为灰色
+            knife_gray.fill((128, 128, 128), special_flags=pygame.BLEND_RGB_MULT)
             
             # 渲染图标
-            self.screen.blit(knife_icon, (knife_x, knife_y))
-            self.screen.blit(gun_icon_large, (gun_x_large, gun_y_large))
+            self.screen.blit(gun_icon_large, (gun_x_large, gun_y_large))  # 枪在左边
+            self.screen.blit(knife_gray, (gun_x+10, gun_y))  # 刀在右边，灰色
         else:
-            # 近战模式：显示刀的白色图标（放大），枪的黑色图标
-            knife_icon = self.knife_white
-            gun_icon = self.gun_black
-            
-            # 放大刀的图标
-            knife_icon_large = pygame.transform.scale(self.knife_white, (int(self.weapon_icon_size * 1.2), int(self.weapon_icon_size * 1.2)))
+            # 近战模式：刀在左边（白色，放大2.5倍），枪在右边（灰色）
+            # 放大刀的图标到2.5倍
+            knife_icon_large = pygame.transform.scale(self.knife_white, 
+                (int(self.weapon_icon_size * 2.5), int(self.weapon_icon_size * 2.5)))
             knife_x_large = knife_x - (knife_icon_large.get_width() - self.weapon_icon_size) // 2
             knife_y_large = knife_y - (knife_icon_large.get_height() - self.weapon_icon_size) // 2
             
+            # 创建灰色的枪图标
+            gun_gray = self.gun_black.copy()
+            # 将黑色图标转换为灰色
+            gun_gray.fill((128, 128, 128), special_flags=pygame.BLEND_RGB_MULT)
+            
             # 渲染图标
-            self.screen.blit(knife_icon_large, (knife_x_large, knife_y_large))
-            self.screen.blit(gun_icon, (gun_x, gun_y))
+            self.screen.blit(knife_icon_large, (knife_x_large, knife_y_large))  # 刀在左边
+            self.screen.blit(gun_gray, (gun_x+10, gun_y))  # 枪在右边，灰色
 
     def _render_ammo_display_left(self, player):
         """在左侧显示弹药信息（双人模式专用）
@@ -463,22 +481,23 @@ class UI:
         time_text = self.small_font.render(f"{minutes:02d}:{seconds:02d}", True, self.text_color)
         time_rect = time_text.get_rect()
         time_rect.left = self.margin
-        time_rect.top = self.bar_height + self.margin
+        time_rect.top = self.bar_height + self.margin+200
         self.screen.blit(time_text, time_rect)
         
-        # 渲染击杀统计（中间，紧贴经验条下方）
+        # 渲染击杀统计（左上角，紧贴经验条下方）
         kill_count = game_kill_num
-        kill_text = self.font.render(str(kill_count), True, self.text_color)
+        print(f"UI渲染 - 击杀数: {kill_count}, 双人系统: {dual_player_system is not None}")  # 调试信息
+        kill_text = self.font.render(f"击杀: {kill_count}", True, self.text_color)
         kill_text_rect = kill_text.get_rect()
         kill_icon_rect = self.kill_icon.get_rect()
         
-        # 计算击杀统计文本和图标的位置（居中）
-        total_width = kill_icon_rect.width + 5 + kill_text_rect.width
-        center_x = screen_width // 2
-        kill_icon_rect.right = center_x - 5
-        kill_icon_rect.top = self.bar_height + self.margin
-        kill_text_rect.left = center_x + 5
+        # 计算击杀统计文本和图标的位置（左上角，往下移动400像素）
+        kill_icon_rect.left = self.margin+900
+        kill_icon_rect.top = self.bar_height + self.margin + 30 + 80  # 在时间下方，再往下400像素
+        kill_text_rect.left = kill_icon_rect.right + 5
         kill_text_rect.centery = kill_icon_rect.centery
+        
+        print(f"击杀图标位置: ({kill_icon_rect.left}, {kill_icon_rect.top})")  # 调试位置信息
         
         # 渲染击杀统计文本和图标
         self.screen.blit(self.kill_icon, kill_icon_rect)
@@ -489,12 +508,45 @@ class UI:
         coin_text_rect = coin_text.get_rect()
         coin_icon_rect = self.coin_icon.get_rect()
         
-        # 计算金币文本和图标的位置
-        coin_text_rect.right = screen_width - self.margin - coin_icon_rect.width - 5
-        coin_text_rect.top = self.bar_height + self.margin
+        # 计算金币文本和图标的位置（往下移动400像素，往左移动500像素）
+        coin_text_rect.right = screen_width - self.margin - coin_icon_rect.width - 5 - 10  # 往左移动500像素
+        coin_text_rect.top = self.bar_height + self.margin + 400  # 往下移动400像素
         coin_icon_rect.right = coin_text_rect.left - 5
         coin_icon_rect.centery = coin_text_rect.centery
         
+        print(f"金币位置: ({coin_text_rect.right}, {coin_text_rect.top})")  # 调试位置信息
+        
         # 渲染金币文本和图标
         self.screen.blit(coin_text, coin_text_rect)
-        self.screen.blit(self.coin_icon, coin_icon_rect) 
+        self.screen.blit(self.coin_icon, coin_icon_rect)
+        
+        # 渲染剩余电量（右上角，金币下方）
+        if dual_player_system:
+            print(f"UI渲染 - 电量: {dual_player_system.energy}%")  # 调试信息
+            
+            # 根据电量值确定颜色
+            energy_value = dual_player_system.energy
+            if energy_value < 20:
+                energy_color = (255, 0, 0)  # 红色 (<20)
+            elif energy_value < 50:
+                energy_color = (255, 255, 0)  # 黄色 (<50)
+            else:
+                energy_color = (0, 255, 0)  # 绿色 (>=50)
+            
+            # 渲染电量图标和文本
+            energy_text = self.font.render(f"电量: {int(energy_value)}%", True, energy_color)
+            energy_rect = energy_text.get_rect()
+            energy_icon_rect = self.energy_icon.get_rect()
+            
+            # 计算位置（图标在文本左侧）
+            energy_rect.right = screen_width - self.margin - 10  # 往左移动400像素
+            energy_rect.top = coin_text_rect.bottom + 5 + 250  # 往下移动300像素
+            energy_icon_rect.right = energy_rect.left - 5
+            energy_icon_rect.centery = energy_rect.centery
+            
+            print(f"电量位置: ({energy_rect.right}, {energy_rect.top})")  # 调试位置信息
+            print(f"电量图标位置: ({energy_icon_rect.right}, {energy_icon_rect.centery})")  # 调试位置信息
+            
+            # 渲染电量图标和文本
+            self.screen.blit(self.energy_icon, energy_icon_rect)
+            self.screen.blit(energy_text, energy_rect) 

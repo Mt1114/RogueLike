@@ -592,8 +592,22 @@ class Player(pygame.sprite.Sprite):
     
     def _load_phase_icon(self):
         """加载穿墙技能图标"""
-        # 用户要求不改变图标，因此不加载特定图片，让render方法使用默认圆形图标
-        self.phase_icon = None
+        try:
+            from .resource_manager import resource_manager
+            # 加载穿墙技能图标
+            self.phase_icon = resource_manager.load_image(
+                "phase_icon", 
+                "images/ui/skill_transport.png"
+            )
+            if self.phase_icon:
+                # 缩放图标到合适大小
+                self.phase_icon = pygame.transform.scale(self.phase_icon, (48, 48))
+                print("穿墙技能图标加载成功")
+            else:
+                print("穿墙技能图标加载失败")
+        except Exception as e:
+            print(f"无法加载穿墙技能图标: {e}")
+            self.phase_icon = None
     
     def render_phase_cooldown(self, screen):
         """渲染穿墙技能CD显示"""
@@ -610,6 +624,7 @@ class Player(pygame.sprite.Sprite):
         if not self.phase_icon:
             self.phase_icon = pygame.Surface((icon_size, icon_size), pygame.SRCALPHA)
             pygame.draw.circle(self.phase_icon, (0, 255, 255), (icon_size // 2, icon_size // 2), icon_size // 2)
+            print("使用默认穿墙技能图标")
         
         # 创建带黄色边框的图标
         bordered_icon = pygame.Surface((icon_size + 4, icon_size + 4), pygame.SRCALPHA)

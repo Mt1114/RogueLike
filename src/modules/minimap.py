@@ -364,5 +364,25 @@ class Minimap:
         pygame.draw.rect(screen, self.wall_color, (legend_x + 185, legend_y2 + 5, 6, 6))
         wall_text = legend_font.render("墙壁", True, (255, 255, 255))
         screen.blit(wall_text, (legend_x + 200, legend_y2))
+    
+    def reset(self):
+        """重置小地图状态"""
+        # 清空小地图表面
+        self.surface.fill((0, 0, 0, 100))
+        print("小地图已重置")
+    
+    def update_map_size(self, map_width, map_height):
+        """更新地图尺寸并重新计算缩放比例
         
- 
+        Args:
+            map_width: 新地图宽度
+            map_height: 新地图高度
+        """
+        self.map_width = map_width
+        self.map_height = map_height
+        
+        # 重新计算缩放比例
+        self.scale_x = self.minimap_width / map_width
+        self.scale_y = self.minimap_height / map_height
+        
+        print(f"小地图尺寸已更新: {map_width}x{map_height}, 缩放比例: {self.scale_x:.3f}x{self.scale_y:.3f}")

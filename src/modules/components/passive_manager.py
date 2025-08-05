@@ -124,4 +124,10 @@ class PassiveManager(Component):
         Returns:
             dict: 被动技能效果字典
         """
-        return self.passives.copy() 
+        return self.passives.copy()
+    
+    def reset(self):
+        """重置被动技能管理器状态"""
+        self.passives.clear()
+        self.passive_levels.clear()
+        print("被动技能管理器已重置") 

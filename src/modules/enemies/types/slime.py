@@ -203,7 +203,7 @@ class RangerProjectile(pygame.sprite.Sprite):
         self.direction_y = direction_y  # 纵向方向向量（已归一化）
         self.damage = damage  # 投射物伤害
         self.speed = speed  # 投射物速度
-        self.radius = 8  # 碰撞半径
+        self.radius = 4  # 碰撞半径，减小碰撞大小
         self.lifetime = 5.0  # 生命周期（秒）
         
         # 创建更大更明显的投射物图像

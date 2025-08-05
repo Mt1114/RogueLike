@@ -31,7 +31,8 @@ class MainMenu:
         try:
             self.background = resource_manager.load_image('menu_background', 'images/ui/Home_page.png')
             self.background = pygame.transform.scale(self.background, (screen.get_width(), screen.get_height()))
-        except:
+        except Exception as e:
+            print(f"加载背景图片失败: {e}")
             self.background = None
             
         # 加载按钮图片

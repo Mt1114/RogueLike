@@ -9,12 +9,15 @@ class TeleportItem(Item):
         # 先创建图像，然后再调用父类初始化
         # 加载传送道具图标
         try:
-            # 尝试加载传送图标，如果没有则创建一个默认的蓝色圆圈
-            spritesheet = resource_manager.load_spritesheet('teleport_icon', 'assets/images/passives/speed_up_32x32.png')
-            self.image = resource_manager.create_animation('teleport_icon', spritesheet,
-                                                         frame_width=32, frame_height=32,
-                                                         frame_count=1, row=0,
-                                                         frame_duration=0.1).get_current_frame()
+            # 尝试加载传送图标
+            self.image = resource_manager.load_image('teleport_icon', 'images/ui/transport.png')
+            if self.image:
+                # 缩放图标到合适大小
+                self.image = pygame.transform.scale(self.image, (32, 32))
+            else:
+                # 如果加载失败，创建蓝色圆圈作为备用
+                self.image = pygame.Surface((16, 16), pygame.SRCALPHA)
+                pygame.draw.circle(self.image, (0, 100, 255), (8, 8), 8)
         except:
             # 如果加载失败，创建蓝色圆圈作为备用
             self.image = pygame.Surface((16, 16), pygame.SRCALPHA)

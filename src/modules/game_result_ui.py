@@ -17,6 +17,11 @@ class GameResultUI:
         self.selected_button = 0  # 0: 重新开始, 1: 回到主页
         self.hovered_button = None  # 鼠标悬停的按钮
         
+        # 关卡进阶相关
+        self.current_map = None  # 当前地图
+        self.next_map = None  # 下一关地图
+        self.is_final_level = False  # 是否为最终关卡
+        
         # 加载图片
         self._load_images()
         
@@ -30,29 +35,64 @@ class GameResultUI:
             # 加载按钮图片
             self.again_image = resource_manager.load_image('again_ui', 'images/ui/Again.png')
             self.home_image = resource_manager.load_image('home_ui', 'images/ui/Home_1.png')
+            self.give_up_image = resource_manager.load_image('give_up_ui', 'images/ui/GiveUp.png')
             
             print(f"游戏结果UI图片加载状态:")
             print(f"  WIN: {self.win_image is not None}")
             print(f"  LOST: {self.lost_image is not None}")
             print(f"  AGAIN: {self.again_image is not None}")
             print(f"  HOME: {self.home_image is not None}")
+            print(f"  GIVE_UP: {self.give_up_image is not None}")
             
         except Exception as e:
             print(f"加载游戏结果UI图片失败: {e}")
     
-    def show(self, is_victory=True):
-        """显示游戏结果界面"""
-        print(f"游戏结果UI: 显示 {'胜利' if is_victory else '失败'} 界面")
+    def show(self, is_victory=True, current_map=None):
+        """显示游戏结果界面
+        
+        Args:
+            is_victory: 是否为胜利
+            current_map: 当前地图名称
+        """
+        print(f"游戏结果UI: 显示 {'胜利' if is_victory else '失败'} 界面，当前地图: {current_map}")
         self.is_active = True
         self.is_victory = is_victory
         self.current_time = 0.0
         self.show_buttons = False
+        self.current_map = current_map
+        
+        # 确定下一关地图
+        self._determine_next_map()
         
         # 播放相应的音效
         if is_victory:
             resource_manager.play_sound("victory")
         else:
             resource_manager.play_sound("defeat")
+    
+    def _determine_next_map(self):
+        """确定下一关地图"""
+        if not self.is_victory or not self.current_map:
+            self.next_map = None
+            self.is_final_level = False
+            return
+        
+        # 关卡进阶逻辑
+        if self.current_map == "small_map":
+            self.next_map = "test2_map"
+            self.is_final_level = False
+        elif self.current_map == "test2_map":
+            self.next_map = "test3_map"
+            self.is_final_level = False
+        elif self.current_map == "test3_map":
+            self.next_map = None
+            self.is_final_level = True
+        else:
+            # 其他地图不进行关卡进阶
+            self.next_map = None
+            self.is_final_level = False
+        
+        print(f"关卡进阶: 当前地图 {self.current_map} -> 下一关 {self.next_map}, 最终关卡: {self.is_final_level}")
     
     def update(self, dt):
         """更新游戏结果UI"""
@@ -120,6 +160,8 @@ class GameResultUI:
         else:
             if button == "again":
                 return "restart"
+            elif button == "next_level":
+                return "next_level"
             elif button == "home":
                 return "main_menu"
         return None
@@ -141,7 +183,7 @@ class GameResultUI:
         if image:
                     # 计算图片位置（居中显示，向右移动70像素）
             image_rect = image.get_rect()
-            image_rect.center = (self.screen.get_width() // 2 + 40, self.screen.get_height() // 2)
+            image_rect.center = (self.screen.get_width() // 2 + 60, self.screen.get_height() // 2-20)
             self.screen.blit(image, image_rect)
         else:
             # 如果图片加载失败，显示文字
@@ -187,9 +229,24 @@ class GameResultUI:
         mouse_pos = pygame.mouse.get_pos()
         self.hovered_button = None
         
-        # 按钮图片列表
-        button_images = [self.again_image, self.home_image]
-        button_names = ["again", "home"]
+        # 根据关卡状态确定按钮
+        print(f"游戏结果UI调试: 胜利={self.is_victory}, 当前地图={self.current_map}, 下一关={self.next_map}, 最终关卡={self.is_final_level}")
+        
+        if self.is_victory and self.is_final_level:
+            # 胜利且是最终关卡：显示重新开始和回到主页按钮
+            button_images = [self.again_image, self.home_image]
+            button_names = ["again", "home"]
+            print("显示重新开始和回到主页按钮（最终关卡）")
+        elif self.is_victory and self.next_map and not self.is_final_level:
+            # 胜利且有下一关：不显示按钮，直接进入下一关
+            button_images = []
+            button_names = []
+            print("胜利且有下一关，不显示按钮，直接进入下一关")
+        else:
+            # 失败或其他情况：显示重新开始和回到主页按钮
+            button_images = [self.again_image, self.home_image]
+            button_names = ["again", "home"]
+            print("显示重新开始和回到主页按钮")
         
         for i, (button_img, button_name) in enumerate(zip(button_images, button_names)):
             button_y = button_start_y + i * (button_height + button_spacing)
@@ -227,6 +284,8 @@ class GameResultUI:
                 font = pygame.font.SysFont('simHei', 24)
                 if button_name == "again":
                     text = "重新开始"
+                elif button_name == "next_level":
+                    text = "下一关"
                 elif button_name == "home":
                     text = "回到主页"
                 

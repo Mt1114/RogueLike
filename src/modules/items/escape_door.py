@@ -89,4 +89,11 @@ class EscapeDoor(pygame.sprite.Sprite):
         screen_y = screen_center_y + (self.world_y - camera_y)
         self.rect.center = (screen_x, screen_y)
         
-        screen.blit(self.image, self.rect) 
+        screen.blit(self.image, self.rect)
+    
+    def reset(self):
+        """重置逃生门状态"""
+        self.is_locked = True
+        self.is_opened = False
+        self._update_appearance()
+        print("逃生门已重置为锁定状态") 

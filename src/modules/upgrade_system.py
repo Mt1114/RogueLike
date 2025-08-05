@@ -383,4 +383,10 @@ class UpgradeManager:
             min(len(candidate_pool), count)
         )
         
-        return selected_upgrades 
+        return selected_upgrades
+    
+    def reset(self):
+        """重置升级管理器状态"""
+        # 升级管理器本身不需要重置，因为它只包含配置信息
+        # 实际的升级状态存储在玩家对象中
+        print("升级管理器重置完成") 
