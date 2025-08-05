@@ -1,94 +1,171 @@
 import pygame
-from .resource_manager import resource_manager
+import math
 
 class LevelTransition:
-    """关卡过渡动画类"""
+    """关卡切换动画类"""
     
     def __init__(self, screen):
         self.screen = screen
         self.is_active = False
-        self.duration = 5.0  # 持续5秒
-        self.current_time = 0.0
         self.next_map = None
+        
+        # 动画状态
+        self.animation_phase = "fade_in"  # fade_in, show_text, fade_out
+        self.animation_timer = 0
+        self.total_duration = 5.0  # 总时长5秒
+        
+        # 各阶段时长
+        self.fade_in_duration = 1.0    # 渐入1秒
+        self.show_text_duration = 3.0  # 显示文字3秒
+        self.fade_out_duration = 1.0   # 渐出1秒
+        
+        # 透明度
+        self.alpha = 0
+        self.max_alpha = 255
         
         # 加载背景图片
         self.background_image = None
         self._load_background()
         
-        # 字体设置
-        self.font = pygame.font.SysFont('simHei', 72)
+        # 字体
+        self.font = None
+        self._load_font()
+        
+        # 文字内容
+        self.text_lines = [
+            "下一关！",
+            "准备！"
+        ]
         
     def _load_background(self):
-        """加载背景图片"""
+        """加载背景图片并自适应屏幕"""
         try:
-            self.background_image = resource_manager.load_image('background_ui', 'images/ui/background.png')
-            print(f"关卡过渡背景加载状态: {self.background_image is not None}")
+            from .resource_manager import resource_manager
+            # 加载背景图片
+            self.background_image = resource_manager.load_image('background', 'images/ui/background.png')
+            
+            if self.background_image:
+                # 获取屏幕尺寸
+                screen_width = self.screen.get_width()
+                screen_height = self.screen.get_height()
+                
+                # 缩放背景图片以适应屏幕
+                self.background_image = pygame.transform.scale(
+                    self.background_image, 
+                    (screen_width, screen_height)
+                )
+                print("关卡切换背景图片加载成功")
+            else:
+                print("关卡切换背景图片加载失败")
         except Exception as e:
-            print(f"加载关卡过渡背景失败: {e}")
+            print(f"无法加载关卡切换背景图片: {e}")
+            self.background_image = None
+    
+    def _load_font(self):
+        """加载字体"""
+        try:
+            # 尝试加载中文字体
+            self.font = pygame.font.SysFont('simHei', 48)
+        except:
+            try:
+                # 备用字体
+                self.font = pygame.font.SysFont('arial', 48)
+            except:
+                # 默认字体
+                self.font = pygame.font.Font(None, 48)
     
     def start(self, next_map):
-        """开始关卡过渡动画
+        """开始关卡切换动画
         
         Args:
-            next_map: 下一关地图名称
+            next_map: 下一关的地图名称
         """
-        print(f"开始关卡过渡动画，下一关: {next_map}")
-        self.is_active = True
-        self.current_time = 0.0
         self.next_map = next_map
+        self.is_active = True
+        self.animation_phase = "fade_in"
+        self.animation_timer = 0
+        self.alpha = 0
+        print(f"开始关卡切换动画，下一关: {next_map}")
     
     def update(self, dt):
-        """更新关卡过渡动画"""
+        """更新动画状态
+        
+        Args:
+            dt: 时间增量
+            
+        Returns:
+            str: 动画完成时返回"next_level"，否则返回None
+        """
         if not self.is_active:
-            return
+            return None
         
-        self.current_time += dt
+        self.animation_timer += dt
         
-        # 5秒后结束动画
-        if self.current_time >= self.duration:
-            self.is_active = False
-            print("关卡过渡动画结束")
-            return "next_level"  # 返回进入下一关的信号
+        if self.animation_phase == "fade_in":
+            # 渐入阶段
+            progress = self.animation_timer / self.fade_in_duration
+            self.alpha = int(self.max_alpha * progress)
+            
+            if self.animation_timer >= self.fade_in_duration:
+                self.animation_phase = "show_text"
+                self.animation_timer = 0
+                self.alpha = self.max_alpha
+                
+        elif self.animation_phase == "show_text":
+            # 显示文字阶段
+            if self.animation_timer >= self.show_text_duration:
+                self.animation_phase = "fade_out"
+                self.animation_timer = 0
+                
+        elif self.animation_phase == "fade_out":
+            # 渐出阶段
+            progress = self.animation_timer / self.fade_out_duration
+            self.alpha = int(self.max_alpha * (1 - progress))
+            
+            if self.animation_timer >= self.fade_out_duration:
+                # 动画完成
+                self.is_active = False
+                self.alpha = 0
+                return "next_level"
+        
+        return None
     
     def render(self):
-        """渲染关卡过渡动画"""
+        """渲染关卡切换动画"""
         if not self.is_active:
             return
         
-        # 渲染背景
+        # 创建覆盖整个屏幕的黑色半透明层
+        overlay = pygame.Surface((self.screen.get_width(), self.screen.get_height()))
+        overlay.set_alpha(self.alpha)
+        overlay.fill((0, 0, 0))
+        self.screen.blit(overlay, (0, 0))
+        
+        # 如果有背景图片，渲染背景图片
         if self.background_image:
-            # 缩放背景到屏幕大小
-            scaled_background = pygame.transform.scale(
-                self.background_image, 
-                (self.screen.get_width(), self.screen.get_height())
-            )
-            self.screen.blit(scaled_background, (0, 0))
-        else:
-            # 如果没有背景图片，使用黑色背景
-            self.screen.fill((0, 0, 0))
+            # 创建带透明度的背景图片
+            background_surface = self.background_image.copy()
+            background_surface.set_alpha(self.alpha)
+            self.screen.blit(background_surface, (0, 0))
         
-        # 计算淡入淡出效果
-        fade_progress = self.current_time / self.duration
-        
-        # 文字淡入淡出效果（前2秒淡入，后2秒淡出，中间1秒保持）
-        if fade_progress <= 0.4:  # 前2秒淡入
-            alpha = int(255 * (fade_progress / 0.4))
-        elif fade_progress >= 0.6:  # 后2秒淡出
-            alpha = int(255 * ((1.0 - fade_progress) / 0.4))
-        else:  # 中间1秒保持
-            alpha = 255
-        
-        # 渲染"NextLevel"文字
-        text_surface = self.font.render("NextLevel", True, (255, 255, 255))
-        
-        # 创建带透明度的表面
-        text_with_alpha = pygame.Surface(text_surface.get_size(), pygame.SRCALPHA)
-        text_with_alpha.fill((255, 255, 255, alpha))
-        text_surface.blit(text_with_alpha, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-        
-        # 居中显示文字
-        text_rect = text_surface.get_rect(center=(
-            self.screen.get_width() // 2,
-            self.screen.get_height() // 2
-        ))
-        self.screen.blit(text_surface, text_rect) 
+        # 只在显示文字阶段渲染文字
+        if self.animation_phase == "show_text" and self.font:
+            # 计算文字位置（屏幕中心）
+            screen_width = self.screen.get_width()
+            screen_height = self.screen.get_height()
+            
+            # 渲染文字
+            for i, text in enumerate(self.text_lines):
+                # 创建文字表面
+                text_surface = self.font.render(text, True, (255, 255, 255))
+                text_rect = text_surface.get_rect()
+                
+                # 计算垂直位置（文字垂直居中，两行文字之间有间距）
+                total_text_height = len(self.text_lines) * text_rect.height + (len(self.text_lines) - 1) * 20
+                start_y = screen_height // 2 - total_text_height // 2
+                
+                text_rect.centerx = screen_width // 2
+                text_rect.y = start_y + i * (text_rect.height + 20)
+                
+                # 渲染文字
+                self.screen.blit(text_surface, text_rect) 

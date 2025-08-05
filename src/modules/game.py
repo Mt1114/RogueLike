@@ -134,6 +134,9 @@ class Game:
         
         # 初始化光照系统
         self._init_lighting_system()
+        
+        # 确保在菜单界面显示默认鼠标光标
+        pygame.mouse.set_visible(True)
     
     def _load_light_cursor(self):
         """加载战斗中的鼠标光标"""
@@ -401,6 +404,9 @@ class Game:
         self.in_main_menu = False
         self.in_map_hero_select = True
         self.map_hero_select_menu.show()
+        
+        # 确保在菜单界面显示默认鼠标光标
+        pygame.mouse.set_visible(True)
     
     def _restart_game(self):
         """重启游戏"""
