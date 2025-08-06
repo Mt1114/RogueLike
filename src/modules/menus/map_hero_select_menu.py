@@ -49,8 +49,19 @@ class MapHeroSelectMenu:
             self.button_height
         )
         
+        # 返回按钮的尺寸和位置
+        self.back_button_width = 200
+        self.back_button_height = 60
+        self.back_button_rect = pygame.Rect(
+            50,  # 距离左边50像素
+            self.height - 100,  # 距离底部100像素
+            self.back_button_width,
+            self.back_button_height
+        )
+        
         # 按钮悬停状态
         self.button_hovered = False
+        self.back_button_hovered = False
         
         # 加载角色图片
         try:
@@ -98,10 +109,14 @@ class MapHeroSelectMenu:
         # 更新按钮悬停状态
         mouse_pos = pygame.mouse.get_pos()
         old_hover = self.button_hovered
+        old_back_hover = self.back_button_hovered
         self.button_hovered = self.button_rect.collidepoint(mouse_pos)
+        self.back_button_hovered = self.back_button_rect.collidepoint(mouse_pos)
         
         # 如果悬停状态改变，播放移动音效
         if old_hover != self.button_hovered and self.button_hovered:
+            resource_manager.play_sound("menu_move")
+        if old_back_hover != self.back_button_hovered and self.back_button_hovered:
             resource_manager.play_sound("menu_move")
             
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # 鼠标左键点击
@@ -112,6 +127,12 @@ class MapHeroSelectMenu:
                     # 直接进入双人模式，默认选择small_map和忍者蛙
                     self.on_start_game("small_map", "ninja_frog")
                 return "start_game"
+            # 检查是否点击了返回按钮
+            elif self.back_button_rect.collidepoint(mouse_pos):
+                resource_manager.play_sound("menu_back")
+                if self.on_back:
+                    self.on_back()
+                return "back"
                 
         elif event.type == pygame.KEYDOWN:
             if event.key in [pygame.K_RETURN, pygame.K_SPACE]:
@@ -120,6 +141,12 @@ class MapHeroSelectMenu:
                     # 直接进入双人模式，默认选择small_map和忍者蛙
                     self.on_start_game("small_map", "ninja_frog")
                 return "start_game"
+            elif event.key == pygame.K_ESCAPE:
+                # ESC键返回主菜单
+                resource_manager.play_sound("menu_back")
+                if self.on_back:
+                    self.on_back()
+                return "back"
                 
         return None
         
@@ -155,4 +182,21 @@ class MapHeroSelectMenu:
         # 绘制按钮文本
         button_text = self.button_font.render("确认进入游戏", True, self.button_text_color)
         text_rect = button_text.get_rect(center=self.button_rect.center)
-        self.screen.blit(button_text, text_rect) 
+        self.screen.blit(button_text, text_rect)
+        
+        # 绘制返回按钮（透明）
+        back_button_color = self.button_hover_color if self.back_button_hovered else self.button_color
+        
+        # 创建透明返回按钮表面
+        back_button_surface = pygame.Surface((self.back_button_width, self.back_button_height), pygame.SRCALPHA)
+        back_button_surface.fill(back_button_color)
+        self.screen.blit(back_button_surface, self.back_button_rect)
+        
+        # 绘制返回按钮边框
+        back_border_color = (255, 255, 0) if self.back_button_hovered else (255, 255, 255)
+        pygame.draw.rect(self.screen, back_border_color, self.back_button_rect, 2, 10)
+        
+        # 绘制返回按钮文本
+        back_button_text = self.button_font.render("返回", True, self.button_text_color)
+        back_text_rect = back_button_text.get_rect(center=self.back_button_rect.center)
+        self.screen.blit(back_button_text, back_text_rect) 

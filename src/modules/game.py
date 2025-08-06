@@ -791,6 +791,11 @@ class Game:
             # 播放背景音乐
             resource_manager.play_music("background", loops=-1)
             
+            # 设置战斗中的鼠标光标
+            if self.light_cursor:
+                pygame.mouse.set_visible(False)  # 隐藏默认鼠标光标
+                print("加载存档：设置战斗鼠标光标")
+            
             return True
             
         except Exception as e:
@@ -879,6 +884,8 @@ class Game:
                 self.showing_main_menu_animation = True  # 重新显示主页动画
                 self.main_menu_animation = MainMenuAnimation(self.screen)  # 重新创建动画
                 resource_manager.stop_music()  # 停止游戏音乐
+                # 恢复默认鼠标光标
+                pygame.mouse.set_visible(True)
             elif action == "exit":
                 self.running = False  # 退出游戏
             return
@@ -899,6 +906,8 @@ class Game:
                 self.showing_main_menu_animation = True  # 重新显示主页动画
                 self.main_menu_animation = MainMenuAnimation(self.screen)  # 重新创建动画
                 resource_manager.stop_music()  # 停止游戏音乐
+                # 恢复默认鼠标光标
+                pygame.mouse.set_visible(True)
             elif action == "exit":  # 退出游戏
                 self.running = False  # 直接退出游戏
             return
@@ -929,6 +938,8 @@ class Game:
                     self.showing_main_menu_animation = True  # 重新显示主页动画
                     self.main_menu_animation = MainMenuAnimation(self.screen)  # 重新创建动画
                     resource_manager.stop_music()
+                    # 恢复默认鼠标光标
+                    pygame.mouse.set_visible(True)
                     return True
                 elif result_action == 'quit':
                     self.running = False
@@ -958,6 +969,8 @@ class Game:
                 self.showing_main_menu_animation = True  # 重新显示主页动画
                 self.main_menu_animation = MainMenuAnimation(self.screen)  # 重新创建动画
                 resource_manager.stop_music()
+                # 恢复默认鼠标光标
+                pygame.mouse.set_visible(True)
                 return True
             elif button_action == 'setup':
                 # TODO: 实现设置功能
@@ -1071,6 +1084,35 @@ class Game:
         else:
             self.pause_menu.hide()
             resource_manager.unpause_music()
+            # 清除所有玩家的移动状态，防止暂停时保留的键盘输入影响游戏
+            self._clear_player_movement_states()
+    
+    def _clear_player_movement_states(self):
+        """清除所有玩家的移动状态"""
+        if self.dual_player_system:
+            # 双人模式：清除两个角色的移动状态
+            # 清除忍者蛙的移动状态
+            self.dual_player_system.ninja_frog.movement.moving = {
+                'up': False, 'down': False, 'left': False, 'right': False
+            }
+            self.dual_player_system.ninja_frog.movement.direction = pygame.math.Vector2(0, 0)
+            self.dual_player_system.ninja_frog.movement.velocity = pygame.math.Vector2(0, 0)
+            
+            # 清除神秘剑士的移动状态
+            self.dual_player_system.mystic_swordsman.movement.moving = {
+                'up': False, 'down': False, 'left': False, 'right': False
+            }
+            self.dual_player_system.mystic_swordsman.movement.direction = pygame.math.Vector2(0, 0)
+            self.dual_player_system.mystic_swordsman.movement.velocity = pygame.math.Vector2(0, 0)
+            print("暂停菜单：双人模式移动状态已清除")
+        elif self.player:
+            # 单人模式：清除玩家的移动状态
+            self.player.movement.moving = {
+                'up': False, 'down': False, 'left': False, 'right': False
+            }
+            self.player.movement.direction = pygame.math.Vector2(0, 0)
+            self.player.movement.velocity = pygame.math.Vector2(0, 0)
+            print("暂停菜单：单人模式移动状态已清除")
         
     def update(self, dt):
         """更新游戏状态"""

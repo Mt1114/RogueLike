@@ -437,9 +437,13 @@ class UpgradeManager:
                         # 如果被动槽未满，添加1级选项
                         candidate_pool.append(passive_upgrade.levels[0])
         
-        # 如果候选池为空，返回空列表
+        # 如果候选池为空，返回金币选项
         if not candidate_pool:
-            return []
+            # 当所有升级选项都满级时，返回金币奖励作为默认选项
+            if 'coins' in self.passive_upgrades:
+                return [self.passive_upgrades['coins'].levels[0]]
+            else:
+                return []
         
         # 如果候选池数量小于count，不添加任何选项
         # 保持候选池原样

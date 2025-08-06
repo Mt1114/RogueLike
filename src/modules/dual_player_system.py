@@ -125,14 +125,14 @@ class DualPlayerSystem:
                 # 激活神秘剑士的临时光圈
                 self.mystic_flashlight_active = True
                 self.mystic_flashlight_timer = self.mystic_flashlight_duration
-            elif event.key == pygame.K_KP5:  # 小键盘5键大招
-                # 神秘剑士的大招
-                print("调试 - 检测到大招按键")
-                if self.mystic_swordsman.hero_type == "role2" and not self.mystic_swordsman.ultimate_active:
-                    print("调试 - 激活大招")
-                    self.mystic_swordsman.activate_ultimate()
-                else:
-                    print(f"调试 - 大招条件不满足: hero_type={self.mystic_swordsman.hero_type}, ultimate_active={self.mystic_swordsman.ultimate_active}")
+            # elif event.key == pygame.K_KP5:  # 小键盘5键大招
+            #     # 神秘剑士的大招
+            #     print("调试 - 检测到大招按键")
+            #     if self.mystic_swordsman.hero_type == "role2" and not self.mystic_swordsman.ultimate_active:
+            #         print("调试 - 激活大招")
+            #         self.mystic_swordsman.activate_ultimate()
+            #     else:
+            #         print(f"调试 - 大招条件不满足: hero_type={self.mystic_swordsman.hero_type}, ultimate_active={self.mystic_swordsman.ultimate_active}")
             elif event.key == pygame.K_KP0:  # 小键盘0键使用传送道具
                 # 使用传送道具
                 self.use_teleport_item()
@@ -389,7 +389,7 @@ class DualPlayerSystem:
             self.force_pull_timer = 0
             self.ninja_frog_start_pos = (self.ninja_frog.world_x, self.ninja_frog.world_y)
             # 目标位置：神秘剑士身边（距离神秘剑士100像素）
-            target_distance = 100
+            target_distance = 0
             if distance > 0:
                 self.ninja_frog_target_pos = (
                     self.mystic_swordsman.world_x - (dx / distance) * target_distance,

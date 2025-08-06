@@ -85,14 +85,14 @@ class TeleportItem(Item):
             dy /= distance
             
             # 目标位置：忍者蛙身边50像素
-            target_distance = 50
+            target_distance = 0
             self.mystic_target_pos = (
                 ninja_x + dx * target_distance,
                 ninja_y + dy * target_distance
             )
         else:
             # 如果神秘剑客就在忍者蛙位置，稍微偏移一点
-            self.mystic_target_pos = (ninja_x + 50, ninja_y)
+            self.mystic_target_pos = (ninja_x + 0, ninja_y)
             
         print(f"传送启动！神秘剑客从 {self.mystic_start_pos} 传送到 {self.mystic_target_pos}")
         return True

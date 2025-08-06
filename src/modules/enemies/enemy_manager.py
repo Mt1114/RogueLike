@@ -112,14 +112,21 @@ class EnemyManager:
             if hasattr(self, 'max_enemies_for_round') and self.max_enemies_for_round is not None:
                 if self.enemies_spawned_this_round >= self.max_enemies_for_round:
                     # 已达到最大敌人数，停止生成
-                    return
-            
-            if self.spawn_timer >= self.spawn_interval:
-                self.spawn_timer = 0
-                if self.random_spawn_enemy(player):
-                    # 成功生成敌人，增加计数
-                    if hasattr(self, 'enemies_spawned_this_round'):
-                        self.enemies_spawned_this_round += 1
+                    pass  # 改为pass，不退出整个update方法
+                else:
+                    if self.spawn_timer >= self.spawn_interval:
+                        self.spawn_timer = 0
+                        if self.random_spawn_enemy(player):
+                            # 成功生成敌人，增加计数
+                            if hasattr(self, 'enemies_spawned_this_round'):
+                                self.enemies_spawned_this_round += 1
+            else:
+                if self.spawn_timer >= self.spawn_interval:
+                    self.spawn_timer = 0
+                    if self.random_spawn_enemy(player):
+                        # 成功生成敌人，增加计数
+                        if hasattr(self, 'enemies_spawned_this_round'):
+                            self.enemies_spawned_this_round += 1
         elif self.current_round == 0:  # 休息期，持续生成少量敌人
             # 休息期使用较慢的生成速度，并且有一定随机性
             rest_spawn_interval = 3.0 + random.uniform(0, 2.0)  # 3-5秒随机间隔
