@@ -29,8 +29,8 @@ class AmmoSupply(Item):
         self.rect = pygame.Rect(x - 16, y - 16, 32, 32)  # 32x32的碰撞区域
         
         # 补给属性
-        self.ammo_amount =150  # 每次补给150发
-        self.lifetime = 20.0  # 存活20秒
+        self.ammo_amount = 150  # 每次补给150发
+        self.lifetime = 40.0  # 存活20秒
         self.spawn_timer = 0.0  # 生成计时器
         
         # 动画效果（只影响渲染，不影响世界坐标）

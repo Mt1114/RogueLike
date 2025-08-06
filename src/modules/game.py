@@ -1036,10 +1036,12 @@ class Game:
                     break
                     
             if weapon_type:
-                if self.player.apply_weapon_upgrade(weapon_type, upgrade_level.level, upgrade_level.effects):
+                # 在双角色模式下，只对神秘剑士应用武器升级
+                target_player = self.dual_player_system.mystic_swordsman if self.dual_player_system else self.player
+                if target_player.apply_weapon_upgrade(weapon_type, upgrade_level.level, upgrade_level.effects):
                     # 如果是新武器，创建并添加到玩家的武器列表
-                    if len([w for w in self.player.weapons if w.type == weapon_type]) == 0:
-                        self.player.add_weapon(weapon_type)
+                    if len([w for w in target_player.weapons if w.type == weapon_type]) == 0:
+                        target_player.add_weapon(weapon_type)
                         
         elif isinstance(upgrade_level, PassiveUpgradeLevel):
             # 获取被动类型
@@ -1050,7 +1052,15 @@ class Game:
                     break
                     
             if passive_type:
-                self.player.apply_passive_upgrade(passive_type, upgrade_level.level, upgrade_level.effects)
+                # 在双角色模式下，对两个角色都应用被动升级
+                if self.dual_player_system:
+                    # 对忍者蛙应用被动升级
+                    self.dual_player_system.ninja_frog.apply_passive_upgrade(passive_type, upgrade_level.level, upgrade_level.effects)
+                    # 对神秘剑士应用被动升级
+                    self.dual_player_system.mystic_swordsman.apply_passive_upgrade(passive_type, upgrade_level.level, upgrade_level.effects)
+                else:
+                    # 单角色模式，只对当前玩家应用
+                    self.player.apply_passive_upgrade(passive_type, upgrade_level.level, upgrade_level.effects)
                 
     def toggle_pause(self):
         """切换游戏暂停状态"""

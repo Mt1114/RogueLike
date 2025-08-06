@@ -40,46 +40,46 @@ WEAPONS_CONFIG = {
             }
         ]
     },
-    'fireball': {
-        'name': '火球术',
-        'icon_path': 'images/weapons/fireball_32x32.png',
-        'max_level': 3,
-        'levels': [
-            {
-                'level': 1,
-                'effects': {
-                    WeaponStatType.DAMAGE: 25,
-                    WeaponStatType.EXPLOSION_RADIUS: 60,
-                    WeaponStatType.BURN_DURATION: 3,
-                    WeaponStatType.BURN_DAMAGE: 5,
-                    WeaponStatType.COOLDOWN: 1.5
-                },
-                'description': '发射火球，造成范围伤害并点燃敌人'
-            },
-            {
-                'level': 2,
-                'effects': {
-                    WeaponStatType.DAMAGE: 25,
-                    WeaponStatType.EXPLOSION_RADIUS: 70,
-                    WeaponStatType.BURN_DURATION: 4,
-                    WeaponStatType.BURN_DAMAGE: 8,
-                    WeaponStatType.COOLDOWN: 1.5
-                },
-                'description': '增加爆炸范围和燃烧伤害'
-            },
-            {
-                'level': 3,
-                'effects': {
-                    WeaponStatType.DAMAGE: 35,
-                    WeaponStatType.EXPLOSION_RADIUS: 80,
-                    WeaponStatType.BURN_DURATION: 5,
-                    WeaponStatType.BURN_DAMAGE: 10,
-                    WeaponStatType.COOLDOWN: 1.2
-                },
-                'description': '提升伤害和燃烧效果，减少冷却时间'
-            }
-        ]
-    },
+    # 'fireball': {
+    #     'name': '火球术',
+    #     'icon_path': 'images/weapons/fireball_32x32.png',
+    #     'max_level': 3,
+    #     'levels': [
+    #         {
+    #             'level': 1,
+    #             'effects': {
+    #                 WeaponStatType.DAMAGE: 25,
+    #                 WeaponStatType.EXPLOSION_RADIUS: 60,
+    #                 WeaponStatType.BURN_DURATION: 3,
+    #                 WeaponStatType.BURN_DAMAGE: 5,
+    #                 WeaponStatType.COOLDOWN: 1.5
+    #             },
+    #             'description': '发射火球，造成范围伤害并点燃敌人'
+    #         },
+    #         {
+    #             'level': 2,
+    #             'effects': {
+    #                 WeaponStatType.DAMAGE: 25,
+    #                 WeaponStatType.EXPLOSION_RADIUS: 70,
+    #                 WeaponStatType.BURN_DURATION: 4,
+    #                 WeaponStatType.BURN_DAMAGE: 8,
+    #                 WeaponStatType.COOLDOWN: 1.5
+    #             },
+    #             'description': '增加爆炸范围和燃烧伤害'
+    #         },
+    #         {
+    #             'level': 3,
+    #             'effects': {
+    #                 WeaponStatType.DAMAGE: 35,
+    #                 WeaponStatType.EXPLOSION_RADIUS: 80,
+    #                 WeaponStatType.BURN_DURATION: 5,
+    #                 WeaponStatType.BURN_DAMAGE: 10,
+    #                 WeaponStatType.COOLDOWN: 1.2
+    #             },
+    #             'description': '提升伤害和燃烧效果，减少冷却时间'
+    #         }
+    #     ]
+    # },
     'bullet': {
         'name': '手枪',
         'icon_path': 'images/weapons/gun.png',
@@ -125,47 +125,47 @@ WEAPONS_CONFIG = {
                 'description': '最高伤害和射速，子弹可以穿透多个敌人'
             }
         ]
-    },
-    'frost_nova': {
-        'name': '冰锥术',
-        'icon_path': 'images/weapons/nova_32x32.png',
-        'max_level': 3,
-        'levels': [
-            {
-                'level': 1,
-                'effects': {
-                    WeaponStatType.DAMAGE: 25,
-                    WeaponStatType.EXPLOSION_RADIUS: 60,
-                    WeaponStatType.FREEZE_DURATION: 3,
-                    WeaponStatType.SLOW_PERCENT: 50,
-                    WeaponStatType.COOLDOWN: 1.5
-                },
-                'description': '发射冰锥，造成单体伤害并减速敌人'
-            },
-            {
-                'level': 2,
-                'effects': {
-                    WeaponStatType.DAMAGE: 25,
-                    WeaponStatType.EXPLOSION_RADIUS: 70,
-                    WeaponStatType.FREEZE_DURATION: 4,
-                    WeaponStatType.SLOW_PERCENT: 50,
-                    WeaponStatType.COOLDOWN: 1.5
-                },
-                'description': '造成爆炸范围和减速'
-            },
-            {
-                'level': 3,
-                'effects': {
-                    WeaponStatType.DAMAGE: 35,
-                    WeaponStatType.EXPLOSION_RADIUS: 80,
-                    WeaponStatType.FREEZE_DURATION: 5,
-                    WeaponStatType.SLOW_PERCENT: 50,
-                    WeaponStatType.COOLDOWN: 1.2
-                },
-                'description': '提升伤害和减速效果，减少冷却时间'
-            }
-        ]
     }
+    # 'frost_nova': {
+    #     'name': '冰锥术',
+    #     'icon_path': 'images/weapons/nova_32x32.png',
+    #     'max_level': 3,
+    #     'levels': [
+    #         {
+    #             'level': 1,
+    #             'effects': {
+    #                 WeaponStatType.DAMAGE: 25,
+    #                 WeaponStatType.EXPLOSION_RADIUS: 60,
+    #                 WeaponStatType.FREEZE_DURATION: 3,
+    #                 WeaponStatType.SLOW_PERCENT: 50,
+    #                 WeaponStatType.COOLDOWN: 1.5
+    #             },
+    #             'description': '发射冰锥，造成单体伤害并减速敌人'
+    #         },
+    #         {
+    #             'level': 2,
+    #             'effects': {
+    #                 WeaponStatType.DAMAGE: 25,
+    #                 WeaponStatType.EXPLOSION_RADIUS: 70,
+    #                 WeaponStatType.FREEZE_DURATION: 4,
+    #                 WeaponStatType.SLOW_PERCENT: 50,
+    #                 WeaponStatType.COOLDOWN: 1.5
+    #             },
+    #             'description': '造成爆炸范围和减速'
+    #         },
+    #         {
+    #             'level': 3,
+    #             'effects': {
+    #                 WeaponStatType.DAMAGE: 35,
+    #                 WeaponStatType.EXPLOSION_RADIUS: 80,
+    #                 WeaponStatType.FREEZE_DURATION: 5,
+    #                 WeaponStatType.SLOW_PERCENT: 50,
+    #                 WeaponStatType.COOLDOWN: 1.2
+    #             },
+    #             'description': '提升伤害和减速效果，减少冷却时间'
+    #         }
+    #     ]
+    # }
 }
 
 def get_weapon_config(weapon_type, level=None):

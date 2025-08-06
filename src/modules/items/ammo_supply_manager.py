@@ -21,7 +21,7 @@ class AmmoSupplyManager:
         self.game = game
         self.supplies = []  # 补给物品列表
         self.spawn_timer = 0.0  # 生成计时器
-        self.spawn_interval = 30.0  # 生成间隔（30秒）
+        self.spawn_interval = 15.0  # 生成间隔（30秒）
         self.spawn_count = 1  # 每次生成1个补给
         
         # 生成区域（地图边界内）

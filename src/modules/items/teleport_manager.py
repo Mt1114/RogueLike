@@ -13,7 +13,7 @@ class TeleportManager:
         
         # 生成计时器
         self.spawn_timer = 0
-        self.spawn_interval = 60.0  # 每60秒生成一个传送道具
+        self.spawn_interval = 20.0  # 每60秒生成一个传送道具
         
         # 道具存在时间
         self.item_lifetime = 120.0  # 传送道具存在120秒（2分钟）

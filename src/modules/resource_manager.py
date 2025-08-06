@@ -1,4 +1,5 @@
 import os
+import sys
 import pygame
 
 class SpriteSheet:
@@ -79,9 +80,16 @@ class ResourceManager:
         self.animations = {}  # 存储动画资源
         
         # 资源根目录，使用规范化的路径
-        current_file = os.path.abspath(__file__)
-        src_dir = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
-        self.resource_dir = os.path.normpath(os.path.join(src_dir, "assets"))
+        # 支持PyInstaller打包后的环境
+        if getattr(sys, 'frozen', False):
+            # 如果是打包后的exe文件
+            base_path = sys._MEIPASS
+            self.resource_dir = os.path.normpath(os.path.join(base_path, "assets"))
+        else:
+            # 如果是开发环境
+            current_file = os.path.abspath(__file__)
+            src_dir = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
+            self.resource_dir = os.path.normpath(os.path.join(src_dir, "assets"))
         
     def load_image(self, name: str, file_path: str) -> pygame.Surface:
         """加载图片资源

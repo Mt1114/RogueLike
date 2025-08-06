@@ -93,22 +93,22 @@ class UpgradeManager:
                     PassiveUpgradeLevel(
                         name="迅捷",
                         level=1,
-                        effects={'speed': 0.1},
-                        description="移动速度提升10%",
-                        icon_path="images/passives/speed_up_32x32.png"
-                    ),
-                    PassiveUpgradeLevel(
-                        name="迅捷",
-                        level=2,
                         effects={'speed': 0.2},
                         description="移动速度提升20%",
                         icon_path="images/passives/speed_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="迅捷",
+                        level=2,
+                        effects={'speed': 0.5},
+                        description="移动速度提升50%",
+                        icon_path="images/passives/speed_up_32x32.png"
+                    ),
+                    PassiveUpgradeLevel(
+                        name="迅捷",
                         level=3,
-                        effects={'speed': 0.3},
-                        description="移动速度提升30%",
+                        effects={'speed': 1},
+                        description="移动速度提升100%",
                         icon_path="images/passives/speed_up_32x32.png"
                     )
                 ]
@@ -134,39 +134,39 @@ class UpgradeManager:
                     PassiveUpgradeLevel(
                         name="生命回复",
                         level=3,
-                        effects={'health_regen': 3},
+                        effects={'health_regen': 5},
                         description="每秒回复3点生命值",
                         icon_path="images/passives/heal_up_32x32.png"
                     )
                 ]
             ),
-            'luck': PassiveUpgrade(
-                name="幸运",
-                max_level=3,
-                levels=[
-                    PassiveUpgradeLevel(
-                        name="幸运",
-                        level=1,
-                        effects={'luck': 0.5},
-                        description="幸运值提升50%",
-                        icon_path="images/passives/lucky_up_32x32.png"
-                    ),
-                    PassiveUpgradeLevel(
-                        name="幸运",
-                        level=2,
-                        effects={'luck': 1},
-                        description="幸运值提升100%",
-                        icon_path="images/passives/lucky_up_32x32.png"
-                    ),
-                    PassiveUpgradeLevel(
-                        name="幸运",
-                        level=3,
-                        effects={'luck': 1.5},
-                        description="幸运值提升150%",
-                        icon_path="images/passives/lucky_up_32x32.png"
-                    )
-                ]
-            ),
+            # 'luck': PassiveUpgrade(
+            #     name="幸运",
+            #     max_level=3,
+            #     levels=[
+            #         PassiveUpgradeLevel(
+            #             name="幸运",
+            #             level=1,
+            #             effects={'luck': 0.5},
+            #             description="幸运值提升50%",
+            #             icon_path="images/passives/lucky_up_32x32.png"
+            #         ),
+            #         PassiveUpgradeLevel(
+            #             name="幸运",
+            #             level=2,
+            #             effects={'luck': 1},
+            #             description="幸运值提升100%",
+            #             icon_path="images/passives/lucky_up_32x32.png"
+            #         ),
+            #         PassiveUpgradeLevel(
+            #             name="幸运",
+            #             level=3,
+            #             effects={'luck': 1.5},
+            #             description="幸运值提升150%",
+            #             icon_path="images/passives/lucky_up_32x32.png"
+            #         )
+            #     ]
+            # ),
             'attack_power': PassiveUpgrade(
                 name="攻击力",
                 max_level=3,
@@ -215,39 +215,39 @@ class UpgradeManager:
                     PassiveUpgradeLevel(
                         name="防御力",
                         level=3,
-                        effects={'defense': 0.3},
-                        description="防御力提升30%",
+                        effects={'defense': 0.5},
+                        description="防御力提升50%",
                         icon_path="images/passives/defense_up_32x32.png"
                     )
                 ]
             ),
-            'pickup_range': PassiveUpgrade(
-                name="拾取范围",
-                max_level=3,
-                levels=[
-                    PassiveUpgradeLevel(
-                        name="拾取范围",
-                        level=1,
-                        effects={'pickup_range': 25},
-                        description="拾取范围增加25",
-                        icon_path="images/passives/absorb_up_32x32.png"
-                    ),
-                    PassiveUpgradeLevel(
-                        name="拾取范围",
-                        level=2,
-                        effects={'pickup_range': 50},
-                        description="拾取范围增加50",
-                        icon_path="images/passives/absorb_up_32x32.png"
-                    ),
-                    PassiveUpgradeLevel(
-                        name="拾取范围",
-                        level=3,
-                        effects={'pickup_range': 100},
-                        description="拾取范围增加100",
-                        icon_path="images/passives/absorb_up_32x32.png"
-                    )
-                ]
-            ),
+            # 'pickup_range': PassiveUpgrade(
+            #     name="拾取范围",
+            #     max_level=3,
+            #     levels=[
+            #         PassiveUpgradeLevel(
+            #             name="拾取范围",
+            #             level=1,
+            #             effects={'pickup_range': 25},
+            #             description="拾取范围增加25",
+            #             icon_path="images/passives/absorb_up_32x32.png"
+            #         ),
+            #         PassiveUpgradeLevel(
+            #             name="拾取范围",
+            #             level=2,
+            #             effects={'pickup_range': 50},
+            #             description="拾取范围增加50",
+            #             icon_path="images/passives/absorb_up_32x32.png"
+            #         ),
+            #         PassiveUpgradeLevel(
+            #             name="拾取范围",
+            #             level=3,
+            #             effects={'pickup_range': 100},
+            #             description="拾取范围增加100",
+            #             icon_path="images/passives/absorb_up_32x32.png"
+            #         )
+            #     ]
+            # ),
             'coins': PassiveUpgrade(
                 name="金币奖励",
                 max_level=1,
@@ -284,12 +284,13 @@ class UpgradeManager:
                 levels=upgrade_levels
             )
             
-    def get_random_upgrades(self, player, count=3):
+    def get_random_upgrades(self, player, count=3, dual_player_system=None):
         """获取随机升级选项
         
         Args:
             player: 玩家对象
             count: 需要返回的升级选项数量
+            dual_player_system: 双角色系统实例（可选）
             
         Returns:
             list: 升级选项列表
@@ -301,81 +302,147 @@ class UpgradeManager:
         all_weapons_maxed = True
         all_passives_maxed = True
         
-        # 检查武器
-        for weapon in player.weapons:
-            if weapon.type in self.weapon_upgrades:
-                weapon_upgrade = self.weapon_upgrades[weapon.type]
-                if weapon.level < weapon_upgrade.max_level:
-                    all_weapons_maxed = False
-                    
-        # 检查被动
-        for passive_type in player.passives:
-            if passive_type in self.passive_upgrades:
-                passive_upgrade = self.passive_upgrades[passive_type]
-                current_level = player.passive_levels.get(passive_type, 0)
-                if current_level < passive_upgrade.max_level:
-                    all_passives_maxed = False
-        
-        # 检查是否武器槽和被动槽已满且都已满级
-        weapons_full = len(player.weapons) >= 3
-        passives_full = len(player.passives) >= 3
-        all_maxed = (weapons_full and all_weapons_maxed) and (passives_full and all_passives_maxed)
-        
-        # 创建一个金币奖励选项
-        coin_reward = self.passive_upgrades['coins'].levels[0]
-
-        # 如果所有武器和被动都满级了，返回金币奖励
-        if all_maxed:
-            return [coin_reward] * count
+        # 在双角色模式下，检查两个角色的状态
+        if dual_player_system:
+            ninja_frog = dual_player_system.ninja_frog
+            mystic_swordsman = dual_player_system.mystic_swordsman
             
-        # 如果两个槽都满了，只添加现有武器和被动的升级选项
-        if weapons_full and passives_full:
-            # 添加现有武器的升级选项
+            # 检查武器（只检查神秘剑士的武器）
+            for weapon in mystic_swordsman.weapons:
+                if weapon.type in self.weapon_upgrades:
+                    weapon_upgrade = self.weapon_upgrades[weapon.type]
+                    if weapon.level < weapon_upgrade.max_level:
+                        all_weapons_maxed = False
+                        
+            # 检查被动（检查忍者蛙的被动，因为被动是共享的）
+            for passive_type in ninja_frog.passives:
+                if passive_type in self.passive_upgrades:
+                    passive_upgrade = self.passive_upgrades[passive_type]
+                    current_level = ninja_frog.passive_levels.get(passive_type, 0)
+                    if current_level < passive_upgrade.max_level:
+                        all_passives_maxed = False
+                        
+            # 检查槽位状态
+            weapons_full = len(mystic_swordsman.weapons) >= 3
+            passives_full = len(ninja_frog.passives) >= 3
+        else:
+            # 单角色模式，使用传入的玩家
+            # 检查武器
             for weapon in player.weapons:
                 if weapon.type in self.weapon_upgrades:
                     weapon_upgrade = self.weapon_upgrades[weapon.type]
                     if weapon.level < weapon_upgrade.max_level:
-                        candidate_pool.append(weapon_upgrade.levels[weapon.level])
-            
-            # 添加现有被动的升级选项
+                        all_weapons_maxed = False
+                        
+            # 检查被动
             for passive_type in player.passives:
                 if passive_type in self.passive_upgrades:
                     passive_upgrade = self.passive_upgrades[passive_type]
                     current_level = player.passive_levels.get(passive_type, 0)
                     if current_level < passive_upgrade.max_level:
-                        candidate_pool.append(passive_upgrade.levels[current_level])
+                        all_passives_maxed = False
+                        
+            # 检查槽位状态
+            weapons_full = len(player.weapons) >= 3
+            passives_full = len(player.passives) >= 3
+        
+        all_maxed = (weapons_full and all_weapons_maxed) and (passives_full and all_passives_maxed)
+        
+        # 如果所有武器和被动都满级了，返回空列表
+        if all_maxed:
+            return []
+            
+        # 如果两个槽都满了，只添加现有武器和被动的升级选项
+        if weapons_full and passives_full:
+            if dual_player_system:
+                # 双角色模式：添加神秘剑士的武器升级选项
+                for weapon in mystic_swordsman.weapons:
+                    if weapon.type in self.weapon_upgrades:
+                        weapon_upgrade = self.weapon_upgrades[weapon.type]
+                        if weapon.level < weapon_upgrade.max_level:
+                            candidate_pool.append(weapon_upgrade.levels[weapon.level])
+                
+                # 添加忍者蛙的被动升级选项
+                for passive_type in ninja_frog.passives:
+                    if passive_type in self.passive_upgrades:
+                        passive_upgrade = self.passive_upgrades[passive_type]
+                        current_level = ninja_frog.passive_levels.get(passive_type, 0)
+                        if current_level < passive_upgrade.max_level:
+                            candidate_pool.append(passive_upgrade.levels[current_level])
+            else:
+                # 单角色模式
+                # 添加现有武器的升级选项
+                for weapon in player.weapons:
+                    if weapon.type in self.weapon_upgrades:
+                        weapon_upgrade = self.weapon_upgrades[weapon.type]
+                        if weapon.level < weapon_upgrade.max_level:
+                            candidate_pool.append(weapon_upgrade.levels[weapon.level])
+                
+                # 添加现有被动的升级选项
+                for passive_type in player.passives:
+                    if passive_type in self.passive_upgrades:
+                        passive_upgrade = self.passive_upgrades[passive_type]
+                        current_level = player.passive_levels.get(passive_type, 0)
+                        if current_level < passive_upgrade.max_level:
+                            candidate_pool.append(passive_upgrade.levels[current_level])
         else:
-            # 添加所有武器选项
-            for weapon_type, weapon_upgrade in self.weapon_upgrades.items():
-                # 检查玩家是否已有该武器
-                player_weapon = next((w for w in player.weapons if w.type == weapon_type), None)
-                if player_weapon:
-                    # 如果武器未达到最高级，添加下一级升级选项
-                    if player_weapon.level < weapon_upgrade.max_level:
-                        candidate_pool.append(weapon_upgrade.levels[player_weapon.level])
-                elif not weapons_full:
-                    # 如果武器槽未满，添加1级选项
-                    candidate_pool.append(weapon_upgrade.levels[0])
-                    
-            # 添加所有被动选项
-            for passive_type, passive_upgrade in self.passive_upgrades.items():
-                # 检查玩家是否已有该被动
-                current_level = player.passive_levels.get(passive_type, 0)
-                if current_level > 0:
-                    # 如果被动未达到最高级，添加下一级升级选项
-                    if current_level < passive_upgrade.max_level:
-                        candidate_pool.append(passive_upgrade.levels[current_level])
-                elif not passives_full:
-                    # 如果被动槽未满，添加1级选项
-                    candidate_pool.append(passive_upgrade.levels[0])
+            if dual_player_system:
+                # 双角色模式
+                # 添加所有武器选项（基于神秘剑士）
+                for weapon_type, weapon_upgrade in self.weapon_upgrades.items():
+                    # 检查神秘剑士是否已有该武器
+                    player_weapon = next((w for w in mystic_swordsman.weapons if w.type == weapon_type), None)
+                    if player_weapon:
+                        # 如果武器未达到最高级，添加下一级升级选项
+                        if player_weapon.level < weapon_upgrade.max_level:
+                            candidate_pool.append(weapon_upgrade.levels[player_weapon.level])
+                    elif not weapons_full:
+                        # 如果武器槽未满，添加1级选项
+                        candidate_pool.append(weapon_upgrade.levels[0])
+                        
+                # 添加所有被动选项（基于忍者蛙）
+                for passive_type, passive_upgrade in self.passive_upgrades.items():
+                    # 检查忍者蛙是否已有该被动
+                    current_level = ninja_frog.passive_levels.get(passive_type, 0)
+                    if current_level > 0:
+                        # 如果被动未达到最高级，添加下一级升级选项
+                        if current_level < passive_upgrade.max_level:
+                            candidate_pool.append(passive_upgrade.levels[current_level])
+                    elif not passives_full:
+                        # 如果被动槽未满，添加1级选项
+                        candidate_pool.append(passive_upgrade.levels[0])
+            else:
+                # 单角色模式
+                # 添加所有武器选项
+                for weapon_type, weapon_upgrade in self.weapon_upgrades.items():
+                    # 检查玩家是否已有该武器
+                    player_weapon = next((w for w in player.weapons if w.type == weapon_type), None)
+                    if player_weapon:
+                        # 如果武器未达到最高级，添加下一级升级选项
+                        if player_weapon.level < weapon_upgrade.max_level:
+                            candidate_pool.append(weapon_upgrade.levels[player_weapon.level])
+                    elif not weapons_full:
+                        # 如果武器槽未满，添加1级选项
+                        candidate_pool.append(weapon_upgrade.levels[0])
+                        
+                # 添加所有被动选项
+                for passive_type, passive_upgrade in self.passive_upgrades.items():
+                    # 检查玩家是否已有该被动
+                    current_level = player.passive_levels.get(passive_type, 0)
+                    if current_level > 0:
+                        # 如果被动未达到最高级，添加下一级升级选项
+                        if current_level < passive_upgrade.max_level:
+                            candidate_pool.append(passive_upgrade.levels[current_level])
+                    elif not passives_full:
+                        # 如果被动槽未满，添加1级选项
+                        candidate_pool.append(passive_upgrade.levels[0])
         
         # 如果候选池为空，返回空列表
         if not candidate_pool:
             return []
         
-        # 如果候选池数量小于count，则在空位添加金币奖励选项
-        if len(candidate_pool) < count:
-            candidate_pool.append(coin_reward)
+        # 如果候选池数量小于count，不添加任何选项
+        # 保持候选池原样
 
         # 从候选池中随机选择指定数量的选项
         selected_upgrades = random.sample(

@@ -2,8 +2,8 @@ import pygame
 import math
 from .resource_manager import resource_manager
 from .weapons.types.knife import Knife
-from .weapons.types.fireball import Fireball
-from .weapons.types.frost_nova import FrostNova
+# from .weapons.types.fireball import Fireball
+# from .weapons.types.frost_nova import FrostNova
 from .weapons.types.bullet import BulletWeapon
 from .upgrade_system import UpgradeType, WeaponUpgradeLevel, PassiveUpgradeLevel
 from .hero_config import get_hero_config
@@ -123,8 +123,8 @@ class Player(pygame.sprite.Sprite):
         self.weapon_manager = WeaponManager(self)
         self.weapon_manager.available_weapons = {
             'knife': Knife,
-            'fireball': Fireball,
-            'frost_nova': FrostNova,
+            # 'fireball': Fireball,
+            # 'frost_nova': FrostNova,
             'bullet': BulletWeapon
         }
         
@@ -657,7 +657,7 @@ class Player(pygame.sprite.Sprite):
             # 加载穿墙时的特殊动画图片
             phase_image = resource_manager.load_image(
                 "phase_animation", 
-                "images/roles/finder/img_v3_02om_fdf9a462-f814-427b-9cb2-8d43bdad2c6g.png"
+                "images/roles/finder/impact01.png"
             )
             # 缩放图片到合适大小
             if phase_image and phase_image.get_size() != (1, 1):

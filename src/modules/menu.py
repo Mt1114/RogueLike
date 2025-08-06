@@ -303,17 +303,42 @@ class UpgradeMenu(Menu):
         self.player.movement.direction.y = 0
         
         # 从Game的upgrade_manager获取可用的升级选项
-        self.options = self.game.upgrade_manager.get_random_upgrades(player)
+        # 在双角色模式下，使用忍者蛙作为主要玩家来生成升级选项
+        if self.game.dual_player_system:
+            self.options = self.game.upgrade_manager.get_random_upgrades(
+                self.game.dual_player_system.ninja_frog, 
+                dual_player_system=self.game.dual_player_system
+            )
+        else:
+            self.options = self.game.upgrade_manager.get_random_upgrades(player)
         self.selected_index = 0
         
     def hide(self):
         """隐藏菜单"""
         super().hide()
+        
+        # 清除所有玩家的移动状态
         if self.player:
             # 确保在关闭菜单时重置移动状态
             self.player.movement.moving = {'up': False, 'down': False, 'left': False, 'right': False}
             self.player.movement.direction.x = 0
             self.player.movement.direction.y = 0
+            
+        # 在双人模式下，同时清除两个玩家的移动状态
+        if hasattr(self, 'game') and self.game and hasattr(self.game, 'dual_player_system') and self.game.dual_player_system:
+            dual_system = self.game.dual_player_system
+            
+            # 清除忍者蛙的移动状态
+            if hasattr(dual_system, 'ninja_frog') and dual_system.ninja_frog:
+                dual_system.ninja_frog.movement.moving = {'up': False, 'down': False, 'left': False, 'right': False}
+                dual_system.ninja_frog.movement.direction.x = 0
+                dual_system.ninja_frog.movement.direction.y = 0
+                
+            # 清除神秘剑士的移动状态
+            if hasattr(dual_system, 'mystic_swordsman') and dual_system.mystic_swordsman:
+                dual_system.mystic_swordsman.movement.moving = {'up': False, 'down': False, 'left': False, 'right': False}
+                dual_system.mystic_swordsman.movement.direction.x = 0
+                dual_system.mystic_swordsman.movement.direction.y = 0
         
     def handle_event(self, event):
         if not self.is_active:
