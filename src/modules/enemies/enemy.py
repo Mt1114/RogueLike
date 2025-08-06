@@ -1,5 +1,6 @@
 import pygame
 import math
+import random
 from ..resource_manager import resource_manager
 from ..utils import create_outlined_sprite
 from abc import ABC, abstractmethod
@@ -254,8 +255,10 @@ class Enemy(pygame.sprite.Sprite, ABC):
         target_player = self._get_nearest_player(player, second_player)
         
         # 计算到目标玩家的方向（使用世界坐标）
-        dx = target_player.world_x - self.rect.x
-        dy = target_player.world_y - self.rect.y
+        enemy_center_x = self.rect.x + self.rect.width / 2
+        enemy_center_y = self.rect.y + self.rect.height / 2
+        dx = target_player.world_x - enemy_center_x
+        dy = target_player.world_y - enemy_center_y
         distance = math.sqrt(dx * dx + dy * dy)
         
         # 更新朝向
@@ -400,14 +403,22 @@ class Enemy(pygame.sprite.Sprite, ABC):
             bar_x = screen_x - health_bar_width // 2+20  # 居中显示
             bar_y = screen_y - 20 * self.scale  # 稍微高一点，确保在敌人正上方
             
-            # 绘制血条背景（红色）
-            pygame.draw.rect(screen, (255, 0, 0),  # 红色背景
+            # 根据血量百分比选择颜色
+            if health_ratio > 0.8:
+                health_color = (0, 255, 0)  # 绿色 (>80%)
+            elif health_ratio > 0.2:
+                health_color = (255, 255, 0)  # 黄色 (>20%)
+            else:
+                health_color = (255, 0, 0)  # 红色 (<20%)
+            
+            # 绘制血条背景（深红色）
+            pygame.draw.rect(screen, (100, 0, 0),  # 深红色背景
                             (bar_x, bar_y,
                              health_bar_width, health_bar_height))
             
-            # 绘制血条（绿色）
+            # 绘制血条（根据血量百分比选择颜色）
             if health_ratio > 0:
-                pygame.draw.rect(screen, (0, 255, 0),  # 绿色血条
+                pygame.draw.rect(screen, health_color,
                                 (bar_x, bar_y,
                                  health_bar_width * health_ratio, health_bar_height))
             
@@ -415,12 +426,32 @@ class Enemy(pygame.sprite.Sprite, ABC):
             pygame.draw.rect(screen, (255, 255, 255),  # 白色边框
                             (bar_x, bar_y,
                              health_bar_width, health_bar_height), 1)
+            
+            # 显示血量数值（在血条中央）
+            health_text = f"{int(self.health)}/{int(self.max_health)}"
+            # 创建字体（根据缩放调整大小）
+            font_size = max(8, int(10 * self.scale))
+            health_font = pygame.font.SysFont('simHei', font_size)
+            health_text_surface = health_font.render(health_text, True, (255, 255, 255))  # 白色文字
+            health_text_rect = health_text_surface.get_rect()
+            health_text_rect.centerx = bar_x + health_bar_width // 2
+            health_text_rect.centery = bar_y + health_bar_height // 2
+            
+            # 渲染文字阴影（略微偏移）
+            shadow_surface = health_font.render(health_text, True, (0, 0, 0))
+            shadow_rect = shadow_surface.get_rect()
+            shadow_rect.centerx = health_text_rect.centerx + 1
+            shadow_rect.centery = health_text_rect.centery + 1
+            screen.blit(shadow_surface, shadow_rect)
+            
+            # 渲染主文字
+            screen.blit(health_text_surface, health_text_rect)
         
     def take_damage(self, amount):
         """受到伤害
         
         Args:
-            amount: 伤害值
+            amount: 基础伤害值
             
         Returns:
             bool: 是否实际造成了伤害
@@ -429,8 +460,23 @@ class Enemy(pygame.sprite.Sprite, ABC):
         if self.invincible:
             return False
             
+        # 计算随机伤害区间：基础伤害的70%-130%
+        damage_min = int(amount * 0.7)
+        damage_max = int(amount * 1.3)
+        actual_damage = random.randint(damage_min, damage_max)
+        
+        # 30%概率翻倍伤害
+        is_critical = False
+        if random.random() < 0.3:
+            actual_damage *= 2
+            is_critical = True
+            print(f"暴击！伤害翻倍: {amount} -> {actual_damage}")
+        
         # 造成伤害
-        self.health -= amount
+        self.health -= actual_damage
+        
+        # 显示伤害数字
+        self._show_damage_number(actual_damage, is_critical)
         
         # 进入无敌状态
         self.invincible = True
@@ -446,6 +492,56 @@ class Enemy(pygame.sprite.Sprite, ABC):
         resource_manager.play_sound("enemy_hit")
         
         return True
+        
+    def _show_damage_number(self, damage, is_critical=False):
+        """显示伤害数字
+        
+        Args:
+            damage: 伤害值
+            is_critical: 是否为暴击伤害
+        """
+        # 获取敌人在世界坐标系中的位置
+        enemy_x = self.rect.x + self.rect.width // 2
+        enemy_y = self.rect.y + self.rect.height // 2
+        
+        # 尝试获取游戏实例的伤害数字管理器
+        game_instance = self._get_game_instance()
+        if game_instance and hasattr(game_instance, 'damage_number_manager'):
+            # 根据伤害值和暴击状态确定伤害类型和字体大小
+            if is_critical:
+                damage_type = 'critical'
+                font_size = 36  # 暴击伤害使用更大的字体
+            elif damage >= 50:
+                damage_type = 'critical'
+                font_size = 32
+            elif damage >= 30:
+                damage_type = 'fire'
+                font_size = 28
+            elif damage >= 20:
+                damage_type = 'magic'
+                font_size = 26
+            else:
+                damage_type = 'normal'
+                font_size = 24
+                
+            # 添加伤害数字
+            game_instance.damage_number_manager.add_damage_number(
+                enemy_x, enemy_y, damage, damage_type, font_size
+            )
+            
+    def _get_game_instance(self):
+        """获取游戏实例
+        
+        Returns:
+            Game: 游戏实例，如果无法获取则返回None
+        """
+        # 尝试通过玩家获取游戏实例
+        if hasattr(self, 'game') and self.game:
+            return self.game
+            
+        # 尝试通过其他方式获取游戏实例
+        # 这里可以添加其他获取游戏实例的逻辑
+        return None
         
     def melee_attack(self, player):
         """
@@ -466,9 +562,11 @@ class Enemy(pygame.sprite.Sprite, ABC):
             if hasattr(player, 'game') and hasattr(player.game, 'dual_player_system'):
                 # 获取忍者蛙并转移伤害
                 ninja_frog = player.game.dual_player_system.ninja_frog
-                # 计算与忍者蛙的距离
-                dx = self.rect.x - ninja_frog.world_x
-                dy = self.rect.y - ninja_frog.world_y
+                # 计算与忍者蛙的距离（使用中心坐标）
+                enemy_center_x = self.rect.x + self.rect.width / 2
+                enemy_center_y = self.rect.y + self.rect.height / 2
+                dx = enemy_center_x - ninja_frog.world_x
+                dy = enemy_center_y - ninja_frog.world_y
                 distance = (dx**2 + dy**2)**0.5
                 
                 print(f"与忍者蛙距离: {distance:.1f}")
@@ -482,9 +580,11 @@ class Enemy(pygame.sprite.Sprite, ABC):
                     print(f"忍者蛙不在攻击范围内")
                 return False
         
-        # 计算与玩家的距离
-        dx = self.rect.x - player.world_x
-        dy = self.rect.y - player.world_y
+        # 计算与玩家的距离（使用中心坐标）
+        enemy_center_x = self.rect.x + self.rect.width / 2
+        enemy_center_y = self.rect.y + self.rect.height / 2
+        dx = enemy_center_x - player.world_x
+        dy = enemy_center_y - player.world_y
         distance = (dx**2 + dy**2)**0.5
         
         print(f"与 {player.hero_type} 距离: {distance:.1f}")

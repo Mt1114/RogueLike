@@ -35,21 +35,24 @@ class TeleportItem(Item):
         
     def collect(self, player):
         """收集传送道具"""
-        if hasattr(player, 'hero_type') and player.hero_type == "ninja_frog":
-            # 只有忍者蛙可以收集传送道具
-            if hasattr(player, 'game') and player.game:
+        # 两个角色都可以收集传送道具，但效果转移给忍者蛙
+        if hasattr(player, 'game') and player.game:
+            # 确定实际受益者：传送道具总是给忍者蛙
+            actual_beneficiary = player
+            if hasattr(player, 'game') and player.game and hasattr(player.game, 'dual_player_system'):
+                # 在双人模式下，传送道具总是给忍者蛙
+                actual_beneficiary = player.game.dual_player_system.ninja_frog
+            
+            # 将道具添加到实际受益者的道具栏
+            if not hasattr(actual_beneficiary, 'teleport_items'):
+                actual_beneficiary.teleport_items = 0
+            actual_beneficiary.teleport_items += 1
+            
+            # 从传送道具管理器中移除道具
+            if hasattr(player, 'game') and player.game and hasattr(player.game, 'teleport_manager'):
+                player.game.teleport_manager.remove_item(self)
                 
-                
-                # 将道具添加到忍者蛙的道具栏
-                if not hasattr(player, 'teleport_items'):
-                    player.teleport_items = 0
-                player.teleport_items += 1
-                
-                # 从传送道具管理器中移除道具
-                if hasattr(player, 'game') and player.game and hasattr(player.game, 'teleport_manager'):
-                    player.game.teleport_manager.remove_item(self)
-                    
-                return True
+            return True
         return False
     
     def use_teleport(self, dual_player_system):

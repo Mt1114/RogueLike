@@ -151,12 +151,7 @@ class HealthSupplyManager:
         Args:
             player: 玩家实例
         """
-       
-        
-        # 生命补给只能由忍者蛙拾取
-        if not hasattr(player, 'hero_type') or player.hero_type != "ninja_frog":
-        
-            return
+        # 生命补给两个角色都可以拾取，但效果转移给忍者蛙
             
         for supply in self.supplies[:]:
             # 检查玩家是否与补给重叠
@@ -166,8 +161,13 @@ class HealthSupplyManager:
            
                 
                 if player.collision_rect.colliderect(supply.rect):
-                   
-                    if supply.on_pickup(player):
+                    # 确定实际受益者：生命补给总是给忍者蛙
+                    actual_beneficiary = player
+                    if hasattr(player, 'game') and player.game and hasattr(player.game, 'dual_player_system'):
+                        # 在双人模式下，生命补给总是给忍者蛙
+                        actual_beneficiary = player.game.dual_player_system.ninja_frog
+                    
+                    if supply.on_pickup(actual_beneficiary):
                         # 拾取成功，移除补给
                         self.supplies.remove(supply)
                       
@@ -183,7 +183,13 @@ class HealthSupplyManager:
                         # 扩大玩家的碰撞检测范围
                         expanded_player_rect = player.collision_rect.inflate(20, 20)
                         if expanded_player_rect.colliderect(supply.rect):
-                            if supply.on_pickup(player):
+                            # 确定实际受益者：生命补给总是给忍者蛙
+                            actual_beneficiary = player
+                            if hasattr(player, 'game') and player.game and hasattr(player.game, 'dual_player_system'):
+                                # 在双人模式下，生命补给总是给忍者蛙
+                                actual_beneficiary = player.game.dual_player_system.ninja_frog
+                            
+                            if supply.on_pickup(actual_beneficiary):
                                 self.supplies.remove(supply)
                               
                                 return

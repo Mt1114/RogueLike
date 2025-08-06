@@ -120,6 +120,15 @@ class EnemyManager:
                     # 成功生成敌人，增加计数
                     if hasattr(self, 'enemies_spawned_this_round'):
                         self.enemies_spawned_this_round += 1
+        elif self.current_round == 0:  # 休息期，持续生成少量敌人
+            # 休息期使用较慢的生成速度，并且有一定随机性
+            rest_spawn_interval = 3.0 + random.uniform(0, 2.0)  # 3-5秒随机间隔
+            if self.spawn_timer >= rest_spawn_interval:
+                self.spawn_timer = 0
+                # 休息期主要生成较弱的敌人
+                enemy_types = ['ghost', 'radish']  # 休息期只生成幽灵和萝卜
+                if random.random() < 0.3:  # 30%概率生成敌人
+                    self.random_spawn_enemy(player, preferred_types=enemy_types)
             
         # 如果玩家等级达到1级，更新蝙蝠生成计时器
         if player.level >= 1:
@@ -150,21 +159,26 @@ class EnemyManager:
         if game_time_minutes >= 0 and game_time_minutes < 0.5 and self.current_round == 0:
             self._start_round(1, "第1波", 2.5, 1.0, 1.0, 24)
             
-        # 第一波结束，进入休息期：0:30-1:30
-        elif game_time_minutes >= 0.5 and game_time_minutes < 1.5 and self.current_round == 1:
+        # 第一波结束，进入休息期：0:30-1:00（缩短休息期）
+        elif game_time_minutes >= 0.5 and game_time_minutes < 1.0 and self.current_round == 1:
             self._end_round()
             
-        # 第二波：1:30-3:00，1.5秒生成一个，四个点位总共40个
-        elif game_time_minutes >= 1.5 and game_time_minutes < 3.0 and self.current_round == 0:
+        # 第二波：1:00-2:30，1.5秒生成一个，四个点位总共40个
+        elif game_time_minutes >= 1.0 and game_time_minutes < 2.5 and self.current_round == 0:
             self._start_round(2, "第2波", 1.5, 1.2, 1.2, 40)  # 生成速度加快，属性提升20%
             
-        # 第二波结束，进入休息期：3:00-4:00
-        elif game_time_minutes >= 3.0 and game_time_minutes < 4.0 and self.current_round == 2:
+        # 第二波结束，进入休息期：2:30-3:00（缩短休息期）
+        elif game_time_minutes >= 2.5 and game_time_minutes < 3.0 and self.current_round == 2:
             self._end_round()
             
-        # 第三波：4:00-5:00，1秒生成一个，四个点位总共120个
-        elif game_time_minutes >= 4.0 and game_time_minutes < 5.0 and self.current_round == 0:
+        # 第三波：3:00-5:00，1秒生成一个，四个点位总共120个
+        elif game_time_minutes >= 3.0 and game_time_minutes < 5.0 and self.current_round == 0:
             self._start_round(3, "第3波", 1.0, 1.0, 1.5, 120)  # 生成速度加快，攻击力提升50%
+            
+        # 修复2:00-2:30之间的空白期：如果第二波还在进行，继续生成敌人
+        elif game_time_minutes >= 2.0 and game_time_minutes < 2.5 and self.current_round == 2:
+            # 第二波继续进行，不执行任何操作
+            pass
             
         # 游戏结束：5:00后
         elif game_time_minutes >= 5.0 and self.current_round != -1:
@@ -197,7 +211,15 @@ class EnemyManager:
     def _end_round(self):
         """结束当前波次"""
         self.current_round = 0
-        print(f"第{self.current_round}波结束，进入休息期")
+        print(f"波次结束，进入休息期")
+        
+        # 添加休息期提示消息
+        self.round_messages.append({
+            'text': "休息期 - 敌人减少",
+            'timer': 0,
+            'duration': 2.0,
+            'color': (0, 255, 255)  # 青色
+        })
         
     def _end_game(self):
         """游戏结束"""
@@ -346,8 +368,13 @@ class EnemyManager:
         if enemy in self.enemies:
             self.enemies.remove(enemy)
             
-    def random_spawn_enemy(self, player):
-        """在四个角落随机位置生成敌人，确保在地图边界内"""
+    def random_spawn_enemy(self, player, preferred_types=None):
+        """在四个角落随机位置生成敌人，确保在地图边界内
+        
+        Args:
+            player: 玩家对象
+            preferred_types: 偏好的敌人类型列表，如果为None则使用默认逻辑
+        """
         if not self.map_boundaries:
             return False  # 如果没有地图边界信息，无法生成敌人
             
@@ -377,13 +404,15 @@ class EnemyManager:
         spawn_marker = SpawnMarker(spawn_x, spawn_y, duration=2.0)
         self.spawn_markers.append(spawn_marker)
         
-        # 根据游戏时间决定生成什么类型的敌人
-        if self.game_time < 10:  # 游戏开始10秒内
-            self.spawn_enemy('slime', spawn_x, spawn_y)
+        # 根据偏好类型或游戏时间决定生成什么类型的敌人
+        if preferred_types:
+            enemy_type = random.choice(preferred_types)
+        elif self.game_time < 10:  # 游戏开始10秒内
+            enemy_type = 'slime'
         else:  # 10秒后可以生成幽灵和萝卜
             enemy_type = random.choice(['ghost', 'radish', 'slime'])
-            self.spawn_enemy(enemy_type, spawn_x, spawn_y)
             
+        self.spawn_enemy(enemy_type, spawn_x, spawn_y)
         return True  # 成功生成敌人
             
     def set_difficulty(self, difficulty):

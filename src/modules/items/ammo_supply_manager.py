@@ -150,12 +150,7 @@ class AmmoSupplyManager:
         Args:
             player: 玩家实例
         """
-       
-        
-        # 弹药补给只能由神秘剑士拾取
-        if not hasattr(player, 'hero_type') or player.hero_type != "role2":
-            
-            return
+        # 弹药补给两个角色都可以拾取，但效果转移给神秘剑士
             
         for supply in self.supplies[:]:
             # 检查玩家是否与补给重叠
@@ -165,8 +160,13 @@ class AmmoSupplyManager:
                 
                 
                 if player.collision_rect.colliderect(supply.rect):
+                    # 确定实际受益者：弹药补给总是给神秘剑士
+                    actual_beneficiary = player
+                    if hasattr(player, 'game') and player.game and hasattr(player.game, 'dual_player_system'):
+                        # 在双人模式下，弹药补给总是给神秘剑士
+                        actual_beneficiary = player.game.dual_player_system.mystic_swordsman
                     
-                    if supply.on_pickup(player):
+                    if supply.on_pickup(actual_beneficiary):
                         # 拾取成功，移除补给
                         self.supplies.remove(supply)
                        
@@ -182,7 +182,13 @@ class AmmoSupplyManager:
                         # 扩大玩家的碰撞检测范围
                         expanded_player_rect = player.collision_rect.inflate(20, 20)
                         if expanded_player_rect.colliderect(supply.rect):
-                            if supply.on_pickup(player):
+                            # 确定实际受益者：弹药补给总是给神秘剑士
+                            actual_beneficiary = player
+                            if hasattr(player, 'game') and player.game and hasattr(player.game, 'dual_player_system'):
+                                # 在双人模式下，弹药补给总是给神秘剑士
+                                actual_beneficiary = player.game.dual_player_system.mystic_swordsman
+                            
+                            if supply.on_pickup(actual_beneficiary):
                                 self.supplies.remove(supply)
                                
                                 return

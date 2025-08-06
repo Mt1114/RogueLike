@@ -65,15 +65,14 @@ class MapHeroSelectMenu:
             self.p1_img = None
             self.p2_img = None
         
-        # 加载背景图片
+        # 加载普通图片
         try:
-            print("正在加载英雄选择界面背景图片: images/ui/background.png")
-            self.background = resource_manager.load_image('menu_background', 'images/ui/background.png')
-            self.background = pygame.transform.scale(self.background, (screen.get_width(), screen.get_height()))
-            print("英雄选择界面背景图片加载成功")
+            print("正在加载英雄选择界面图片: images/ui/background.png")
+            self.background_image = resource_manager.load_image('menu_image', 'images/ui/background.png')
+            print("英雄选择界面图片加载成功")
         except Exception as e:
-            print(f"加载背景图片失败: {e}")
-            self.background = None
+            print(f"加载图片失败: {e}")
+            self.background_image = None
         
     def show(self):
         """显示菜单"""
@@ -129,37 +128,17 @@ class MapHeroSelectMenu:
         if not self.active:
             return
             
-        # 绘制背景
-        if self.background:
-            self.screen.blit(self.background, (0, 0))
-        else:
-            # 如果没有背景图片，填充纯色背景
-            self.screen.fill(self.bg_color)
+        # 绘制纯色背景
+        self.screen.fill(self.bg_color)
         
-        # 绘制角色图片（在按钮上方左右排列）
-        if self.role1_img and self.role2_img:
-            # 计算角色图片位置
-            role1_x = self.screen_center_x - 200  # 左侧角色
-            role2_x = self.screen_center_x + 200  # 右侧角色
-            role_y = self.button_rect.y - 200  # 按钮上方200像素
-            
-            # 绘制P1标签
-            if self.p1_img:
-                p1_rect = self.p1_img.get_rect(center=(role1_x, role_y - 250))  # 原来是-100，往上移动150像素
-                self.screen.blit(self.p1_img, p1_rect)
-            
-            # 绘制角色1
-            role1_rect = self.role1_img.get_rect(center=(role1_x, role_y))
-            self.screen.blit(self.role1_img, role1_rect)
-            
-            # 绘制P2标签
-            if self.p2_img:
-                p2_rect = self.p2_img.get_rect(center=(role2_x, role_y - 250))  # 原来是-100，往上移动150像素
-                self.screen.blit(self.p2_img, p2_rect)
-            
-            # 绘制角色2
-            role2_rect = self.role2_img.get_rect(center=(role2_x, role_y))
-            self.screen.blit(self.role2_img, role2_rect)
+        # 绘制普通图片（居中显示）
+        if self.background_image:
+            # 计算图片位置，使其居中显示
+            image_rect = self.background_image.get_rect()
+            image_rect.center = (self.screen_center_x, self.screen_center_y)
+            self.screen.blit(self.background_image, image_rect)
+        
+       
         
         # 绘制确认按钮（透明）
         button_color = self.button_hover_color if self.button_hovered else self.button_color

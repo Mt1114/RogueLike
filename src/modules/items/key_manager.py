@@ -10,7 +10,7 @@ class KeyManager:
         self.keys = []  # 当前存在的钥匙列表
         self.spawned_keys = 0  # 已生成的钥匙数量
         self.max_keys = 3  # 最大钥匙数量
-        self.key_spawn_times = [0.0, 1.0, 2.0]  # 钥匙生成时间点（秒）
+        self.key_spawn_times = [0.0, 60.0, 210.0]  # 钥匙生成时间点（秒）
         self.spawned_keys_set = set()  # 记录已生成的钥匙时间点
         
     def update(self, dt, game_time):
@@ -124,4 +124,32 @@ class KeyManager:
     def on_key_collected(self):
         """当钥匙被拾取时调用"""
         # 钥匙被拾取，不需要生成新的钥匙（钥匙按时间生成）
-        print(f"钥匙被拾取，当前已生成: {len(self.spawned_keys_set)}") 
+        print(f"钥匙被拾取，当前已生成: {len(self.spawned_keys_set)}")
+        
+    def get_next_key_spawn_time(self, game_time):
+        """获取下一把钥匙的生成时间
+        
+        Args:
+            game_time: 当前游戏时间（秒）
+            
+        Returns:
+            float: 下一把钥匙的生成时间（秒），如果所有钥匙都已生成则返回None
+        """
+        for i, spawn_time in enumerate(self.key_spawn_times):
+            if i not in self.spawned_keys_set:
+                return spawn_time
+        return None
+        
+    def get_next_key_countdown(self, game_time):
+        """获取下一把钥匙的倒计时
+        
+        Args:
+            game_time: 当前游戏时间（秒）
+            
+        Returns:
+            float: 倒计时秒数，如果所有钥匙都已生成则返回None
+        """
+        next_spawn_time = self.get_next_key_spawn_time(game_time)
+        if next_spawn_time is None:
+            return None
+        return max(0, next_spawn_time - game_time) 

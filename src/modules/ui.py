@@ -116,24 +116,31 @@ class UI:
         self.screen.blit(ammo_icon, icon_rect)
         self.screen.blit(ammo_surface, ammo_rect)
         
-    def _render_key_info(self, player):
+    def _render_key_info(self, player, game_time):
         """渲染钥匙信息
         
         Args:
             player: 玩家实例
+            game_time: 当前游戏时间
         """
         # 检查玩家是否有钥匙系统
         if not hasattr(player, 'keys_collected') or not hasattr(player, 'total_keys_needed'):
             return
             
+        # 获取钥匙管理器
+        key_manager = None
+        if hasattr(player, 'game') and player.game and hasattr(player.game, 'key_manager'):
+            key_manager = player.game.key_manager
+            
+        # 显示钥匙数量
         key_text = f"钥匙: {player.keys_collected}/{player.total_keys_needed}"
         
         # 渲染钥匙文本
         key_surface = self.font.render(key_text, True, (255, 255, 0))  # 黄色
         key_rect = key_surface.get_rect()
         
-        # 计算左上角位置
-        key_rect.topleft = (10, 10)
+        # 计算位置（向右500像素，向下100像素）
+        key_rect.topleft = (10, 400)
         
         # 添加背景
         bg_rect = pygame.Rect(key_rect.left - 5, key_rect.top - 2, 
@@ -145,6 +152,34 @@ class UI:
         
         # 渲染文本
         self.screen.blit(key_surface, key_rect)
+        
+        # 显示下一把钥匙倒计时
+        if key_manager:
+            countdown = key_manager.get_next_key_countdown(game_time)
+            if countdown is not None:
+                # 格式化倒计时显示
+                if countdown >= 60:
+                    countdown_text = f"下一把钥匙: {int(countdown // 60)}分{int(countdown % 60)}秒"
+                else:
+                    countdown_text = f"下一把钥匙: {int(countdown)}秒"
+                
+                # 渲染倒计时文本
+                countdown_surface = self.font.render(countdown_text, True, (0, 255, 255))  # 青色
+                countdown_rect = countdown_surface.get_rect()
+                
+                # 位置：在钥匙数量下方（向右500像素，向下100像素）
+                countdown_rect.topleft = (10, key_rect.bottom + 5)
+                
+                # 添加背景
+                countdown_bg_rect = pygame.Rect(countdown_rect.left - 5, countdown_rect.top - 2, 
+                                             countdown_rect.width + 10, countdown_rect.height + 4)
+                countdown_bg_surface = pygame.Surface((countdown_bg_rect.width, countdown_bg_rect.height))
+                countdown_bg_surface.set_alpha(128)
+                countdown_bg_surface.fill((0, 0, 0))
+                self.screen.blit(countdown_bg_surface, countdown_bg_rect)
+                
+                # 渲染倒计时文本
+                self.screen.blit(countdown_surface, countdown_rect)
     
     def _render_weapon_mode(self, player):
         """渲染武器模式信息（仅对神秘剑士）
@@ -390,16 +425,44 @@ class UI:
         pygame.draw.rect(self.screen, self.health_back_color,
                         (0, health_bar_y, screen_width, self.bar_height))
         
+        # 计算血量百分比
+        health_ratio = primary_player.health / primary_player.max_health
+        
+        # 根据血量百分比选择颜色
+        if health_ratio > 0.8:
+            health_color = (0, 255, 0)  # 绿色 (>80%)
+        elif health_ratio > 0.2:
+            health_color = (255, 255, 0)  # 黄色 (>20%)
+        else:
+            health_color = (255, 0, 0)  # 红色 (<20%)
+        
         # 绘制生命槽
-        health_width = (primary_player.health / primary_player.max_health) * screen_width
-        pygame.draw.rect(self.screen, self.health_bar_color,
+        health_width = health_ratio * screen_width
+        pygame.draw.rect(self.screen, health_color,
                         (0, health_bar_y, health_width, self.bar_height))
+        
+        # 显示血量数值（在血条中央）
+        health_text = f"{int(primary_player.health)}/{int(primary_player.max_health)}"
+        health_text_surface = self.font.render(health_text, True, (255, 255, 255))  # 白色文字
+        health_text_rect = health_text_surface.get_rect()
+        health_text_rect.centerx = screen_width // 2
+        health_text_rect.centery = health_bar_y + self.bar_height // 2
+        
+        # 渲染文字阴影（略微偏移）
+        shadow_surface = self.font.render(health_text, True, (0, 0, 0))
+        shadow_rect = shadow_surface.get_rect()
+        shadow_rect.centerx = screen_width // 2 + 2
+        shadow_rect.centery = health_bar_y + self.bar_height // 2 + 2
+        self.screen.blit(shadow_surface, shadow_rect)
+        
+        # 渲染主文字
+        self.screen.blit(health_text_surface, health_text_rect)
         
         # 显示弹药数量（在右上角）
         self._render_ammo_info(weapon_player)
         
         # 显示钥匙数量（在左上角）
-        self._render_key_info(primary_player)
+        self._render_key_info(primary_player, game_time)
         
         # 显示武器模式（仅对神秘剑士）
         self._render_weapon_mode(weapon_player)

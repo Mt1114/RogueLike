@@ -41,7 +41,7 @@ class DualPlayerSystem:
             1: {"name": "default", "radius": 640, "angle": 60, "circle_radius": 160, "energy_drain": -1},
             2: {"name": "battle", "radius": 640, "angle": 180, "circle_radius": 160, "energy_drain": -2}, 
             3: {"name": "explore", "radius": 1000, "angle": 30, "circle_radius": 85, "energy_drain": -2},
-            4: {"name": "low_energy", "radius": 80, "angle": 30, "circle_radius": 80, "energy_drain": 4}
+            4: {"name": "low_energy", "radius": 80, "angle": 30, "circle_radius": 80, "energy_drain": 10}
         }
         
         # 电量系统

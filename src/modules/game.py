@@ -132,6 +132,10 @@ class Game:
         # 小地图
         self.minimap = None
         
+        # 伤害数字管理器
+        from .damage_numbers import DamageNumberManager
+        self.damage_number_manager = DamageNumberManager()
+        
         # 初始化光照系统
         self._init_lighting_system()
         
@@ -144,8 +148,8 @@ class Game:
             from .resource_manager import resource_manager
             self.light_cursor = resource_manager.load_image('light_cursor', 'images/ui/light.png')
             if self.light_cursor:
-                # 缩放光标到合适大小
-                self.light_cursor = pygame.transform.scale(self.light_cursor, (32, 32))
+                # 缩放光标到更大尺寸（从32x32增加到48x48）
+                self.light_cursor = pygame.transform.scale(self.light_cursor, (48, 48))
                 print("战斗鼠标光标加载成功")
             else:
                 print("战斗鼠标光标加载失败")
@@ -1170,6 +1174,9 @@ class Game:
         # 更新消息提示
         self._update_message(dt)
         
+        # 更新伤害数字管理器
+        self.damage_number_manager.update(dt)
+        
         # 确保玩家对象存在再更新
         if self.dual_player_system:
             # 更新双角色系统
@@ -1192,7 +1199,13 @@ class Game:
             if self.health_supply_manager:
                 self.health_supply_manager.update(dt)
             if self.teleport_manager:
+                # 传送道具两个角色都可以拾取，所以需要检查两个角色
                 self.teleport_manager.update(dt, self.dual_player_system.ninja_frog)
+                # 额外检查神秘剑士是否可以拾取传送道具（效果转移给忍者蛙）
+                for teleport_item in self.teleport_manager.teleport_items[:]:
+                    if teleport_item.check_collision(self.dual_player_system.mystic_swordsman):
+                        if teleport_item.collect(self.dual_player_system.mystic_swordsman):
+                            pass
             if self.key_manager:
                 self.key_manager.update(dt, self.game_time)
                 
@@ -1437,6 +1450,9 @@ class Game:
         # 渲染消息提示（在UI之后）
         self._render_message()
         
+        # 渲染伤害数字（在UI之后，小地图之前）
+        self.damage_number_manager.render(self.screen, self.camera_x, self.camera_y)
+        
         # 渲染小地图（在UI之后）
         if self.minimap and self.player:
             # 找到所有钥匙物品
@@ -1551,8 +1567,18 @@ class Game:
                     projectile_radius = getattr(projectile, 'collision_radius', projectile.rect.width / 2)
                     
                     if distance < enemy_radius + projectile_radius:
+                        # 临时更新projectile的rect位置以进行像素级碰撞检测
+                        original_projectile_rect = projectile.rect.copy()
+                        projectile.rect.centerx = projectile_x
+                        projectile.rect.centery = projectile_y
+                        
                         # 使用像素完美碰撞检测
-                        if apply_mask_collision(enemy, projectile):
+                        collision_detected = apply_mask_collision(enemy, projectile)
+                        
+                        # 恢复原始rect位置
+                        projectile.rect = original_projectile_rect
+                        
+                        if collision_detected:
                             should_destroy = weapon.handle_collision(projectile, enemy, self.enemy_manager.enemies)
                             resource_manager.play_sound("hit")
                             
@@ -1574,11 +1600,13 @@ class Game:
         
         # 检测玩家和敌人的碰撞
         for enemy in self.enemy_manager.enemies:
-            # 选择最近的目标
-            ninja_distance = math.sqrt((enemy.rect.x - self.dual_player_system.ninja_frog.world_x)**2 + 
-                                     (enemy.rect.y - self.dual_player_system.ninja_frog.world_y)**2)
-            mystic_distance = math.sqrt((enemy.rect.x - self.dual_player_system.mystic_swordsman.world_x)**2 + 
-                                      (enemy.rect.y - self.dual_player_system.mystic_swordsman.world_y)**2)
+            # 选择最近的目标（使用敌人中心坐标）
+            enemy_center_x = enemy.rect.x + enemy.rect.width / 2
+            enemy_center_y = enemy.rect.y + enemy.rect.height / 2
+            ninja_distance = math.sqrt((enemy_center_x - self.dual_player_system.ninja_frog.world_x)**2 + 
+                                     (enemy_center_y - self.dual_player_system.ninja_frog.world_y)**2)
+            mystic_distance = math.sqrt((enemy_center_x - self.dual_player_system.mystic_swordsman.world_x)**2 + 
+                                      (enemy_center_y - self.dual_player_system.mystic_swordsman.world_y)**2)
             
             # 选择最近的目标进行攻击
             if ninja_distance <= mystic_distance:
@@ -1597,7 +1625,19 @@ class Game:
                 
                 if player_rect.colliderect(enemy.rect):
                     print(f"敌人 {enemy.type} 与 {target_player.hero_type} 发生碰撞")
-                    if apply_mask_collision(target_player, enemy):
+                    
+                    # 临时更新玩家的rect位置以进行像素级碰撞检测
+                    original_rect = target_player.rect.copy()
+                    target_player.rect.centerx = target_player.world_x
+                    target_player.rect.centery = target_player.world_y
+                    
+                    # 进行像素级碰撞检测
+                    collision_detected = apply_mask_collision(target_player, enemy)
+                    
+                    # 恢复原始rect位置
+                    target_player.rect = original_rect
+                    
+                    if collision_detected:
                         print(f"像素级碰撞检测通过，{target_player.hero_type} 被攻击")
                         if enemy.attack_player(target_player):
                             # 如果神秘剑客受到伤害，让忍者蛙扣血
@@ -1675,12 +1715,17 @@ class Game:
                     
                     if distance < enemy.rect.width / 2 + projectile.rect.width / 2:
                         # 进行更精确的像素级碰撞检测
-                        # 调整projectile的rect以匹配world坐标
-                        projectile_rect = projectile.rect.copy()
-                        projectile_rect.centerx = projectile_x
-                        projectile_rect.centery = projectile_y
+                        # 临时更新projectile的rect位置以进行像素级碰撞检测
+                        original_projectile_rect = projectile.rect.copy()
+                        projectile.rect.centerx = projectile_x
+                        projectile.rect.centery = projectile_y
                         
-                        if apply_mask_collision(enemy, projectile):
+                        collision_detected = apply_mask_collision(enemy, projectile)
+                        
+                        # 恢复原始rect位置
+                        projectile.rect = original_projectile_rect
+                        
+                        if collision_detected:
                             # 处理碰撞
                             should_destroy = weapon.handle_collision(projectile, enemy, self.enemy_manager.enemies)
                             # 播放击中音效
@@ -1718,8 +1763,18 @@ class Game:
                 
                 # 对于直接碰撞的敌人，进行常规碰撞检测
                 if player_rect.colliderect(enemy.rect):
+                    # 临时更新玩家的rect位置以进行像素级碰撞检测
+                    original_rect = self.player.rect.copy()
+                    self.player.rect.centerx = self.player.world_x
+                    self.player.rect.centery = self.player.world_y
+                    
                     # 进行像素级碰撞检测
-                    if apply_mask_collision(self.player, enemy):
+                    collision_detected = apply_mask_collision(self.player, enemy)
+                    
+                    # 恢复原始rect位置
+                    self.player.rect = original_rect
+                    
+                    if collision_detected:
                         if enemy.attack_player(self.player):
                             # 播放受伤音效
                             resource_manager.play_sound("player_hurt")
@@ -1757,12 +1812,17 @@ class Game:
                     
                     if distance < enemy.rect.width / 2 + projectile.rect.width / 2:
                         # 进行更精确的像素级碰撞检测
-                        # 调整projectile的rect以匹配world坐标
-                        projectile_rect = projectile.rect.copy()
-                        projectile_rect.centerx = projectile.world_x
-                        projectile_rect.centery = projectile.world_y
+                        # 临时更新projectile的rect位置以进行像素级碰撞检测
+                        original_projectile_rect = projectile.rect.copy()
+                        projectile.rect.centerx = projectile.world_x
+                        projectile.rect.centery = projectile.world_y
                         
-                        if apply_mask_collision(enemy, projectile):
+                        collision_detected = apply_mask_collision(enemy, projectile)
+                        
+                        # 恢复原始rect位置
+                        projectile.rect = original_projectile_rect
+                        
+                        if collision_detected:
                             # 处理碰撞
                             should_destroy = weapon.handle_collision(projectile, enemy, self.enemy_manager.enemies)
                             # 播放击中音效
@@ -1800,8 +1860,18 @@ class Game:
                 
                 # 对于直接碰撞的敌人，进行常规碰撞检测
                 if player_rect.colliderect(enemy.rect):
+                    # 临时更新玩家的rect位置以进行像素级碰撞检测
+                    original_rect = self.player.rect.copy()
+                    self.player.rect.centerx = self.player.world_x
+                    self.player.rect.centery = self.player.world_y
+                    
                     # 进行像素级碰撞检测
-                    if apply_mask_collision(self.player, enemy):
+                    collision_detected = apply_mask_collision(self.player, enemy)
+                    
+                    # 恢复原始rect位置
+                    self.player.rect = original_rect
+                    
+                    if collision_detected:
                         if enemy.attack_player(self.player):
                             # 播放受伤音效
                             resource_manager.play_sound("player_hurt")
