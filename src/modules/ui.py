@@ -8,7 +8,7 @@ class UI:
         self.screen = screen
         pygame.font.init()
         self.font = pygame.font.SysFont('simHei', 24)
-        self.small_font = pygame.font.SysFont('simHei', 20)  # 较小的字体用于时间显示
+        self.small_font = pygame.font.SysFont('simHei', 80)  # 较小的字体用于时间显示
         
         # UI颜色
         self.exp_bar_color = (0, 255, 255)    # 青色
@@ -375,9 +375,9 @@ class UI:
         ammo_surface = self.font.render(ammo_text, True, text_color)
         ammo_rect = ammo_surface.get_rect()
         
-        # 计算左侧位置
+        # 计算右侧位置
         margin = 20
-        x = margin
+        x = self.screen.get_width() - margin - ammo_rect.width
         y = self.screen.get_height() // 2 - 50  # 屏幕中央偏上
         
         # 添加背景
@@ -679,12 +679,10 @@ class UI:
             energy_icon_rect = self.energy_icon.get_rect()
             
             # 计算位置（图标在文本左侧）
-            energy_rect.right = screen_width - self.margin - 10  # 往左移动400像素
-            energy_rect.top = coin_text_rect.bottom + 5 + 250  # 往下移动300像素
-            energy_icon_rect.right = energy_rect.left - 5
+            energy_icon_rect.right = self.margin + energy_icon_rect.width
+            energy_rect.right = self.margin + energy_rect.width + energy_icon_rect.width + 5  # 往左移动400像素
+            energy_rect.top = coin_text_rect.bottom + 5 + 210  # 往下移动300像素
             energy_icon_rect.centery = energy_rect.centery
-            
-            
             
             # 渲染电量图标和文本
             self.screen.blit(self.energy_icon, energy_icon_rect)

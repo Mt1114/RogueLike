@@ -481,6 +481,12 @@ class DualPlayerSystem:
         self.ninja_frog.render(screen)
         self.mystic_swordsman.render(screen)
         
+        # 渲染忍者蛙头上的电量进度条
+        self.render_energy_progress_bar(screen, camera_x, camera_y)
+        
+        # 渲染神秘剑士头上的子弹射击次数显示
+        self.render_bullet_shots_display(screen, camera_x, camera_y)
+        
         # 渲染光照效果（基于忍者蛙的位置，方向由忍者蛙指向鼠标）
         if self.lighting_manager:
             mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -687,6 +693,81 @@ class DualPlayerSystem:
         energy_rect = energy_surface.get_rect(center=(x + 50, y + 50))
         screen.blit(energy_surface, energy_rect)
         
+    def render_energy_progress_bar(self, screen, camera_x, camera_y):
+        """在忍者蛙头上渲染电量进度条"""
+        # 计算忍者蛙在屏幕上的位置
+        ninja_screen_x = self.ninja_frog.world_x - camera_x + screen.get_width() // 2
+        ninja_screen_y = self.ninja_frog.world_y - camera_y + screen.get_height() // 2
+        
+        # 进度条参数
+        bar_width = 50  # 进度条宽度
+        bar_height = 8  # 进度条高度
+        bar_offset_y = -35  # 距离角色头顶的偏移
+        icon_size = 16  # 图标大小
+        
+        # 计算进度条位置（居中于角色头顶）
+        bar_x = ninja_screen_x - bar_width // 2 + 10
+        bar_y = ninja_screen_y + bar_offset_y
+        
+        # 计算图标位置（在进度条左边）
+        icon_x = bar_x - icon_size - 5  # 进度条左边5像素
+        icon_y = bar_y - (icon_size - bar_height) // 2  # 垂直居中对齐
+        
+        # 加载light_icon图标
+        try:
+            from .resource_manager import resource_manager
+            light_icon = resource_manager.load_image('light_icon', 'images/ui/light_icon.png')
+            # 缩放图标到合适大小
+            light_icon = pygame.transform.scale(light_icon, (icon_size, icon_size))
+            # 渲染图标
+            screen.blit(light_icon, (icon_x, icon_y))
+        except Exception as e:
+            print(f"加载light_icon失败: {e}")
+            # 如果加载失败，创建一个默认的绿色圆形图标
+            fallback_surface = pygame.Surface((icon_size, icon_size), pygame.SRCALPHA)
+            pygame.draw.circle(fallback_surface, (0, 255, 0, 200), (icon_size // 2, icon_size // 2), icon_size // 2)
+            screen.blit(fallback_surface, (icon_x, icon_y))
+        
+        # 绘制进度条背景（深色）
+        background_color = (50, 50, 50, 180)  # 半透明深灰色
+        background_surface = pygame.Surface((bar_width, bar_height), pygame.SRCALPHA)
+        pygame.draw.rect(background_surface, background_color, (0, 0, bar_width, bar_height))
+        screen.blit(background_surface, (bar_x, bar_y))
+        
+        # 计算电量百分比
+        energy_ratio = self.energy / 100.0
+        energy_width = int(bar_width * energy_ratio)
+        
+        # 根据电量选择颜色
+        if energy_ratio > 0.6:
+            energy_color = (0, 255, 0, 200)  # 绿色（电量充足）
+        elif energy_ratio > 0.3:
+            energy_color = (255, 255, 0, 200)  # 黄色（电量中等）
+        else:
+            energy_color = (255, 0, 0, 200)  # 红色（电量不足）
+        
+        # 绘制电量进度条
+        if energy_width > 0:
+            energy_surface = pygame.Surface((energy_width, bar_height), pygame.SRCALPHA)
+            pygame.draw.rect(energy_surface, energy_color, (0, 0, energy_width, bar_height))
+            screen.blit(energy_surface, (bar_x, bar_y))
+        
+        # 绘制进度条边框
+        border_color = (255, 255, 255, 150)  # 半透明白色边框
+        border_surface = pygame.Surface((bar_width, bar_height), pygame.SRCALPHA)
+        pygame.draw.rect(border_surface, border_color, (0, 0, bar_width, bar_height), 1)
+        screen.blit(border_surface, (bar_x, bar_y))
+        
+        # 可选：显示电量百分比文字
+        if energy_ratio < 0.5:  # 只在电量低于50%时显示文字
+            font = pygame.font.SysFont('simHei', 12)
+            energy_text = f"{int(self.energy)}%"
+            text_surface = font.render(energy_text, True, (255, 255, 255))
+            text_rect = text_surface.get_rect()
+            text_rect.centerx = ninja_screen_x
+            text_rect.bottom = bar_y - 2
+            screen.blit(text_surface, text_rect)
+        
     def render_teleport_display(self, screen):
         """渲染传送道具数量显示"""
         # 检查忍者蛙是否有传送道具
@@ -770,5 +851,71 @@ class DualPlayerSystem:
             end_x = x2
             end_y = y2
             pygame.draw.line(screen, (255, 255, 0), (start_x, start_y), (end_x, end_y), 2)
+    
+    def render_bullet_shots_display(self, screen, camera_x, camera_y):
+        """在神秘剑士头上渲染子弹射击次数显示"""
+        if not self.mystic_swordsman:
+            return
+        
+        # 计算神秘剑士在屏幕上的位置
+        mystic_screen_x = int(self.mystic_swordsman.world_x - camera_x + screen.get_width() // 2)
+        mystic_screen_y = int(self.mystic_swordsman.world_y - camera_y + screen.get_height() // 2)
+        
+        # 获取子弹武器
+        bullet_weapon = None
+        for weapon in self.mystic_swordsman.weapons:
+            if weapon.type == 'bullet':
+                bullet_weapon = weapon
+                break
+        if not bullet_weapon:
+            return
+        
+        shots_per_magazine = 6  # 30 / 5 = 6次射击
+        # 计算剩余射击次数（基于当前弹夹）
+        remaining_shots = (bullet_weapon.shots_before_reload - bullet_weapon.shots_fired) // 5
+        if bullet_weapon.is_reloading:
+            remaining_shots = 0
+        
+        icon_size = 16  # 增加图标高度
+        icon_spacing = 0  # 减少图标之间的间距
+        total_width = shots_per_magazine * (icon_size-8) + (shots_per_magazine - 1) * icon_spacing
+        start_x = mystic_screen_x - total_width // 2
+        icon_y = mystic_screen_y - 35 - icon_size // 2
+        
+        # 加载子弹图标
+        try:
+            from .resource_manager import resource_manager
+            bullet_icon = resource_manager.load_image('bullet_icon', 'images/weapons/bullet_icon.png')
+            bullet_icon = pygame.transform.scale(bullet_icon, (icon_size, icon_size))
+        except Exception as e:
+            print(f"加载bullet_icon失败: {e}")
+            bullet_icon = pygame.Surface((icon_size, icon_size), pygame.SRCALPHA)
+            pygame.draw.circle(bullet_icon, (255, 255, 0, 200), (icon_size // 2, icon_size // 2), icon_size // 2)
+        
+        # 添加调试信息
+        print(f"调试 - 子弹武器弹药: {bullet_weapon.shots_before_reload}, 剩余射击次数: {remaining_shots}, 装弹状态: {bullet_weapon.shots_fired}")
+        
+        # 渲染6个子弹图标
+        for i in range(shots_per_magazine):
+            icon_x = start_x + i * (icon_size-8 + icon_spacing)
+            
+            # 如果剩余射击次数大于等于当前图标索引，则显示图标
+            if i < remaining_shots:
+                screen.blit(bullet_icon, (icon_x, icon_y))
+            else:
+                # 否则显示灰色（已用完的子弹）
+                gray_icon = bullet_icon.copy()
+                gray_icon.fill((100, 100, 100, 100), special_flags=pygame.BLEND_RGBA_MULT)
+                screen.blit(gray_icon, (icon_x, icon_y))
+        
+        # 如果正在装弹，显示"装弹中"文本
+        if bullet_weapon.is_reloading:
+            font = pygame.font.SysFont('simHei', 12)
+            reload_text = "装弹中"
+            text_surface = font.render(reload_text, True, (255, 255, 255))
+            text_rect = text_surface.get_rect()
+            text_rect.centerx = mystic_screen_x
+            text_rect.top = icon_y + icon_size + 2
+            screen.blit(text_surface, text_rect)
              
  
