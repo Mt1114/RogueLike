@@ -1417,9 +1417,20 @@ class Game:
             self.enemy_manager.render(self.screen, self.camera_x, self.camera_y, 
                                    self.screen_center_x, self.screen_center_y, self.lighting_manager)
 
-            if self.item_manager:
-                self.item_manager.render(self.screen, self.camera_x, self.camera_y, 
-                                       self.screen_center_x, self.screen_center_y, self.lighting_manager)
+        # 渲染道具（在光照系统之前，确保能被黑暗遮罩覆盖）
+        if self.item_manager:
+            self.item_manager.render(self.screen, self.camera_x, self.camera_y, 
+                                   self.screen_center_x, self.screen_center_y, self.lighting_manager)
+        
+        # 渲染补给（在光照系统之前，确保能被黑暗遮罩覆盖）
+        if self.ammo_supply_manager:
+            self.ammo_supply_manager.render(self.screen, self.camera_x, self.camera_y, 
+                                          self.screen_center_x, self.screen_center_y)
+        if self.health_supply_manager:
+            self.health_supply_manager.render(self.screen, self.camera_x, self.camera_y,
+                                            self.screen_center_x, self.screen_center_y)
+        if self.teleport_manager:
+            self.teleport_manager.render(self.screen, self.camera_x, self.camera_y)
         
         # 渲染逃生门
         if self.escape_door:
@@ -1457,31 +1468,11 @@ class Game:
                         self.camera_x, 
                         self.camera_y
                     )
-                
-                # 在光照系统内部渲染补给（确保在光照内可见）
-                if self.ammo_supply_manager:
-                    self.ammo_supply_manager.render(self.screen, self.camera_x, self.camera_y, 
-                                                  self.screen_center_x, self.screen_center_y)
-                if self.health_supply_manager:
-                    self.health_supply_manager.render(self.screen, self.camera_x, self.camera_y,
-                                                    self.screen_center_x, self.screen_center_y)
-                if self.teleport_manager:
-                    self.teleport_manager.render(self.screen, self.camera_x, self.camera_y)
                     
             except Exception as e:
         
                 # 如果光照系统出错，暂时禁用它
                 self.enable_lighting = False
-        else:
-            # 如果光照系统未启用，直接渲染补给
-            if self.ammo_supply_manager:
-                self.ammo_supply_manager.render(self.screen, self.camera_x, self.camera_y,
-                                              self.screen_center_x, self.screen_center_y)
-            if self.health_supply_manager:
-                self.health_supply_manager.render(self.screen, self.camera_x, self.camera_y,
-                                                self.screen_center_x, self.screen_center_y)
-            if self.teleport_manager:
-                self.teleport_manager.render(self.screen, self.camera_x, self.camera_y)
         # 渲染UI（在视野系统之后）
         if self.player:
             # 在双人模式下，传递双人系统参数给UI

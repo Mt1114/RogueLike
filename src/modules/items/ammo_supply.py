@@ -7,6 +7,7 @@ import pygame
 import random
 import math
 from .item import Item
+from ..resource_manager import resource_manager
 
 class AmmoSupply(Item):
     """远程攻击补给物品"""
@@ -15,9 +16,11 @@ class AmmoSupply(Item):
         # 先设置图像，再调用父类构造函数
         # 加载补给图标
         try:
-            self.image = pygame.image.load("assets/images/ui/bullet.png").convert_alpha()
+            # 使用资源管理器加载图片，确保在打包环境中也能正常工作
+            self.image = resource_manager.load_image('ammo_supply', 'images/ui/bullet.png')
             self.image = pygame.transform.scale(self.image, (96, 96))
-        except:
+        except Exception as e:
+            print(f"加载弹药补给图片失败: {e}")
             # 如果加载失败，创建一个默认的黄色圆形图标
             self.image = pygame.Surface((96, 96), pygame.SRCALPHA)
             pygame.draw.circle(self.image, (255, 255, 0), (48, 48), 48)

@@ -6,6 +6,7 @@
 import pygame
 import math
 from .item import Item
+from ..resource_manager import resource_manager
 
 class HealthSupply(Item):
     """生命补给物品"""
@@ -17,11 +18,13 @@ class HealthSupply(Item):
         Args:
             x, y: 补给在世界坐标系中的位置
         """
-        # 设置图像（使用吸收图标）
+        # 设置图像（使用心形图标）
         try:
-            self.image = pygame.image.load("assets/images/ui/heart.png")
+            # 使用资源管理器加载图片，确保在打包环境中也能正常工作
+            self.image = resource_manager.load_image('heart_supply', 'images/ui/heart.png')
             self.image = pygame.transform.scale(self.image, (96, 96))
-        except:
+        except Exception as e:
+            print(f"加载心形图片失败: {e}")
             # 如果加载失败，创建一个默认的红色圆形图标
             self.image = pygame.Surface((96, 96), pygame.SRCALPHA)
             pygame.draw.circle(self.image, (255, 0, 0), (48, 48), 48)
