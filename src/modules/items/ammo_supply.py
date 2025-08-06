@@ -16,17 +16,17 @@ class AmmoSupply(Item):
         # 加载补给图标
         try:
             self.image = pygame.image.load("assets/images/ui/bullet.png").convert_alpha()
-            self.image = pygame.transform.scale(self.image, (32, 32))
+            self.image = pygame.transform.scale(self.image, (96, 96))
         except:
             # 如果加载失败，创建一个默认的黄色圆形图标
-            self.image = pygame.Surface((32, 32), pygame.SRCALPHA)
-            pygame.draw.circle(self.image, (255, 255, 0), (16, 16), 16)
+            self.image = pygame.Surface((96, 96), pygame.SRCALPHA)
+            pygame.draw.circle(self.image, (255, 255, 0), (48, 48), 48)
         
         # 现在调用父类构造函数
         super().__init__(x, y, "ammo_supply")
         
         # 设置碰撞区域
-        self.rect = pygame.Rect(x - 16, y - 16, 32, 32)  # 32x32的碰撞区域
+        self.rect = pygame.Rect(x - 48, y - 48, 96, 96)  # 96x96的碰撞区域
         
         # 补给属性
         self.ammo_amount = 150  # 每次补给150发
@@ -107,12 +107,6 @@ class AmmoSupply(Item):
         # 绘制补给物品
         screen.blit(self.image, (screen_x - self.rect.width // 2, 
                                 screen_y - self.rect.height // 2))
-        
-        # 调试：绘制碰撞区域（红色边框）
-        debug_rect = pygame.Rect(screen_x - self.rect.width // 2, 
-                                screen_y - self.rect.height // 2,
-                                self.rect.width, self.rect.height)
-        pygame.draw.rect(screen, (255, 0, 0), debug_rect, 2)
         
         # 绘制剩余时间指示器
         remaining_time = max(0, self.lifetime - self.spawn_timer)

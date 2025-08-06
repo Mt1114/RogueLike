@@ -553,11 +553,11 @@ class Enemy(pygame.sprite.Sprite, ABC):
         Returns:
             bool: 攻击是否命中
         """
-        print(f"敌人 {self.type} 近战攻击 {player.hero_type}")
+
         
         # 在双人模式下，如果神秘剑客被攻击，伤害转移给忍者蛙
         if hasattr(player, 'hero_type') and (player.hero_type == "mystic_swordsman" or player.hero_type == "role2"):
-            print(f"检测到神秘剑客被近战攻击，准备转移伤害给忍者蛙")
+
             # 检查是否有双人系统
             if hasattr(player, 'game') and hasattr(player.game, 'dual_player_system'):
                 # 获取忍者蛙并转移伤害
@@ -587,12 +587,12 @@ class Enemy(pygame.sprite.Sprite, ABC):
         dy = enemy_center_y - player.world_y
         distance = (dx**2 + dy**2)**0.5
         
-        print(f"与 {player.hero_type} 距离: {distance:.1f}")
+        
         
         # 如果在攻击范围内
         if distance < self.rect.width / 2 + player.rect.width / 2:
             player.take_damage(self.damage)
-            print(f"{player.hero_type} 受到 {self.damage} 点伤害")
+            
             return True
         return False
         
@@ -607,16 +607,16 @@ class Enemy(pygame.sprite.Sprite, ABC):
         Returns:
             bool: 攻击是否命中
         """
-        print(f"敌人 {self.type} 攻击 {player.hero_type}")
+        
         
         # 在双人模式下，如果神秘剑客被攻击，伤害转移给忍者蛙
         if hasattr(player, 'hero_type') and (player.hero_type == "mystic_swordsman" or player.hero_type == "role2"):
-            print(f"检测到神秘剑客被攻击，准备转移伤害给忍者蛙")
+            
             # 检查是否有双人系统
             if hasattr(player, 'game') and hasattr(player.game, 'dual_player_system'):
                 # 获取忍者蛙并转移伤害
                 ninja_frog = player.game.dual_player_system.ninja_frog
-                print(f"找到忍者蛙，转移攻击目标")
+                
                 # 调用attack方法，但传入忍者蛙作为目标
                 return self.attack(ninja_frog, 0.016)
             else:

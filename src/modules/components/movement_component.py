@@ -228,6 +228,7 @@ class MovementComponent(Component):
     def _update_movement_direction(self):
         """更新移动方向和对应的角度"""
         # 更新方向向量（基于键盘输入）
+        old_direction = (self.direction.x, self.direction.y)
         self.direction.x = float(self.moving['right']) - float(self.moving['left'])
         self.direction.y = float(self.moving['down']) - float(self.moving['up'])
         
@@ -241,10 +242,21 @@ class MovementComponent(Component):
                 self.direction = self.direction.normalize()
                 
             # 更新角色朝向：基于移动方向
+            # 对于对角线移动，优先考虑X方向，但如果只有Y方向移动，则保持当前朝向
+            old_facing = self.facing_right
             if self.direction.x > 0:
                 self.facing_right = True
             elif self.direction.x < 0:
                 self.facing_right = False
+            # 如果只有Y方向移动（上下），保持当前朝向不变
+            
+            # 调试信息：打印移动状态变化
+            if old_direction != (self.direction.x, self.direction.y):
+                print(f"调试 - 移动组件: 方向从{old_direction}变为({self.direction.x:.2f}, {self.direction.y:.2f})")
+                print(f"调试 - 移动组件: 移动状态 上={self.moving['up']}, 下={self.moving['down']}, 左={self.moving['left']}, 右={self.moving['right']}")
+                print(f"调试 - 移动组件: 标准化前原始方向 x={float(self.moving['right']) - float(self.moving['left'])}, y={float(self.moving['down']) - float(self.moving['up'])}")
+            
+
             
     def is_moving(self):
         """

@@ -54,11 +54,11 @@ class Item(pygame.sprite.Sprite):
                                                          frame_duration=0.1).get_current_frame()
 
 
-        # 缩放图片到合适大小
+        # 缩放图片到合适大小（大地图放大3倍）
         if item_type == 'chest':
-            self.image = pygame.transform.scale(self.image, (24, 24))  # 将物品图片缩放为24x24像素
+            self.image = pygame.transform.scale(self.image, (72, 72))  # 将物品图片缩放为72x72像素（24*3）
         else:
-            self.image = pygame.transform.scale(self.image, (16, 16))  # 将物品图片缩放为16x16像素
+            self.image = pygame.transform.scale(self.image, (48, 48))  # 将物品图片缩放为48x48像素（16*3）
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         

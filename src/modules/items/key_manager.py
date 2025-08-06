@@ -78,8 +78,8 @@ class KeyManager:
         Returns:
             bool: 位置是否有效
         """
-        # 创建钥匙的碰撞矩形（假设钥匙大小为16x16）
-        key_rect = pygame.Rect(x - 8, y - 8, 16, 16)
+        # 创建钥匙的碰撞矩形（钥匙大小为48x48）
+        key_rect = pygame.Rect(x - 24, y - 24, 48, 48)
         
         # 检查是否与任何碰撞图块重叠
         for tile_rect in collision_tiles:
@@ -89,7 +89,7 @@ class KeyManager:
         # 检查是否与其他钥匙重叠
         for key in self.keys:
             if hasattr(key, 'rect'):
-                key_rect_other = pygame.Rect(key.world_x - 8, key.world_y - 8, 16, 16)
+                key_rect_other = pygame.Rect(key.world_x - 24, key.world_y - 24, 48, 48)
                 if key_rect.colliderect(key_rect_other):
                     return False
         

@@ -110,7 +110,7 @@ class DualPlayerSystem:
             elif event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
                 # 神秘剑士的移动控制（方向键）
                 self._handle_mystic_movement(event)
-            elif event.key in [pygame.K_KP2, pygame.K_KP4, pygame.K_KP6, pygame.K_KP8]:
+            elif event.key in [pygame.K_KP5, pygame.K_KP4, pygame.K_KP6, pygame.K_KP8]:
                 # 神秘剑士的攻击控制（数字键盘）
                 self._handle_mystic_attack(event)
             elif event.key == pygame.K_u:  # U键远程攻击
@@ -138,12 +138,8 @@ class DualPlayerSystem:
                 self.use_teleport_item()
             elif event.key == pygame.K_KP1:  # 小键盘1键武器切换（仅对神秘剑士）
                 # 神秘剑士的武器切换
-                print("调试 - 检测到小键盘1键按下")
                 if self.mystic_swordsman.hero_type == "role2":
-                    print("调试 - 调用神秘剑士的武器切换")
                     self.mystic_swordsman.toggle_weapon_mode()
-                else:
-                    print(f"调试 - 神秘剑士hero_type不是role2: {self.mystic_swordsman.hero_type}")
                 
         elif event.type == pygame.KEYUP:
             if event.key in [pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d]:
@@ -166,25 +162,41 @@ class DualPlayerSystem:
         """处理神秘剑士的移动控制"""
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
+                print("调试 - 神秘剑士上键按下")
                 self.mystic_swordsman.movement.moving['up'] = True
             elif event.key == pygame.K_DOWN:
+                print("调试 - 神秘剑士下键按下")
                 self.mystic_swordsman.movement.moving['down'] = True
             elif event.key == pygame.K_LEFT:
+                print("调试 - 神秘剑士左键按下")
                 self.mystic_swordsman.movement.moving['left'] = True
             elif event.key == pygame.K_RIGHT:
+                print("调试 - 神秘剑士右键按下")
                 self.mystic_swordsman.movement.moving['right'] = True
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_UP:
+                print("调试 - 神秘剑士上键释放")
                 self.mystic_swordsman.movement.moving['up'] = False
             elif event.key == pygame.K_DOWN:
+                print("调试 - 神秘剑士下键释放")
                 self.mystic_swordsman.movement.moving['down'] = False
             elif event.key == pygame.K_LEFT:
+                print("调试 - 神秘剑士左键释放")
                 self.mystic_swordsman.movement.moving['left'] = False
             elif event.key == pygame.K_RIGHT:
+                print("调试 - 神秘剑士右键释放")
                 self.mystic_swordsman.movement.moving['right'] = False
                 
         # 更新移动方向
         self.mystic_swordsman.movement._update_movement_direction()
+        
+        # 打印当前移动状态
+        moving = self.mystic_swordsman.movement.moving
+        print(f"调试 - 神秘剑士移动状态: 上={moving['up']}, 下={moving['down']}, 左={moving['left']}, 右={moving['right']}")
+        print(f"调试 - 神秘剑士移动方向: ({self.mystic_swordsman.movement.direction.x:.2f}, {self.mystic_swordsman.movement.direction.y:.2f})")
+        print(f"调试 - 神秘剑士朝向: {'右' if self.mystic_swordsman.movement.facing_right else '左'}")
+        print(f"调试 - 神秘剑士速度: {self.mystic_swordsman.movement.speed}")
+        print(f"调试 - 神秘剑士速度向量: ({self.mystic_swordsman.movement.velocity.x:.2f}, {self.mystic_swordsman.movement.velocity.y:.2f})")
             
     def _handle_mystic_attack(self, event):
         """处理神秘剑士的攻击"""
@@ -198,7 +210,7 @@ class DualPlayerSystem:
             if event.key == pygame.K_KP8:  # 上
                 attack_direction = (0, -1)
                 print("神秘剑士向上攻击")
-            elif event.key == pygame.K_KP2:  # 下
+            elif event.key == pygame.K_KP5:  # 下
                 attack_direction = (0, 1)
                 print("神秘剑士向下攻击")
             elif event.key == pygame.K_KP4:  # 左
@@ -282,15 +294,7 @@ class DualPlayerSystem:
         # 更新电量系统
         self._update_energy(dt)
         
-        # 调试：每秒打印一次电量状态
-        if hasattr(self, '_debug_timer'):
-            self._debug_timer += dt
-        else:
-            self._debug_timer = 0
-            
-        if self._debug_timer >= 1.0:
-            self._debug_timer = 0
-            print(f"当前电量: {self.energy:.1f}%, 模式: {self.light_modes[self.light_mode]['name']}, 消耗: {self.light_modes[self.light_mode]['energy_drain']}")
+
             
         # 更新传送道具
         if self.teleport_item and self.is_teleporting:
@@ -352,12 +356,11 @@ class DualPlayerSystem:
                 self.energy = 0
                 # 电量耗尽，强制切换到低能耗模式
                 if self.light_mode != 4:
-                    print("电量耗尽！强制切换到低能耗模式")
+    
                     self.light_mode = 4
                     self._apply_light_mode()
                     
-            # 调试信息
-            print(f"电量更新: {old_energy:.1f}% -> {self.energy:.1f}% (变化: {energy_change}, 模式: {self.light_modes[self.light_mode]['name']})")
+
                     
     def _apply_light_mode(self):
         """应用当前光照模式"""
@@ -397,7 +400,7 @@ class DualPlayerSystem:
                 )
             else:
                 self.ninja_frog_target_pos = (self.mystic_swordsman.world_x, self.mystic_swordsman.world_y)
-            print(f"强制拉回启动！距离: {distance:.1f}像素")
+            
         
         # 如果正在强制拉回
         if self.is_force_pulling:
@@ -421,7 +424,7 @@ class DualPlayerSystem:
                 self.force_pull_timer = 0
                 self.ninja_frog_start_pos = None
                 self.ninja_frog_target_pos = None
-                print("强制拉回完成！")
+                
                 return  # 跳过普通距离约束
         
         # 普通距离约束（仅在非强制拉回时）
@@ -519,9 +522,9 @@ class DualPlayerSystem:
                                            self.mystic_attack_direction[1])
         self.mystic_swordsman.render_melee_attacks(screen, camera_x, camera_y)
         
-        # 渲染神秘剑士的大招
-        self.mystic_swordsman.render_ultimate(screen)
-        self.mystic_swordsman.render_ultimate_cooldown(screen)
+        # # 渲染神秘剑士的大招
+        # self.mystic_swordsman.render_ultimate(screen)
+        # self.mystic_swordsman.render_ultimate_cooldown(screen)
         
         # 渲染忍者蛙的穿墙技能CD
         self.ninja_frog.render_phase_cooldown(screen)

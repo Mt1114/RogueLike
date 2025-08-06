@@ -88,9 +88,9 @@ class Player(pygame.sprite.Sprite):
         self.add_weapon(starting_weapon)  # 添加远程武器（手枪）
         self.add_weapon("knife")  # 添加近战武器（刀）
         
-        # 加载大招图标（仅对role2角色）
-        if self.hero_type == "role2":
-            self._load_ultimate_icon()
+        # # 加载大招图标（仅对role2角色）
+        # if self.hero_type == "role2":
+        #     self._load_ultimate_icon()
         
         # 加载穿墙技能图标（仅对忍者蛙）
         if self.hero_type == "ninja_frog":
@@ -617,7 +617,7 @@ class Player(pygame.sprite.Sprite):
         # 计算CD显示位置（右侧中央）
         icon_size = 48
         margin = 20
-        x = screen.get_width() - margin - icon_size
+        x =  margin +icon_size-45
         y = screen.get_height() // 2 - icon_size // 2
         
         # 如果没有图标，创建一个默认的蓝色圆形图标
@@ -671,15 +671,7 @@ class Player(pygame.sprite.Sprite):
     
     def toggle_weapon_mode(self):
         """切换武器模式（仅对神秘剑士）"""
-        print(f"调试 - toggle_weapon_mode被调用，hero_type={self.hero_type}")
         if self.hero_type != "role2":
-            print("调试 - 不是神秘剑士，退出")
             return
             
-        self.is_ranged_mode = not self.is_ranged_mode
-        print(f"调试 - 武器模式切换为: {'远程' if self.is_ranged_mode else '近战'}")
-        
-        if self.is_ranged_mode:
-            print("切换到远程模式")
-        else:
-            print("切换到近战模式") 
+        self.is_ranged_mode = not self.is_ranged_mode 

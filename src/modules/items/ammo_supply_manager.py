@@ -123,8 +123,8 @@ class AmmoSupplyManager:
                 if tile.collidepoint(x, y):
                     return False
                     
-                # 检查补给区域是否与墙壁重叠（32x32区域）
-                supply_rect = pygame.Rect(x - 16, y - 16, 32, 32)
+                # 检查补给区域是否与墙壁重叠（96x96区域）
+                supply_rect = pygame.Rect(x - 48, y - 48, 96, 96)
                 if tile.colliderect(supply_rect):
                     return False
         else:
@@ -138,7 +138,7 @@ class AmmoSupplyManager:
                 
         # 检查是否与其他补给重叠
         for supply in self.supplies:
-            supply_rect = pygame.Rect(x - 16, y - 16, 32, 32)
+            supply_rect = pygame.Rect(x - 48, y - 48, 96, 96)
             if supply_rect.colliderect(supply.rect):
                 return False
                 

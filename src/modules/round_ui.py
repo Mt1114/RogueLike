@@ -22,10 +22,7 @@ class RoundUI:
             self.round_images[2] = resource_manager.load_image('round2_ui', 'images/ui/Round2.png')
             self.round_images[3] = resource_manager.load_image('round3_ui', 'images/ui/Round3.png')
             
-            print(f"波次UI图片加载状态:")
-            print(f"  Round1: {self.round_images[1] is not None}")
-            print(f"  Round2: {self.round_images[2] is not None}")
-            print(f"  Round3: {self.round_images[3] is not None}")
+
             
         except Exception as e:
             print(f"加载波次UI图片失败: {e}")
@@ -40,7 +37,7 @@ class RoundUI:
             print(f"无效的波次编号: {round_number}")
             return
         
-        print(f"显示波次UI: Round{round_number}")
+
         self.is_active = True
         self.current_time = 0.0
         self.current_round = round_number
@@ -55,7 +52,7 @@ class RoundUI:
         # 5秒后结束动画
         if self.current_time >= self.duration:
             self.is_active = False
-            print(f"波次UI结束: Round{self.current_round}")
+
     
     def render(self):
         """渲染波次UI"""

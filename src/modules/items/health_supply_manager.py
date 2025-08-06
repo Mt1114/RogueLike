@@ -117,8 +117,8 @@ class HealthSupplyManager:
                 if tile.collidepoint(x, y):
                     return False
                     
-                # 检查补给区域是否与墙壁重叠（32x32区域）
-                supply_rect = pygame.Rect(x - 16, y - 16, 32, 32)
+                # 检查补给区域是否与墙壁重叠（96x96区域）
+                supply_rect = pygame.Rect(x - 48, y - 48, 96, 96)
                 if tile.colliderect(supply_rect):
                     return False
         else:
@@ -133,13 +133,13 @@ class HealthSupplyManager:
         # 检查是否与弹药补给重叠
         if hasattr(self.game, 'ammo_supply_manager'):
             for ammo_supply in self.game.ammo_supply_manager.supplies:
-                supply_rect = pygame.Rect(x - 16, y - 16, 32, 32)
+                supply_rect = pygame.Rect(x - 48, y - 48, 96, 96)
                 if supply_rect.colliderect(ammo_supply.rect):
                     return False
         
         # 检查是否与其他生命补给重叠
         for supply in self.supplies:
-            supply_rect = pygame.Rect(x - 16, y - 16, 32, 32)
+            supply_rect = pygame.Rect(x - 48, y - 48, 96, 96)
             if supply_rect.colliderect(supply.rect):
                 return False
                 

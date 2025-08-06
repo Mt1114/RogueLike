@@ -20,11 +20,11 @@ class HealthSupply(Item):
         # 设置图像（使用吸收图标）
         try:
             self.image = pygame.image.load("assets/images/ui/heart.png")
-            self.image = pygame.transform.scale(self.image, (32, 32))
+            self.image = pygame.transform.scale(self.image, (96, 96))
         except:
             # 如果加载失败，创建一个默认的红色圆形图标
-            self.image = pygame.Surface((32, 32), pygame.SRCALPHA)
-            pygame.draw.circle(self.image, (255, 0, 0), (16, 16), 16)
+            self.image = pygame.Surface((96, 96), pygame.SRCALPHA)
+            pygame.draw.circle(self.image, (255, 0, 0), (48, 48), 48)
         
         # 调用父类初始化
         super().__init__(x, y, 'health_supply')

@@ -13,15 +13,15 @@ class TeleportItem(Item):
             self.image = resource_manager.load_image('teleport_icon', 'images/ui/transport.png')
             if self.image:
                 # 缩放图标到合适大小
-                self.image = pygame.transform.scale(self.image, (32, 32))
+                self.image = pygame.transform.scale(self.image, (96, 96))
             else:
                 # 如果加载失败，创建蓝色圆圈作为备用
-                self.image = pygame.Surface((16, 16), pygame.SRCALPHA)
-                pygame.draw.circle(self.image, (0, 100, 255), (8, 8), 8)
+                self.image = pygame.Surface((48, 48), pygame.SRCALPHA)
+                pygame.draw.circle(self.image, (0, 100, 255), (24, 24), 24)
         except:
             # 如果加载失败，创建蓝色圆圈作为备用
-            self.image = pygame.Surface((16, 16), pygame.SRCALPHA)
-            pygame.draw.circle(self.image, (0, 100, 255), (8, 8), 8)
+            self.image = pygame.Surface((48, 48), pygame.SRCALPHA)
+            pygame.draw.circle(self.image, (0, 100, 255), (24, 24), 24)
         
         # 现在调用父类初始化
         super().__init__(x, y, "teleport")

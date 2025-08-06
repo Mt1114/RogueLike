@@ -36,6 +36,18 @@ class UI:
         self.energy_icon = resource_manager.load_image('energy_icon', 'images/ui/light_icon.png')
         self.energy_icon = pygame.transform.scale(self.energy_icon, (24, 24))  # 调整电量图标大小
         
+        # 加载传送道具图标
+        try:
+            self.teleport_icon = resource_manager.load_image('teleport_icon', 'images/ui/transport.png')
+            self.teleport_icon = pygame.transform.scale(self.teleport_icon, (73, 64))  # 调整传送道具图标大小
+            print("传送道具图标加载成功")
+        except Exception as e:
+            print(f"传送道具图标加载失败: {e}")
+            # 创建一个默认的传送道具图标
+            self.teleport_icon = pygame.Surface((73, 64), pygame.SRCALPHA)
+            pygame.draw.circle(self.teleport_icon, (0, 255, 255), (36, 32), 30)  # 青色圆圈
+            pygame.draw.circle(self.teleport_icon, (255, 255, 255), (36, 32), 15)  # 白色内圈
+        
         # 加载武器选择图标
         self.knife_black = resource_manager.load_image('knife_black', 'images/ui/knife_black.png')
         self.knife_white = resource_manager.load_image('knife_white', 'images/ui/knife_white.png')
@@ -379,6 +391,66 @@ class UI:
         ammo_rect.topleft = (x, y)
         self.screen.blit(ammo_surface, ammo_rect)
 
+    def _render_teleport_info(self, player):
+        """渲染传送道具信息
+        
+        Args:
+            player: 玩家实例
+        """
+        # 检查玩家是否有传送道具属性
+        if not hasattr(player, 'teleport_items'):
+            return
+            
+        # 获取传送道具数量
+        teleport_count = player.teleport_items
+        
+        # 显示传送道具文本
+        teleport_text = f"传送道具: {teleport_count}"
+        
+        # 根据数量设置颜色
+        if teleport_count > 0:
+            text_color = (0, 255, 255)  # 青色表示有传送道具
+        else:
+            text_color = (128, 128, 128)  # 灰色表示没有传送道具
+        
+        # 渲染传送道具文本
+        teleport_surface = self.font.render(teleport_text, True, text_color)
+        teleport_rect = teleport_surface.get_rect()
+        
+        # 计算屏幕正中间位置
+        screen_center_x = self.screen.get_width() -100
+        screen_center_y = self.screen.get_height() // 2
+        
+        # 添加背景（居中显示）
+        bg_rect = pygame.Rect(screen_center_x - teleport_rect.width // 2 - 10, 
+                             screen_center_y - teleport_rect.height // 2 - 5,
+                             teleport_rect.width + 20, teleport_rect.height + 10)
+        bg_surface = pygame.Surface((bg_rect.width, bg_rect.height))
+        bg_surface.set_alpha(200)  # 更不透明的背景
+        bg_surface.fill((0, 0, 0))
+        self.screen.blit(bg_surface, bg_rect)
+        
+        # 渲染图标（放在文字左边）
+        if self.teleport_icon:
+            icon_rect = self.teleport_icon.get_rect()
+            icon_rect.right = teleport_rect.left - 10  # 图标在文字左边10像素
+            icon_rect.centery = teleport_rect.centery  # 垂直居中对齐
+            self.screen.blit(self.teleport_icon, icon_rect)
+            
+            # print("传送道具图标为空，无法渲染")
+            # 绘制一个简单的测试图标
+            test_icon = pygame.Surface((73, 64), pygame.SRCALPHA)
+            pygame.draw.circle(test_icon, (255, 0, 0), (36, 32), 30)  # 红色圆圈
+            test_rect = test_icon.get_rect()
+            test_rect.right = teleport_rect.left - 10
+            test_rect.centery = teleport_rect.centery
+            self.screen.blit(test_icon, test_rect)
+            # print("使用测试图标")
+        
+        # 渲染文本（居中显示）
+        teleport_rect.center = (screen_center_x, screen_center_y)
+        self.screen.blit(teleport_surface, teleport_rect)
+
     def render(self, player, game_time, game_kill_num, dual_player_system=None):
         screen_width = self.screen.get_width()
         screen_height = self.screen.get_height()
@@ -473,6 +545,11 @@ class UI:
         # 在双人模式下，在左侧显示弹药信息
         if dual_player_system:
             self._render_ammo_display_left(weapon_player)
+            # 显示传送道具数量
+            self._render_teleport_info(primary_player)
+        else:
+            # 单人模式下也显示传送道具数量
+            self._render_teleport_info(player)
         
         # 计算技能图标框的总宽度（每排3个）
         total_icons_width = 3 * (self.icon_size + self.icon_spacing) - self.icon_spacing
@@ -549,7 +626,7 @@ class UI:
         
         # 渲染击杀统计（左上角，紧贴经验条下方）
         kill_count = game_kill_num
-        print(f"UI渲染 - 击杀数: {kill_count}, 双人系统: {dual_player_system is not None}")  # 调试信息
+
         kill_text = self.font.render(f"击杀: {kill_count}", True, self.text_color)
         kill_text_rect = kill_text.get_rect()
         kill_icon_rect = self.kill_icon.get_rect()
@@ -560,7 +637,7 @@ class UI:
         kill_text_rect.left = kill_icon_rect.right + 5
         kill_text_rect.centery = kill_icon_rect.centery
         
-        print(f"击杀图标位置: ({kill_icon_rect.left}, {kill_icon_rect.top})")  # 调试位置信息
+
         
         # 渲染击杀统计文本和图标
         self.screen.blit(self.kill_icon, kill_icon_rect)
@@ -577,7 +654,7 @@ class UI:
         coin_icon_rect.right = coin_text_rect.left - 5
         coin_icon_rect.centery = coin_text_rect.centery
         
-        print(f"金币位置: ({coin_text_rect.right}, {coin_text_rect.top})")  # 调试位置信息
+
         
         # 渲染金币文本和图标
         self.screen.blit(coin_text, coin_text_rect)
@@ -585,7 +662,7 @@ class UI:
         
         # 渲染剩余电量（右上角，金币下方）
         if dual_player_system:
-            print(f"UI渲染 - 电量: {dual_player_system.energy}%")  # 调试信息
+    
             
             # 根据电量值确定颜色
             energy_value = dual_player_system.energy
@@ -607,8 +684,7 @@ class UI:
             energy_icon_rect.right = energy_rect.left - 5
             energy_icon_rect.centery = energy_rect.centery
             
-            print(f"电量位置: ({energy_rect.right}, {energy_rect.top})")  # 调试位置信息
-            print(f"电量图标位置: ({energy_icon_rect.right}, {energy_icon_rect.centery})")  # 调试位置信息
+            
             
             # 渲染电量图标和文本
             self.screen.blit(self.energy_icon, energy_icon_rect)

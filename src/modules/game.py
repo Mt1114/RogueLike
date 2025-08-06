@@ -165,7 +165,7 @@ class Game:
         # 创建光照管理器（使用默认预设）
         self.lighting_manager = LightingManager(screen_width, screen_height, "default")
         
-        print(f"光照系统初始化完成，当前预设: {self.lighting_manager.get_current_preset()}")
+
     
     def show_message(self, message, duration=3.0):
         """显示消息提示
@@ -519,7 +519,7 @@ class Game:
             self.enemy_manager.enemies.clear()
             self.enemy_manager.current_round = 0
             self.enemy_manager.game_time = 0
-            print("敌人管理器已重置")
+    
         
         # 重置物品管理器
         if self.item_manager:
@@ -631,12 +631,12 @@ class Game:
                         self.dual_player_system.ninja_frog.movement.set_collision_tiles(walls, tile_width, tile_height)
                     if hasattr(self.dual_player_system.mystic_swordsman, 'movement'):
                         self.dual_player_system.mystic_swordsman.movement.set_collision_tiles(walls, tile_width, tile_height)
-                    print("双人模式碰撞数据已更新")
+            
                 
                 # 设置单人模式的碰撞数据
                 elif self.player and hasattr(self.player, 'movement'):
                     self.player.movement.set_collision_tiles(walls, tile_width, tile_height)
-                    print("单人模式碰撞数据已更新")
+            
             
         else:
             print(f"加载地图 '{map_name}' 失败")
@@ -778,7 +778,7 @@ class Game:
                         enemy_data.get('health', 50)
                     )
                 except Exception as e:
-                    print(f"加载敌人时出错: {e}")
+        
                     continue
             
             # 设置相机位置
@@ -922,10 +922,10 @@ class Game:
             
         # 处理游戏结果UI事件
         if self.game_result_ui.is_active:
-            print(f"游戏类: 游戏结果UI激活，处理事件类型: {event.type}")
+    
             result_action = self.game_result_ui.handle_event(event)
             if result_action:
-                print(f"游戏类: 游戏结果UI返回动作: {result_action}")
+    
                 if result_action == 'restart':
                     self._restart_game()
                     return True
@@ -951,7 +951,7 @@ class Game:
                     return True
             else:
                 # 如果游戏结果UI激活但没有处理事件，也要消费掉事件，防止传递给其他系统
-                print(f"游戏类: 游戏结果UI消费事件类型: {event.type}")
+               
                 return True
         
         # 处理游戏按钮事件（暂停时也能响应，但不在游戏结果UI激活时）
@@ -974,7 +974,7 @@ class Game:
                 return True
             elif button_action == 'setup':
                 # TODO: 实现设置功能
-                print("设置功能待实现")
+               
                 return True
             
         # ESC键暂停游戏
@@ -1004,19 +1004,12 @@ class Game:
                     if preset_info:
                         self.show_message(f"光照预设: {preset_info['name']}", 2.0)
                 return True
-            elif event.key == pygame.K_F10:
-                # 切换调试模式
-                self.debug_mode = not self.debug_mode
-                if self.debug_mode:
-                    print("调试模式已开启")
-                else:
-                    print("调试模式已关闭")
-                return True
+            
             elif event.key == pygame.K_F11:
                 # 切换视野调试模式
                 if self.enemy_manager:
                     self.enemy_manager.debug_vision = not getattr(self.enemy_manager, 'debug_vision', False)
-                    print(f"视野调试模式: {'开启' if self.enemy_manager.debug_vision else '关闭'}")
+                    
                 return True
             
         # 更新鼠标位置（用于视野系统）
@@ -1104,7 +1097,7 @@ class Game:
             }
             self.dual_player_system.mystic_swordsman.movement.direction = pygame.math.Vector2(0, 0)
             self.dual_player_system.mystic_swordsman.movement.velocity = pygame.math.Vector2(0, 0)
-            print("暂停菜单：双人模式移动状态已清除")
+          
         elif self.player:
             # 单人模式：清除玩家的移动状态
             self.player.movement.moving = {
@@ -1112,7 +1105,7 @@ class Game:
             }
             self.player.movement.direction = pygame.math.Vector2(0, 0)
             self.player.movement.velocity = pygame.math.Vector2(0, 0)
-            print("暂停菜单：单人模式移动状态已清除")
+          
         
     def update(self, dt):
         """更新游戏状态"""
@@ -1128,7 +1121,7 @@ class Game:
         self.fps_timer += dt
         if self.fps_timer >= self.fps_update_interval:
             self.fps = int(self.fps_counter / self.fps_timer)
-            print(f"FPS: {self.fps}")
+    
             
             self.fps_counter = 0
             self.fps_timer = 0
@@ -1165,7 +1158,7 @@ class Game:
         # 检查游戏胜利
         if self.game_victory and not self.game_over:
             self.game_over = True
-            print(f"游戏胜利！当前地图: {self.current_map}")
+            
             
             # 确定下一关地图
             next_map = None
@@ -1186,7 +1179,7 @@ class Game:
             
             # 如果不是最终关卡且有下一关，直接开始关卡过渡动画
             if next_map and not is_final_level:
-                print(f"开始关卡过渡动画，下一关: {next_map}")
+                
                 self.level_transition.start(next_map)
             else:
                 # 最终关卡或失败，显示游戏结果UI
@@ -1445,7 +1438,7 @@ class Game:
             self.player.render_weapons(self.screen, self.camera_x, self.camera_y)
             self.player.render_melee_attacks(self.screen, self.camera_x, self.camera_y)
             self.player.render_ultimate(self.screen)
-            self.player.render_ultimate_cooldown(self.screen)
+            # self.player.render_ultimate_cooldown(self.screen)
             self.player.render_phase_cooldown(self.screen)
             
         # 渲染光照系统（在所有游戏对象之后，UI之前）
@@ -1476,7 +1469,7 @@ class Game:
                     self.teleport_manager.render(self.screen, self.camera_x, self.camera_y)
                     
             except Exception as e:
-                print(f"光照系统渲染错误: {e}")
+        
                 # 如果光照系统出错，暂时禁用它
                 self.enable_lighting = False
         else:
@@ -1676,7 +1669,7 @@ class Game:
                     enemy.attack_player(target_player)
                 
                 if player_rect.colliderect(enemy.rect):
-                    print(f"敌人 {enemy.type} 与 {target_player.hero_type} 发生碰撞")
+                    
                     
                     # 临时更新玩家的rect位置以进行像素级碰撞检测
                     original_rect = target_player.rect.copy()
@@ -1690,17 +1683,16 @@ class Game:
                     target_player.rect = original_rect
                     
                     if collision_detected:
-                        print(f"像素级碰撞检测通过，{target_player.hero_type} 被攻击")
+                        
                         if enemy.attack_player(target_player):
                             # 如果神秘剑客受到伤害，让忍者蛙扣血
-                            if target_player.hero_type == "mystic_swordsman":
-                                print(f"神秘剑客受到敌人直接攻击，忍者蛙扣血")
+                            
                             resource_manager.play_sound("player_hurt")
                             break
         
         # 检测敌人子弹和玩家的碰撞
         if hasattr(self.enemy_manager, 'enemy_projectiles'):
-            print(f"检测到 {len(self.enemy_manager.enemy_projectiles)} 个敌人子弹")
+            
             for projectile in self.enemy_manager.enemy_projectiles[:]:
                 # 计算子弹到两个玩家的距离
                 # 使用正确的属性名（x, y 而不是 world_x, world_y）
@@ -1715,7 +1707,7 @@ class Game:
                 mystic_dy = self.dual_player_system.mystic_swordsman.world_y - projectile_y
                 mystic_distance = (mystic_dx**2 + mystic_dy**2)**0.5
                 
-                print(f"忍者蛙距离: {ninja_distance:.1f}, 神秘剑客距离: {mystic_distance:.1f}")
+                
                 
                 # 选择最近的目标进行攻击
                 if ninja_distance <= mystic_distance:
@@ -1725,25 +1717,22 @@ class Game:
                     target_player = self.dual_player_system.mystic_swordsman
                     distance = mystic_distance
                 
-                print(f"目标玩家: {target_player.hero_type}, 距离: {distance:.1f}")
+               
                 
                 if distance < 50:  # 减小碰撞距离到50像素
-                    print(f"检测到碰撞！目标: {target_player.hero_type}")
-                    print(f"投射物伤害: {getattr(projectile, 'damage', '无')}")
+                    
                     if hasattr(projectile, 'damage'):
                         # 如果神秘剑客受到伤害，让忍者蛙扣血
                         if target_player.hero_type == "mystic_swordsman" or target_player.hero_type == "role2":
                             self.dual_player_system.ninja_frog.take_damage(projectile.damage)
-                            print(f"神秘剑客受击，忍者蛙受到 {projectile.damage} 点伤害，距离: {distance:.1f}")
+                            
                         else:
                             target_player.take_damage(projectile.damage)
-                            print(f"{target_player.hero_type} 受到 {projectile.damage} 点伤害，距离: {distance:.1f}")
-                    else:
-                        print(f"投射物没有伤害属性")
+                            
+                    
                     self.enemy_manager.enemy_projectiles.remove(projectile)
                     resource_manager.play_sound("player_hurt")
-                else:
-                    print(f"距离太远，不造成伤害，距离: {distance:.1f}")
+                
                     
     def _check_single_player_collisions(self):
         """单角色模式的碰撞检测"""

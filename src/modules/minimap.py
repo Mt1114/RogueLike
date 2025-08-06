@@ -236,9 +236,9 @@ class Minimap:
         if escape_door and hasattr(escape_door, 'world_x') and hasattr(escape_door, 'world_y'):
             door_x, door_y = self.world_to_minimap(escape_door.world_x, escape_door.world_y)
             if self.door_icon:
-                self.draw_icon(door_x, door_y, self.door_icon, 6)
+                self.draw_icon(door_x, door_y, self.door_icon, 9)  # 放大1.5倍：6 * 1.5 = 9
             else:
-                self.draw_marker(door_x, door_y, self.door_color, 6)
+                self.draw_marker(door_x, door_y, self.door_color, 9)  # 放大1.5倍：6 * 1.5 = 9
         
         # 绘制弹药补给位置
         if ammo_supplies:

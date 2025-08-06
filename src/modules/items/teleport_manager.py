@@ -56,7 +56,7 @@ class TeleportManager:
         collision_tiles = self.map_manager.get_collision_tiles()
         
         # 检查位置是否与任何碰撞图块重叠
-        player_rect = pygame.Rect(x - 16, y - 16, 32, 32)  # 假设玩家大小为32x32
+        player_rect = pygame.Rect(x - 48, y - 48, 96, 96)  # 传送道具大小为96x96
         
         for tile_rect in collision_tiles:
             if player_rect.colliderect(tile_rect):
