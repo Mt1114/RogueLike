@@ -53,12 +53,55 @@ class DualPlayerSystem:
         self.teleport_item = None  # 当前传送道具实例
         self.is_teleporting = False  # 是否正在传送
         
+        # 光照方向追踪（解决摄像机移动时光照方向变化的问题）
+        self.lighting_direction = 0  # 光照方向（弧度）
+        self.last_mouse_pos = pygame.mouse.get_pos()  # 上次鼠标位置
+        
+        # 初始化光照方向（指向屏幕中心稍微偏右，避免开始时的零向量问题）
+        initial_mouse_x, initial_mouse_y = self.last_mouse_pos
+        screen_center_x = self.screen_width // 2
+        screen_center_y = self.screen_height // 2
+        
+        # 如果鼠标在屏幕中心，设置一个默认方向
+        if initial_mouse_x == screen_center_x and initial_mouse_y == screen_center_y:
+            self.lighting_direction = 0  # 指向右方
+        else:
+            # 计算从屏幕中心到鼠标的角度
+            dx = initial_mouse_x - screen_center_x
+            dy = initial_mouse_y - screen_center_y
+            self.lighting_direction = math.atan2(dy, dx)
+            if self.lighting_direction < 0:
+                self.lighting_direction += 2 * math.pi
+        
         # 初始化角色
         self._init_players()
         
         # 光照管理器（由忍者蛙控制）
         self.lighting_manager = None
         self._init_lighting_system()
+        
+        # 鼠标显示状态管理
+        self.mouse_hidden = False  # 记录鼠标是否被我们隐藏了
+        self.last_game_active_state = None  # 记录上次的游戏活跃状态
+    
+    def hide_mouse_for_lighting(self):
+        """为光照控制隐藏鼠标"""
+        if not self.mouse_hidden:
+            pygame.mouse.set_visible(False)
+            self.mouse_hidden = True
+            print("🔸 鼠标已隐藏（游戏进行中）")
+    
+    def show_mouse_for_ui(self):
+        """为UI操作显示鼠标"""
+        if self.mouse_hidden:
+            pygame.mouse.set_visible(True)
+            self.mouse_hidden = False
+            print("🔹 鼠标已显示（UI操作）")
+    
+    def cleanup(self):
+        """清理双人系统，恢复鼠标显示"""
+        pygame.mouse.set_visible(True)
+        self.mouse_hidden = False
         
     def _init_players(self):
         """初始化两个角色"""
@@ -447,6 +490,51 @@ class DualPlayerSystem:
             self.mystic_swordsman.world_x = center_x + (dx * scale) / 2
             self.mystic_swordsman.world_y = center_y + (dy * scale) / 2
             
+    def update_mouse_visibility(self):
+        """独立的鼠标显示管理方法"""
+        # 检查所有可能的菜单状态
+        upgrade_menu_active = (hasattr(self.game, 'upgrade_menu') and 
+                              self.game.upgrade_menu and 
+                              self.game.upgrade_menu.is_active)
+        
+        save_menu_active = (hasattr(self.game, 'save_menu') and 
+                           self.game.save_menu and 
+                           self.game.save_menu.is_active)
+        
+        load_menu_active = (hasattr(self.game, 'load_menu') and 
+                           self.game.load_menu and 
+                           self.game.load_menu.is_active)
+        
+        game_result_ui_active = (hasattr(self.game, 'game_result_ui') and 
+                               self.game.game_result_ui and 
+                               self.game.game_result_ui.is_active)
+        
+        in_map_hero_select = getattr(self.game, 'in_map_hero_select', False)
+        
+        # 只有在完全没有UI界面时才是游戏活跃状态
+        is_game_active = (not self.game.paused and 
+                        not self.game.game_over and 
+                        not self.game.in_main_menu and
+                        not upgrade_menu_active and
+                        not save_menu_active and
+                        not load_menu_active and
+                        not game_result_ui_active and
+                        not in_map_hero_select)
+        
+        # 只在状态改变时输出调试信息
+        if self.last_game_active_state != is_game_active:
+            self.last_game_active_state = is_game_active
+            print(f"🔍 游戏状态改变 - 暂停:{self.game.paused}, 游戏结束:{self.game.game_over}, 主菜单:{self.game.in_main_menu}")
+            print(f"🔍 菜单状态 - 升级:{upgrade_menu_active}, 保存:{save_menu_active}, 加载:{load_menu_active}, 结果:{game_result_ui_active}")
+            print(f"🎮 游戏活跃状态: {is_game_active}")
+        
+        if is_game_active:
+            # 游戏正常进行时：隐藏鼠标
+            self.hide_mouse_for_lighting()
+        else:
+            # 游戏暂停或在菜单中：显示鼠标
+            self.show_mouse_for_ui()
+
     def _update_lighting(self):
         """更新光照系统"""
         if self.lighting_manager:
@@ -455,6 +543,64 @@ class DualPlayerSystem:
                 walls = self.game.map_manager.get_collision_tiles()
                 tile_width, tile_height = self.game.map_manager.get_tile_size()
                 self.lighting_manager.set_walls(walls, tile_width)
+            
+            # 只有在游戏活跃时才进行光照控制
+            is_game_active = (not self.game.paused and 
+                            not self.game.game_over and 
+                            not self.game.in_main_menu)
+            
+            if is_game_active:
+                # 检测鼠标移动并更新光照方向
+                current_mouse_pos = pygame.mouse.get_pos()
+                if current_mouse_pos != self.last_mouse_pos:
+                    old_mouse_x, old_mouse_y = self.last_mouse_pos
+                    new_mouse_x, new_mouse_y = current_mouse_pos
+                    
+                    # 计算屏幕中心
+                    screen_center_x = self.screen_width // 2
+                    screen_center_y = self.screen_height // 2
+                    
+                    # 计算旧鼠标位置相对于屏幕中心的角度
+                    old_dx = old_mouse_x - screen_center_x
+                    old_dy = old_mouse_y - screen_center_y
+                    old_angle = math.atan2(old_dy, old_dx)
+                    if old_angle < 0:
+                        old_angle += 2 * math.pi
+                    
+                    # 计算新鼠标位置相对于屏幕中心的角度
+                    new_dx = new_mouse_x - screen_center_x
+                    new_dy = new_mouse_y - screen_center_y
+                    new_angle = math.atan2(new_dy, new_dx)
+                    if new_angle < 0:
+                        new_angle += 2 * math.pi
+                    
+                    # 计算角度变化量
+                    angle_change = new_angle - old_angle
+                    
+                    # 处理角度跨越0/2π边界的情况
+                    if angle_change > math.pi:
+                        angle_change -= 2 * math.pi
+                    elif angle_change < -math.pi:
+                        angle_change += 2 * math.pi
+                    
+                    # 应用角度变化到光照方向
+                    self.lighting_direction += angle_change
+                    
+                    # 确保角度在0-2π范围内
+                    if self.lighting_direction < 0:
+                        self.lighting_direction += 2 * math.pi
+                    elif self.lighting_direction >= 2 * math.pi:
+                        self.lighting_direction -= 2 * math.pi
+                    
+                    # 将鼠标位置强制设置到光照方向的中心
+                    # 计算距离屏幕中心一定距离的位置（比如200像素）
+                    mouse_distance = 200
+                    target_mouse_x = screen_center_x + int(mouse_distance * math.cos(self.lighting_direction))
+                    target_mouse_y = screen_center_y + int(mouse_distance * math.sin(self.lighting_direction))
+                    
+                    # 强制设置鼠标位置
+                    pygame.mouse.set_pos(target_mouse_x, target_mouse_y)
+                    self.last_mouse_pos = (target_mouse_x, target_mouse_y)
             
     def render(self, screen, camera_x, camera_y):
         """渲染双角色系统"""
@@ -487,10 +633,8 @@ class DualPlayerSystem:
         # 渲染神秘剑士头上的子弹射击次数显示
         self.render_bullet_shots_display(screen, camera_x, camera_y)
         
-        # 渲染光照效果（基于忍者蛙的位置，方向由忍者蛙指向鼠标）
+        # 渲染光照效果（基于忍者蛙的位置，使用固定的光照方向）
         if self.lighting_manager:
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-            
             # 计算忍者蛙在屏幕上的位置
             ninja_screen_x = self.ninja_frog.world_x - camera_x + screen.get_width() // 2
             ninja_screen_y = self.ninja_frog.world_y - camera_y + screen.get_height() // 2
@@ -508,13 +652,12 @@ class DualPlayerSystem:
                 
                 additional_lights.append((mystic_screen_x, mystic_screen_y, intensity, radius))
             
-            # 渲染光照（包括忍者蛙的主光照和神秘剑士的临时光源）
-            self.lighting_manager.render(
+            # 使用固定的光照方向渲染光照（不受摄像机移动影响）
+            self.lighting_manager.render_with_independent_direction(
                 screen, 
                 ninja_screen_x,  # 光源中心位置（忍者蛙）
                 ninja_screen_y, 
-                mouse_x,  # 鼠标位置
-                mouse_y, 
+                self.lighting_direction,  # 使用保存的光照方向
                 camera_x, 
                 camera_y,
                 additional_lights  # 额外光源

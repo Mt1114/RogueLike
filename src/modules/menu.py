@@ -81,7 +81,7 @@ class Menu:
 class PauseMenu(Menu):
     def __init__(self, screen):
         super().__init__(screen)
-        self.options = ["继续游戏", "保存游戏", "重新开始", "返回主菜单", "退出游戏"]
+        self.options = ["继续游戏", "重新开始", "返回主菜单", "退出游戏"]
         self.selected_index = 0
         self.option_rects = []  # 存储选项的矩形区域
         

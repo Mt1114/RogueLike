@@ -127,7 +127,7 @@ class Game:
         
         # 鼠标光标相关
         self.light_cursor = None
-        self._load_light_cursor()
+        # self._load_light_cursor()
         
         # 小地图
         self.minimap = None
@@ -1207,6 +1207,10 @@ class Game:
                 self.game_result_ui.update(dt)
                 return
             
+        # 更新双人系统的鼠标显示状态（无论是否暂停都要更新）
+        if self.dual_player_system:
+            self.dual_player_system.update_mouse_visibility()
+        
         # 如果暂停或者正在选择升级，不更新游戏状态
         if self.paused or self.upgrade_menu.is_active or self.save_menu.is_active:
             return

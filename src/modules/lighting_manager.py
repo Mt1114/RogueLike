@@ -173,7 +173,7 @@ class LightingManager:
         # 将最终遮罩渲染到屏幕
         screen.blit(final_overlay, (0, 0))
         
-    def render_with_independent_direction(self, screen, player_x, player_y, absolute_direction, camera_x=0, camera_y=0):
+    def render_with_independent_direction(self, screen, player_x, player_y, absolute_direction, camera_x=0, camera_y=0, additional_lights=None):
         """
         渲染光照效果（使用独立方向）
         
@@ -184,6 +184,7 @@ class LightingManager:
             absolute_direction: 绝对方向角度（弧度），独立于角色位置
             camera_x: 相机X偏移
             camera_y: 相机Y偏移
+            additional_lights: 额外光源列表，每个元素为 (x, y, intensity, radius)
         """
         # 更新相机和屏幕信息
         self.camera_x = camera_x
@@ -203,8 +204,21 @@ class LightingManager:
         # 更新视野系统（使用独立方向）
         self.vision_system.update_with_independent_direction(screen_player_x, screen_player_y, absolute_direction)
         
-        # 渲染视野系统（这会创建光照效果）
-        self.vision_system.render(screen, self.dark_overlay.get_overlay())
+        # 重新创建黑暗遮罩，确保每次渲染都是干净的
+        self.dark_overlay._create_overlay()
+        
+        # 创建最终的黑暗遮罩
+        final_overlay = self.dark_overlay.get_overlay().copy()
+        
+        # 渲染主视野系统（忍者蛙的光照）到最终遮罩
+        self._render_main_vision(final_overlay)
+        
+        # 渲染额外光源（神秘剑士的光源）到最终遮罩
+        if additional_lights:
+            self._render_additional_lights(final_overlay, additional_lights)
+        
+        # 将最终遮罩渲染到屏幕
+        screen.blit(final_overlay, (0, 0))
 
     def set_light_config(
         self,

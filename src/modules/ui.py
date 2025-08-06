@@ -48,6 +48,17 @@ class UI:
             pygame.draw.circle(self.teleport_icon, (0, 255, 255), (36, 32), 30)  # 青色圆圈
             pygame.draw.circle(self.teleport_icon, (255, 255, 255), (36, 32), 15)  # 白色内圈
         
+        # 加载心形血量图标
+        try:
+            self.heart_icon = resource_manager.load_image('heart_icon', 'images/ui/heart_icon.png')
+            self.heart_icon = pygame.transform.scale(self.heart_icon, (32, 32))  # 调整心形图标大小
+            print("心形血量图标加载成功")
+        except Exception as e:
+            print(f"心形血量图标加载失败: {e}")
+            # 创建一个默认的心形图标
+            self.heart_icon = pygame.Surface((32, 32), pygame.SRCALPHA)
+            pygame.draw.circle(self.heart_icon, (255, 0, 0), (16, 16), 15)  # 红色圆圈作为替代
+        
         # 加载武器选择图标
         self.knife_black = resource_manager.load_image('knife_black', 'images/ui/knife_black.png')
         self.knife_white = resource_manager.load_image('knife_white', 'images/ui/knife_white.png')
@@ -252,11 +263,11 @@ class UI:
         screen_width = self.screen.get_width()
         screen_height = self.screen.get_height()
         
-        # 计算血条位置
-        health_bar_y = screen_height - self.bar_height - 100
+        # 计算心形血条位置
+        heart_y = screen_height - 100 - 40  # 与_render_heart_health中的位置保持一致
         
-        # 武器选择UI位置：血条正上方160像素
-        weapon_ui_y = health_bar_y - 160
+        # 武器选择UI位置：心形血条正上方160像素
+        weapon_ui_y = heart_y - 160
         
         # 计算两个图标的位置（居中靠左分布）
         # 计算屏幕中心位置
@@ -492,43 +503,8 @@ class UI:
         # 渲染主文本
         self.screen.blit(text, text_rect)
         
-        # 绘制生命槽背景（底部，向上移动100像素）
-        health_bar_y = screen_height - self.bar_height - 100
-        pygame.draw.rect(self.screen, self.health_back_color,
-                        (0, health_bar_y, screen_width, self.bar_height))
-        
-        # 计算血量百分比
-        health_ratio = primary_player.health / primary_player.max_health
-        
-        # 根据血量百分比选择颜色
-        if health_ratio > 0.8:
-            health_color = (0, 255, 0)  # 绿色 (>80%)
-        elif health_ratio > 0.2:
-            health_color = (255, 255, 0)  # 黄色 (>20%)
-        else:
-            health_color = (255, 0, 0)  # 红色 (<20%)
-        
-        # 绘制生命槽
-        health_width = health_ratio * screen_width
-        pygame.draw.rect(self.screen, health_color,
-                        (0, health_bar_y, health_width, self.bar_height))
-        
-        # 显示血量数值（在血条中央）
-        health_text = f"{int(primary_player.health)}/{int(primary_player.max_health)}"
-        health_text_surface = self.font.render(health_text, True, (255, 255, 255))  # 白色文字
-        health_text_rect = health_text_surface.get_rect()
-        health_text_rect.centerx = screen_width // 2
-        health_text_rect.centery = health_bar_y + self.bar_height // 2
-        
-        # 渲染文字阴影（略微偏移）
-        shadow_surface = self.font.render(health_text, True, (0, 0, 0))
-        shadow_rect = shadow_surface.get_rect()
-        shadow_rect.centerx = screen_width // 2 + 2
-        shadow_rect.centery = health_bar_y + self.bar_height // 2 + 2
-        self.screen.blit(shadow_surface, shadow_rect)
-        
-        # 渲染主文字
-        self.screen.blit(health_text_surface, health_text_rect)
+        # 渲染心形血量显示
+        self._render_heart_health(primary_player, screen_width, screen_height)
         
         # 显示弹药数量（在右上角）
         self._render_ammo_info(weapon_player)
@@ -555,10 +531,13 @@ class UI:
         total_icons_width = 3 * (self.icon_size + self.icon_spacing) - self.icon_spacing
         start_x = (screen_width - total_icons_width) // 2
         
-        # 武器图标位于上排（相对于新的血条位置调整）
-        weapon_y = health_bar_y - (self.icon_size + self.icon_spacing) * 2 - 5
-        # 被动图标位于下排（相对于新的血条位置调整）
-        passive_y = health_bar_y - self.icon_size - 5
+        # 计算心形血条位置作为参考
+        heart_y = screen_height - 100 - 40  # 与_render_heart_health中的位置保持一致
+        
+        # 武器图标位于上排（相对于心形血条位置调整）
+        weapon_y = heart_y - (self.icon_size + self.icon_spacing) * 2 - 5
+        # 被动图标位于下排（相对于心形血条位置调整）
+        passive_y = heart_y - self.icon_size - 5
         
         # 绘制3个武器图标框（上排）
         for i in range(3):
@@ -686,4 +665,117 @@ class UI:
             
             # 渲染电量图标和文本
             self.screen.blit(self.energy_icon, energy_icon_rect)
-            self.screen.blit(energy_text, energy_rect) 
+            self.screen.blit(energy_text, energy_rect)
+    
+    def _render_heart_health(self, player, screen_width, screen_height):
+        """渲染心形血量显示
+        
+        Args:
+            player: 玩家实例
+            screen_width: 屏幕宽度
+            screen_height: 屏幕高度
+        """
+        # 计算心形图标的显示位置（底部上方100像素）
+        heart_y = screen_height - 100 - 40  # 40是心形图标的高度
+        
+        # 计算需要显示的心形数量
+        max_hearts = int(player.max_health // 10)  # 每10点血量1个心形
+        current_health = player.health
+        
+        # 心形图标尺寸和间距
+        heart_size = 32
+        heart_spacing = 5
+        total_width = max_hearts * heart_size + (max_hearts - 1) * heart_spacing
+        start_x = (screen_width - total_width) // 2  # 居中显示
+        
+        # 渲染每个心形
+        for i in range(max_hearts):
+            heart_x = start_x + i * (heart_size + heart_spacing)
+            
+            # 计算这个心形对应的血量范围
+            heart_min_health = i * 10
+            heart_max_health = (i + 1) * 10
+            
+            # 创建心形图标副本用于处理
+            heart_surface = self.heart_icon.copy()
+            
+            if current_health <= heart_min_health:
+                # 完全没血，显示灰色心形
+                heart_surface.fill((50, 50, 50), special_flags=pygame.BLEND_RGB_MULT)
+            elif current_health >= heart_max_health:
+                # 满血，显示红色心形（保持原色）
+                pass
+            else:
+                # 部分血量，按百分比置灰
+                remaining_health = current_health - heart_min_health
+                health_percentage = remaining_health / 10.0
+                
+                # 创建遮罩，从右到左置灰
+                mask_width = int(heart_size * (1.0 - health_percentage))
+                if mask_width > 0:
+                    # 创建灰色遮罩
+                    gray_overlay = pygame.Surface((mask_width, heart_size), pygame.SRCALPHA)
+                    gray_overlay.fill((40, 40, 40, 255))  # 更深的灰色，完全不透明
+                    
+                    # 应用遮罩到心形的右侧
+                    heart_surface.blit(gray_overlay, (heart_size - mask_width, 0), special_flags=pygame.BLEND_RGB_MULT)
+            
+            # 渲染心形图标
+            self.screen.blit(heart_surface, (heart_x, heart_y))
+        
+        # 显示血量数值（在心形下方）
+        health_text = f"{int(current_health)}/{int(player.max_health)}"
+        health_text_surface = self.font.render(health_text, True, (255, 255, 255))
+        health_text_rect = health_text_surface.get_rect()
+        health_text_rect.centerx = screen_width // 2
+        health_text_rect.top = heart_y + heart_size + 5
+        
+        # 渲染文字阴影
+        shadow_surface = self.font.render(health_text, True, (0, 0, 0))
+        shadow_rect = shadow_surface.get_rect()
+        shadow_rect.centerx = screen_width // 2 + 2
+        shadow_rect.top = heart_y + heart_size + 5 + 2
+        self.screen.blit(shadow_surface, shadow_rect)
+        
+        # 渲染主文字
+        self.screen.blit(health_text_surface, health_text_rect)
+        
+        # 在左边显示血量比值
+        health_ratio_text = f"血量：{int(current_health)}/{int(player.max_health)}"
+        
+        # 根据血量百分比选择颜色
+        health_percentage = current_health / player.max_health
+        if health_percentage > 0.8:
+            ratio_color = (0, 255, 0)  # 绿色 (>80%)
+        elif health_percentage > 0.5:
+            ratio_color = (255, 255, 0)  # 黄色 (>50%)
+        elif health_percentage > 0.2:
+            ratio_color = (255, 165, 0)  # 橙色 (>20%)
+        else:
+            ratio_color = (255, 0, 0)  # 红色 (<=20%)
+        
+        # 渲染血量比值文本
+        ratio_surface = self.font.render(health_ratio_text, True, ratio_color)
+        ratio_rect = ratio_surface.get_rect()
+        
+        # 位置：左侧，与心形垂直居中对齐
+        ratio_rect.left = 20  # 距离左边缘20像素
+        ratio_rect.centery = heart_y + heart_size // 2  # 与心形中心对齐
+        
+        # 添加背景
+        bg_rect = pygame.Rect(ratio_rect.left - 5, ratio_rect.top - 2, 
+                             ratio_rect.width + 10, ratio_rect.height + 4)
+        bg_surface = pygame.Surface((bg_rect.width, bg_rect.height))
+        bg_surface.set_alpha(150)
+        bg_surface.fill((0, 0, 0))
+        self.screen.blit(bg_surface, bg_rect)
+        
+        # 渲染血量比值文字阴影
+        ratio_shadow_surface = self.font.render(health_ratio_text, True, (0, 0, 0))
+        ratio_shadow_rect = ratio_shadow_surface.get_rect()
+        ratio_shadow_rect.left = ratio_rect.left + 2
+        ratio_shadow_rect.top = ratio_rect.top + 2
+        self.screen.blit(ratio_shadow_surface, ratio_shadow_rect)
+        
+        # 渲染血量比值主文字
+        self.screen.blit(ratio_surface, ratio_rect) 
