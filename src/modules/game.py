@@ -109,6 +109,10 @@ class Game:
         self.kill_num = 0 # 击杀数
         self.level = 1
         
+        # 全局关卡系统
+        self.global_level = 1  # 全局关卡（每过一关+1）
+        self.level_strength_multiplier = 1.0  # 关卡强度倍数（每关+30%）
+        
         # 地图状态
         self.current_map = None  # 当前地图名称
         
@@ -118,6 +122,9 @@ class Game:
         
         # 调试模式
         self.debug_mode = False
+        
+        # 性能优化选项
+        self.show_fps_display = False  # 是否显示FPS，默认关闭以提高性能
         
         # 帧数跟踪
         self.fps = 0
@@ -319,6 +326,7 @@ class Game:
         self.enemy_manager = EnemyManager()
         self.enemy_manager.game = self  # 设置敌人管理器对游戏对象的引用
         self.enemy_manager.set_difficulty("normal")  # 设置初始难度
+        self.enemy_manager.set_global_level(self.global_level)  # 设置全局关卡
         # 设置波次UI回调函数
         self.enemy_manager.on_round_start = self._on_round_start
         # 重置soul生成标志
@@ -516,11 +524,17 @@ class Game:
             self.player.movement.velocity = pygame.math.Vector2(0, 0)
             print("单人模式移动状态已重置")
         
+        # 增加全局关卡
+        self.global_level += 1
+        print(f"进入第 {self.global_level} 关，怪物强度提升30%")
+        
         # 重置敌人管理器
         if self.enemy_manager:
             self.enemy_manager.enemies.clear()
             self.enemy_manager.current_round = 0
             self.enemy_manager.game_time = 0
+            # 设置新的全局关卡
+            self.enemy_manager.set_global_level(self.global_level)
             # 重置soul生成标志
             self.enemy_manager.reset_soul_spawn_flag()
     
@@ -768,10 +782,12 @@ class Game:
             self.game_time = game_data.get('game_time', 0)
             self.kill_num = game_data.get('kill_num', 0)
             self.level = game_data.get('level', 1)
+            self.global_level = game_data.get('global_level', 1)  # 加载全局关卡
             
             # 设置敌人管理器的难度和等级
             self.enemy_manager.difficulty_level = self.level
             self.enemy_manager.set_difficulty(game_data.get('difficulty', 'normal'))
+            self.enemy_manager.set_global_level(self.global_level)  # 设置全局关卡
             
             # 恢复敌人状态
             enemies_data = save_data.get('enemies_data', [])
@@ -815,18 +831,20 @@ class Game:
         if self.showing_main_menu_animation:
             if event.type == pygame.QUIT:
                 self.running = False
+                return True
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE or event.key == pygame.K_ESCAPE:
                     # 允许跳过动画
                     self.showing_main_menu_animation = False
                     self.main_menu_animation.is_playing = False
-            return
+                    return True
+            return False
             
         # 如果在地图和英雄选择界面
         if self.in_map_hero_select:
             result = self.map_hero_select_menu.handle_event(event)
             # 不需要处理返回值，因为已经在回调函数中处理了
-            return
+            return True
             
         # 如果在主菜单中
         if self.in_main_menu:
@@ -852,7 +870,7 @@ class Game:
                 self.main_menu.options_menu.show()
             elif action == "quit":
                 self.running = False  # 设置running为False以退出游戏
-            return
+            return True
             
         # 如果在暂停菜单中且读取菜单激活
         if self.load_menu.is_active:
@@ -865,7 +883,7 @@ class Game:
                     self.paused = False  # 取消暂停状态
                 else:
                     print("加载存档失败")
-            return
+            return True
             
         # 处理保存菜单事件
         if self.save_menu.is_active:
@@ -877,7 +895,7 @@ class Game:
                 self.paused = False
             elif action == "back":
                 self.save_menu.hide()
-            return
+            return True
             
         # 处理游戏结束菜单事件（只在没有游戏结果UI时处理）
         if self.game_over and not self.game_result_ui.is_active:
@@ -894,7 +912,7 @@ class Game:
                 pygame.mouse.set_visible(True)
             elif action == "exit":
                 self.running = False  # 退出游戏
-            return
+            return True
             
             
         # 处理暂停菜单事件
@@ -916,7 +934,7 @@ class Game:
                 pygame.mouse.set_visible(True)
             elif action == "exit":  # 退出游戏
                 self.running = False  # 直接退出游戏
-            return
+            return True
                
         # 如果正在选择升级
         if self.upgrade_menu.is_active:
@@ -1017,6 +1035,10 @@ class Game:
                     self.enemy_manager.debug_vision = not getattr(self.enemy_manager, 'debug_vision', False)
                     
                 return True
+            elif event.key == pygame.K_F12:
+                # 切换FPS显示
+                self.show_fps_display = not self.show_fps_display
+                return True
             
         # 更新鼠标位置（用于视野系统）
         if event.type == pygame.MOUSEMOTION:
@@ -1027,7 +1049,8 @@ class Game:
             
         # 处理双角色系统输入
         if self.dual_player_system:
-            self.dual_player_system.handle_event(event)
+            if self.dual_player_system.handle_event(event):
+                return True  # 事件已被双角色系统处理
         elif self.player:  # 兼容单角色模式
             self.player.handle_event(event)
             
@@ -1132,10 +1155,13 @@ class Game:
             self.fps_counter = 0
             self.fps_timer = 0
         
-        # 更新UI的FPS显示
-        if self.ui:
+        # 更新UI的FPS显示（仅在启用时）
+        if self.ui and self.show_fps_display:
             self.ui.update_fps(dt)
             self.ui.set_fps(self.fps)
+            self.ui.set_fps_display(True)  # 启用UI的FPS显示
+        elif self.ui:
+            self.ui.set_fps_display(False)  # 禁用UI的FPS显示
         
         # 保持游戏状态的更新
         if self.in_main_menu:

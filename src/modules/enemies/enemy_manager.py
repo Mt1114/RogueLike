@@ -13,6 +13,10 @@ class EnemyManager:
         self.difficulty = "normal"  # 默认难度为normal
         self.difficulty_level = 1   # 难度等级，随游戏时间增长
         self.game_time = 0  # 游戏进行时间
+        
+        # 关卡强度系统
+        self.global_level = 1  # 全局关卡
+        self.level_strength_multiplier = 1.0  # 关卡强度倍数
         self.bat_spawn_timer = 0  # 蝙蝠生成计时器
         
         # 波次系统
@@ -92,6 +96,16 @@ class EnemyManager:
             # 应用攻击力加成
             if hasattr(enemy, 'damage'):
                 enemy.damage = int(enemy.damage * self.damage_multiplier)
+        
+        # 应用关卡强度倍数
+        if enemy:
+            # 应用关卡强度倍数到生命值
+            enemy.health = int(enemy.health * self.level_strength_multiplier)
+            enemy.max_health = int(enemy.max_health * self.level_strength_multiplier)
+            
+            # 应用关卡强度倍数到攻击力
+            if hasattr(enemy, 'damage'):
+                enemy.damage = int(enemy.damage * self.level_strength_multiplier)
             
         # 如果指定了生命值，覆盖配置的生命值
         if enemy and health is not None:
@@ -183,7 +197,7 @@ class EnemyManager:
         
         # 第一波：0:00-0:30，2.5秒生成一个，四个点位总共24个
         if game_time_minutes >= 0 and game_time_minutes < 0.5 and self.current_round == 0:
-            self._start_round(1, "第1波", 2.5, 1.0, 1.0, 24)
+            self._start_round(1, "第1波", 2.5, 1.0, 1.0, 1200)
             
         # 第一波结束，进入休息期：0:30-1:00（缩短休息期）
         elif game_time_minutes >= 0.5 and game_time_minutes < 1.0 and self.current_round == 1:
@@ -459,6 +473,21 @@ class EnemyManager:
             difficulty (str): 难度级别 ('easy', 'normal', 'hard', 'nightmare')
         """
         self.difficulty = difficulty
+        
+    def set_global_level(self, global_level):
+        """设置全局关卡
+        
+        Args:
+            global_level (int): 全局关卡数
+        """
+        self.global_level = global_level
+        # 计算关卡强度倍数：每关增加30%
+        self.level_strength_multiplier = 1.0 + (global_level - 1) * 0.3
+        print(f"设置全局关卡: {global_level}, 强度倍数: {self.level_strength_multiplier:.2f}")
+        
+    def get_level_strength_multiplier(self):
+        """获取当前关卡强度倍数"""
+        return self.level_strength_multiplier
         
     def reset_soul_spawn_flag(self):
         """重置soul生成标志，用于重新开始游戏时"""

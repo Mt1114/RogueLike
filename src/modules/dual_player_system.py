@@ -167,64 +167,71 @@ class DualPlayerSystem:
         
     def handle_event(self, event):
         """处理输入事件"""
+        # 确保每个事件只被处理一次，避免事件堆积
         if event.type == pygame.KEYDOWN:
             if event.key in [pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d]:
                 # 忍者蛙的移动控制
                 self.ninja_frog.handle_event(event)
+                return True  # 标记事件已处理
             elif event.key == pygame.K_SPACE:
                 # 忍者蛙的穿墙技能
                 if self.ninja_frog.hero_type == "ninja_frog" and not self.ninja_frog.phase_through_walls and self.ninja_frog.phase_cooldown_timer <= 0:
                     self.ninja_frog.activate_phase_through_walls()
+                return True  # 标记事件已处理
             elif event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
                 # 神秘剑士的移动控制（方向键）
                 self._handle_mystic_movement(event)
+                return True  # 标记事件已处理
             elif event.key in [pygame.K_KP5, pygame.K_KP4, pygame.K_KP6, pygame.K_KP8]:
                 # 神秘剑士的攻击控制（数字键盘）
                 self._handle_mystic_attack(event)
+                return True  # 标记事件已处理
             elif event.key == pygame.K_u:  # U键远程攻击
                 # 神秘剑士的远程攻击
                 self.mystic_swordsman.weapon_manager.manual_attack(self.screen)
                 # 激活神秘剑士的临时光圈
                 self.mystic_flashlight_active = True
                 self.mystic_flashlight_timer = self.mystic_flashlight_duration
+                return True  # 标记事件已处理
             elif event.key == pygame.K_k:  # K键近战攻击
                 # 神秘剑士的近战攻击
                 self.mystic_swordsman.weapon_manager.melee_attack(self.screen)
                 # 激活神秘剑士的临时光圈
                 self.mystic_flashlight_active = True
                 self.mystic_flashlight_timer = self.mystic_flashlight_duration
-            # elif event.key == pygame.K_KP5:  # 小键盘5键大招
-            #     # 神秘剑士的大招
-            #     
-            #     if self.mystic_swordsman.hero_type == "role2" and not self.mystic_swordsman.ultimate_active:
-            #         
-            #         self.mystic_swordsman.activate_ultimate()
-            #     else:
-            #         
+                return True  # 标记事件已处理
             elif event.key == pygame.K_KP0:  # 小键盘0键使用传送道具
                 # 使用传送道具
                 self.use_teleport_item()
+                return True  # 标记事件已处理
             elif event.key == pygame.K_KP1:  # 小键盘1键武器切换（仅对神秘剑士）
                 # 神秘剑士的武器切换
                 if self.mystic_swordsman.hero_type == "role2":
                     self.mystic_swordsman.toggle_weapon_mode()
+                return True  # 标记事件已处理
                 
         elif event.type == pygame.KEYUP:
             if event.key in [pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d]:
                 # 忍者蛙的移动控制
                 self.ninja_frog.handle_event(event)
+                return True  # 标记事件已处理
             elif event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
                 # 神秘剑士的移动控制（方向键）
                 self._handle_mystic_movement(event)
+                return True  # 标记事件已处理
                 
         # 鼠标事件（忍者蛙的光源控制）
         elif event.type == pygame.MOUSEMOTION:
             # 忍者蛙的光源方向跟随鼠标
-            pass  # 在update中处理
+            return True  # 标记事件已处理
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # 鼠标左键
                 # 切换光照类型
                 self.switch_light_mode()
+                return True  # 标记事件已处理
+        
+        # 如果事件没有被处理，返回False
+        return False
                 
     def _handle_mystic_movement(self, event):
         """处理神秘剑士的移动控制"""

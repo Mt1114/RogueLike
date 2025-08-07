@@ -53,7 +53,7 @@ class VisionSystem:
         self._cache_radius = None
         self._cache_angle = None
         self._last_update_time = 0
-        self._update_interval = 0.033  # 30 FPS = 33ms，限制更新频率
+        self._update_interval = 0.008  # 60 FPS = 16ms，提高更新频率
         
         # 性能监控
         self._performance_stats = {

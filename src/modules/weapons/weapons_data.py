@@ -88,7 +88,7 @@ WEAPONS_CONFIG = {
             {
                 'level': 1,
                 'effects': {
-                    WeaponStatType.DAMAGE: randint(50,80)*(1+randint(0,100)//70),
+                    WeaponStatType.DAMAGE: randint(30,80),
                     WeaponStatType.ATTACK_SPEED: 1.0,  # 攻击间隔1.0秒
                     WeaponStatType.PROJECTILE_SPEED: 600,
                     WeaponStatType.PENETRATION: 1,
@@ -101,7 +101,7 @@ WEAPONS_CONFIG = {
             {
                 'level': 2,
                 'effects': {
-                    WeaponStatType.DAMAGE: randint(60,90)*(1+randint(0,100)//70),
+                    WeaponStatType.DAMAGE: randint(60,90),
                     WeaponStatType.ATTACK_SPEED: 1.5,  # 攻击间隔0.67秒
                     WeaponStatType.PROJECTILE_SPEED: 700,
                     WeaponStatType.PENETRATION: 2,
@@ -114,7 +114,7 @@ WEAPONS_CONFIG = {
             {
                 'level': 3,
                 'effects': {
-                    WeaponStatType.DAMAGE: 90*(1+randint(0,100)//70),
+                    WeaponStatType.DAMAGE: 90,
                     WeaponStatType.ATTACK_SPEED: 2.0,  # 攻击间隔0.5秒（最低限制）
                     WeaponStatType.PROJECTILE_SPEED: 800,
                     WeaponStatType.PENETRATION: 3,

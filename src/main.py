@@ -37,9 +37,11 @@ def main():
     # 开场动画循环
     print("播放开场动画...")
     while intro_animation.is_playing:
-        dt = clock.tick(60) / 1000.0  # 60 FPS for smooth animation
+        dt = clock.tick(120) / 1000.0  # 120 FPS for smooth animation
         
-        for event in pygame.event.get():
+        # 完全清空事件队列，确保没有事件堆积
+        events = pygame.event.get()
+        for event in events:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
@@ -47,6 +49,10 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE or event.key == pygame.K_ESCAPE:
                     intro_animation.is_playing = False
+        
+        # 确保所有事件都被处理完毕
+        if events:
+            pygame.event.clear()  # 额外清空事件队列
         
         intro_animation.update(dt)
         intro_animation.render()
@@ -59,13 +65,19 @@ def main():
     
     # 主游戏循环
     while game.running:
-        dt = clock.tick(30) / 1000.0  # 转换为秒
+        dt = clock.tick(120) / 1000.0  # 转换为秒
         
-        for event in pygame.event.get():
+        # 完全清空事件队列，确保没有事件堆积
+        events = pygame.event.get()
+        for event in events:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             game.handle_event(event)
+        
+        # 确保所有事件都被处理完毕
+        if events:
+            pygame.event.clear()  # 额外清空事件队列
         
         game.update(dt)
         game.render()

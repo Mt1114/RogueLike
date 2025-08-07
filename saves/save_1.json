@@ -2,7 +2,7 @@
   "timestamp": "2025-08-07 14:29:20",
   "player_data": {
     "health": 45,
-    "max_health": 100,
+    "max_health": 10000,
     "level": 1,
     "experience": 0,
     "coins": 0,

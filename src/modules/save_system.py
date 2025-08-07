@@ -58,7 +58,8 @@ class SaveSystem:
             'game_data': {
                 'kill_num': game_state.kill_num,
                 'game_time': game_state.game_time,
-                'level': game_state.level
+                'level': game_state.level,
+                'global_level': game_state.global_level  # 保存全局关卡
             },
             'enemies_data': [
                 {

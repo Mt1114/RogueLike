@@ -137,7 +137,7 @@ class GameEngine:
                 self.handle_event(event)
                 
             # 计算帧时间
-            dt = self.clock.tick(60) / 1000.0
+            dt = self.clock.tick(120) / 1000.0  # 提升到120 FPS以提高响应性
             
             # 更新游戏
             self.update(dt)
