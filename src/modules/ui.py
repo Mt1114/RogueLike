@@ -81,7 +81,7 @@ class UI:
         # FPS显示相关
         self.fps = 0
         self.fps_font = pygame.font.SysFont('simHei', 20)  # 较小的字体用于FPS显示
-        self.show_fps_display = True  # FPS显示开关，默认关闭
+        self.show_fps_display = True  # FPS显示开关，默认开启
         
     def set_fps(self, fps):
         """设置FPS值"""

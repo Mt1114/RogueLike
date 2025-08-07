@@ -402,8 +402,9 @@ class EnemyManager:
                     enemy.render(screen, screen_x, screen_y, show_health_bar=True)
                 
                 # 显示碰撞圈（除了soul类型）
-                if enemy.type != 'soul':
-                    self._render_collision_circle(screen, enemy, screen_x, screen_y)
+                # 注释掉怪物光圈显示
+                # if enemy.type != 'soul':
+                #     self._render_collision_circle(screen, enemy, screen_x, screen_y)
         
         # 渲染敌人子弹
         self._render_enemy_projectiles(screen, camera_x, camera_y, screen_center_x, screen_center_y)

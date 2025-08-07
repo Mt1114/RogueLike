@@ -43,7 +43,7 @@ class DualPlayerSystem:
         self.light_mode = 1  # 当前光照类型：1-默认，2-战斗，3-探索，4-低能耗
         self.light_modes = {
             1: {"name": "default", "radius": 640, "angle": 60, "circle_radius": 160, "energy_drain": -1},
-            2: {"name": "battle", "radius": 640, "angle": 180, "circle_radius": 160, "energy_drain": -2}, 
+            2: {"name": "battle", "radius": 300, "angle": 360, "circle_radius": 160, "energy_drain": -2}, 
             3: {"name": "explore", "radius": 1000, "angle": 30, "circle_radius": 85, "energy_drain": -2},
             4: {"name": "low_energy", "radius": 80, "angle": 30, "circle_radius": 80, "energy_drain": 10}
         }
