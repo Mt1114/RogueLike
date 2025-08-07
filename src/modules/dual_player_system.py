@@ -83,6 +83,7 @@ class DualPlayerSystem:
         # 鼠标显示状态管理
         self.mouse_hidden = False  # 记录鼠标是否被我们隐藏了
         self.last_game_active_state = None  # 记录上次的游戏活跃状态
+        self.mouse_restriction_disabled = False  # 鼠标限制是否被禁用
     
     def hide_mouse_for_lighting(self):
         """为光照控制隐藏鼠标"""
@@ -102,6 +103,14 @@ class DualPlayerSystem:
         """清理双人系统，恢复鼠标显示"""
         pygame.mouse.set_visible(True)
         self.mouse_hidden = False
+    
+    def disable_mouse_restriction(self):
+        """临时禁用鼠标限制"""
+        self.mouse_restriction_disabled = True
+    
+    def restore_mouse_restriction(self):
+        """恢复鼠标限制"""
+        self.mouse_restriction_disabled = False
         
     def _init_players(self):
         """初始化两个角色"""
@@ -205,29 +214,29 @@ class DualPlayerSystem:
         """处理神秘剑士的移动控制"""
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
-                print("调试 - 神秘剑士上键按下")
+                
                 self.mystic_swordsman.movement.moving['up'] = True
             elif event.key == pygame.K_DOWN:
-                print("调试 - 神秘剑士下键按下")
+                
                 self.mystic_swordsman.movement.moving['down'] = True
             elif event.key == pygame.K_LEFT:
-                print("调试 - 神秘剑士左键按下")
+                
                 self.mystic_swordsman.movement.moving['left'] = True
             elif event.key == pygame.K_RIGHT:
-                print("调试 - 神秘剑士右键按下")
+                
                 self.mystic_swordsman.movement.moving['right'] = True
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_UP:
-                print("调试 - 神秘剑士上键释放")
+                
                 self.mystic_swordsman.movement.moving['up'] = False
             elif event.key == pygame.K_DOWN:
-                print("调试 - 神秘剑士下键释放")
+                
                 self.mystic_swordsman.movement.moving['down'] = False
             elif event.key == pygame.K_LEFT:
-                print("调试 - 神秘剑士左键释放")
+                
                 self.mystic_swordsman.movement.moving['left'] = False
             elif event.key == pygame.K_RIGHT:
-                print("调试 - 神秘剑士右键释放")
+                
                 self.mystic_swordsman.movement.moving['right'] = False
                 
         # 更新移动方向
@@ -235,11 +244,7 @@ class DualPlayerSystem:
         
         # 打印当前移动状态
         moving = self.mystic_swordsman.movement.moving
-        print(f"调试 - 神秘剑士移动状态: 上={moving['up']}, 下={moving['down']}, 左={moving['left']}, 右={moving['right']}")
-        print(f"调试 - 神秘剑士移动方向: ({self.mystic_swordsman.movement.direction.x:.2f}, {self.mystic_swordsman.movement.direction.y:.2f})")
-        print(f"调试 - 神秘剑士朝向: {'右' if self.mystic_swordsman.movement.facing_right else '左'}")
-        print(f"调试 - 神秘剑士速度: {self.mystic_swordsman.movement.speed}")
-        print(f"调试 - 神秘剑士速度向量: ({self.mystic_swordsman.movement.velocity.x:.2f}, {self.mystic_swordsman.movement.velocity.y:.2f})")
+        
             
     def _handle_mystic_attack(self, event):
         """处理神秘剑士的攻击"""
@@ -252,18 +257,18 @@ class DualPlayerSystem:
             attack_direction = None
             if event.key == pygame.K_KP8:  # 上
                 attack_direction = (0, -1)
-                print("神秘剑士向上攻击")
+                
             elif event.key == pygame.K_KP5:  # 下
                 attack_direction = (0, 1)
-                print("神秘剑士向下攻击")
+                
             elif event.key == pygame.K_KP4:  # 左
                 attack_direction = (-1, 0)
-                print("神秘剑士向左攻击")
+                
                 # 更新角色朝向为朝左
                 self.mystic_swordsman.movement.facing_right = False
             elif event.key == pygame.K_KP6:  # 右
                 attack_direction = (1, 0)
-                print("神秘剑士向右攻击")
+                
                 # 更新角色朝向为朝右
                 self.mystic_swordsman.movement.facing_right = True
                 
@@ -287,7 +292,7 @@ class DualPlayerSystem:
                     # 远程模式：使用子弹攻击
                     if bullet_weapon and hasattr(bullet_weapon, '_perform_attack'):
                         if bullet_weapon.ammo >= 5:  # 需要5发子弹
-                            print(f"远程模式 - 执行子弹攻击，方向: {attack_direction}")
+                            
                             # 重置攻击计时器以允许立即攻击
                             bullet_weapon.attack_timer = bullet_weapon.attack_interval
                             bullet_weapon._perform_attack(attack_direction[0], attack_direction[1])
@@ -295,14 +300,11 @@ class DualPlayerSystem:
                             # 激活神秘剑士的临时光圈
                             self.mystic_flashlight_active = True
                             self.mystic_flashlight_timer = self.mystic_flashlight_duration
-                        else:
-                            print("远程模式 - 子弹不足，无法攻击")
-                    else:
-                        print("远程模式 - 没有子弹武器")
+                        
                 else:
                     # 近战模式：使用近战攻击
                     if knife_weapon and hasattr(knife_weapon, '_perform_melee_attack'):
-                        print(f"近战模式 - 执行近战攻击，方向: {attack_direction}")
+                        
                         # 重置攻击计时器以允许立即攻击
                         knife_weapon.attack_timer = knife_weapon.attack_interval
                         knife_weapon._perform_melee_attack(attack_direction[0], attack_direction[1])
@@ -310,8 +312,7 @@ class DualPlayerSystem:
                         # 激活神秘剑士的临时光圈（近战攻击也触发）
                         self.mystic_flashlight_active = True
                         self.mystic_flashlight_timer = self.mystic_flashlight_duration
-                    else:
-                        print("近战模式 - 没有近战武器")
+                    
                 
     def update(self, dt):
         """更新双角色系统"""
@@ -354,7 +355,7 @@ class DualPlayerSystem:
         # 应用光照模式
         self._apply_light_mode()
         
-        print(f"切换到{current_mode['name']}：视野{current_mode['radius']}像素，角度{current_mode['angle']}度，光圈{current_mode['circle_radius']}像素")
+        
         
     def use_teleport_item(self):
         """使用传送道具"""
@@ -524,9 +525,7 @@ class DualPlayerSystem:
         # 只在状态改变时输出调试信息
         if self.last_game_active_state != is_game_active:
             self.last_game_active_state = is_game_active
-            print(f"🔍 游戏状态改变 - 暂停:{self.game.paused}, 游戏结束:{self.game.game_over}, 主菜单:{self.game.in_main_menu}")
-            print(f"🔍 菜单状态 - 升级:{upgrade_menu_active}, 保存:{save_menu_active}, 加载:{load_menu_active}, 结果:{game_result_ui_active}")
-            print(f"🎮 游戏活跃状态: {is_game_active}")
+            
         
         if is_game_active:
             # 游戏正常进行时：隐藏鼠标
@@ -592,15 +591,20 @@ class DualPlayerSystem:
                     elif self.lighting_direction >= 2 * math.pi:
                         self.lighting_direction -= 2 * math.pi
                     
-                    # 将鼠标位置强制设置到光照方向的中心
-                    # 计算距离屏幕中心一定距离的位置（比如200像素）
-                    mouse_distance = 200
-                    target_mouse_x = screen_center_x + int(mouse_distance * math.cos(self.lighting_direction))
-                    target_mouse_y = screen_center_y + int(mouse_distance * math.sin(self.lighting_direction))
-                    
-                    # 强制设置鼠标位置
-                    pygame.mouse.set_pos(target_mouse_x, target_mouse_y)
-                    self.last_mouse_pos = (target_mouse_x, target_mouse_y)
+                    # 只有在鼠标限制未被禁用时才强制设置鼠标位置
+                    if not self.mouse_restriction_disabled:
+                        # 将鼠标位置强制设置到光照方向的中心
+                        # 计算距离屏幕中心一定距离的位置（比如200像素）
+                        mouse_distance = 200
+                        target_mouse_x = screen_center_x + int(mouse_distance * math.cos(self.lighting_direction))
+                        target_mouse_y = screen_center_y + int(mouse_distance * math.sin(self.lighting_direction))
+                        
+                        # 强制设置鼠标位置
+                        pygame.mouse.set_pos(target_mouse_x, target_mouse_y)
+                        self.last_mouse_pos = (target_mouse_x, target_mouse_y)
+                    else:
+                        # 如果鼠标限制被禁用，只更新last_mouse_pos为当前鼠标位置
+                        self.last_mouse_pos = current_mouse_pos
             
     def render(self, screen, camera_x, camera_y):
         """渲染双角色系统"""
@@ -1036,7 +1040,6 @@ class DualPlayerSystem:
             pygame.draw.circle(bullet_icon, (255, 255, 0, 200), (icon_size // 2, icon_size // 2), icon_size // 2)
         
         # 添加调试信息
-        print(f"调试 - 子弹武器弹药: {bullet_weapon.shots_before_reload}, 剩余射击次数: {remaining_shots}, 装弹状态: {bullet_weapon.shots_fired}")
         
         # 渲染6个子弹图标
         for i in range(shots_per_magazine):

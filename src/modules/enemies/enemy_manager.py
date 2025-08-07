@@ -90,6 +90,13 @@ class EnemyManager:
                 enemy.game = self.game
             self.enemies.append(enemy)
             
+            # 打印调试信息
+            print(f"🎯 生成敌人 - {enemy_type} (难度等级{self.difficulty_level}):")
+            print(f"   位置: ({x}, {y})")
+            print(f"   生命值: {enemy.health}/{enemy.max_health}")
+            print(f"   伤害值: {enemy.damage}")
+            print(f"   移动速度: {enemy.speed}")
+            
         return enemy
         
     def update(self, dt, player, second_player=None):
@@ -101,7 +108,14 @@ class EnemyManager:
         self._update_round_system(dt, player)
         
         # 更新难度等级（根据游戏时间）
+        old_difficulty_level = self.difficulty_level
         self.difficulty_level = max(1, int(self.game_time // 60) + 1)  # 每60秒提升一级
+        
+        # 如果难度等级发生变化，打印调试信息
+        if self.difficulty_level != old_difficulty_level:
+            print(f"🚀 难度等级提升: {old_difficulty_level} → {self.difficulty_level}")
+            print(f"   游戏时间: {self.game_time:.1f}秒")
+            print(f"   新生成的敌人将获得属性加成")
         
         # 更新敌人子弹
         self._update_enemy_projectiles(dt)

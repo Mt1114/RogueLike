@@ -462,7 +462,38 @@ class UI:
         teleport_rect.center = (screen_center_x, screen_center_y)
         self.screen.blit(teleport_surface, teleport_rect)
 
-    def render(self, player, game_time, game_kill_num, dual_player_system=None):
+    def _render_difficulty_level(self, enemy_manager):
+        """渲染难度等级信息
+        
+        Args:
+            enemy_manager: 敌人管理器实例
+        """
+        if not enemy_manager or not hasattr(enemy_manager, 'difficulty_level'):
+            return
+            
+        # 获取难度等级
+        difficulty_level = enemy_manager.difficulty_level
+        
+        # 渲染难度等级文本
+        difficulty_text = f"难度等级: {difficulty_level}"
+        difficulty_surface = self.font.render(difficulty_text, True, (255, 165, 0))  # 橙色
+        difficulty_rect = difficulty_surface.get_rect()
+        
+        # 位置：左上角，在游戏时间下方
+        difficulty_rect.topleft = (10, 480)  # 在时间显示下方
+        
+        # 添加背景
+        bg_rect = pygame.Rect(difficulty_rect.left - 5, difficulty_rect.top - 2, 
+                             difficulty_rect.width + 10, difficulty_rect.height + 4)
+        bg_surface = pygame.Surface((bg_rect.width, bg_rect.height))
+        bg_surface.set_alpha(128)
+        bg_surface.fill((0, 0, 0))
+        self.screen.blit(bg_surface, bg_rect)
+        
+        # 渲染难度等级文本
+        self.screen.blit(difficulty_surface, difficulty_rect)
+
+    def render(self, player, game_time, game_kill_num, dual_player_system=None, enemy_manager=None):
         screen_width = self.screen.get_width()
         screen_height = self.screen.get_height()
         
@@ -667,6 +698,9 @@ class UI:
             self.screen.blit(self.energy_icon, energy_icon_rect)
             self.screen.blit(energy_text, energy_rect)
     
+        # 渲染难度等级信息
+        self._render_difficulty_level(enemy_manager)
+
     def _render_heart_health(self, player, screen_width, screen_height):
         """渲染心形血量显示
         
@@ -734,7 +768,7 @@ class UI:
         shadow_surface = self.font.render(health_text, True, (0, 0, 0))
         shadow_rect = shadow_surface.get_rect()
         shadow_rect.centerx = screen_width // 2 + 2
-        shadow_rect.top = heart_y + heart_size + 5 + 2
+        shadow_rect.top = health_text_rect.top + 2
         self.screen.blit(shadow_surface, shadow_rect)
         
         # 渲染主文字

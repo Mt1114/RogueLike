@@ -17,7 +17,7 @@ WEAPONS_CONFIG = {
             {
                 'level': 1,
                 'effects': {
-                    WeaponStatType.DAMAGE: 30,
+                    WeaponStatType.DAMAGE: 20,
                     WeaponStatType.ATTACK_SPEED: 1.0,
                 },
                 'description': '基础刀，近战攻击'
@@ -25,7 +25,7 @@ WEAPONS_CONFIG = {
             {
                 'level': 2,
                 'effects': {
-                    WeaponStatType.DAMAGE: 40,
+                    WeaponStatType.DAMAGE: 25,
                     WeaponStatType.ATTACK_SPEED: 1.2,
                 },
                 'description': '提升伤害和攻击速度'
@@ -88,7 +88,7 @@ WEAPONS_CONFIG = {
             {
                 'level': 1,
                 'effects': {
-                    WeaponStatType.DAMAGE: randint(30,50)*(1+randint(0,100)//70),
+                    WeaponStatType.DAMAGE: randint(20,40)*(1+randint(0,100)//70),
                     WeaponStatType.ATTACK_SPEED: 1.0,  # 攻击间隔1.0秒
                     WeaponStatType.PROJECTILE_SPEED: 600,
                     WeaponStatType.PENETRATION: 1,
@@ -101,7 +101,7 @@ WEAPONS_CONFIG = {
             {
                 'level': 2,
                 'effects': {
-                    WeaponStatType.DAMAGE: 50*(1+randint(0,100)//70),
+                    WeaponStatType.DAMAGE: randint(25,44)*(1+randint(0,100)//70),
                     WeaponStatType.ATTACK_SPEED: 1.5,  # 攻击间隔0.67秒
                     WeaponStatType.PROJECTILE_SPEED: 700,
                     WeaponStatType.PENETRATION: 2,
@@ -114,7 +114,7 @@ WEAPONS_CONFIG = {
             {
                 'level': 3,
                 'effects': {
-                    WeaponStatType.DAMAGE: 70*(1+randint(0,100)//70),
+                    WeaponStatType.DAMAGE: 80*(1+randint(0,100)//70),
                     WeaponStatType.ATTACK_SPEED: 2.0,  # 攻击间隔0.5秒（最低限制）
                     WeaponStatType.PROJECTILE_SPEED: 800,
                     WeaponStatType.PENETRATION: 3,

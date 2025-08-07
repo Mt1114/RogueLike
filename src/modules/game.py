@@ -87,7 +87,7 @@ class Game:
         )
         
         # 创建游戏按钮管理器
-        self.game_buttons = GameButtons(screen)
+        self.game_buttons = GameButtons(screen, self)
         
         # 创建游戏结果UI
         self.game_result_ui = GameResultUI(screen)
@@ -1448,6 +1448,8 @@ class Game:
             
             # 为神秘剑客添加绿色三角形标记
             self._render_mystic_triangle()
+            # 为忍者蛙添加粉红色三角形标记
+            self._render_ninja_triangle()
         elif self.player:  # 兼容单角色模式
             self.player.render(self.screen)
             self.player.render_weapons(self.screen, self.camera_x, self.camera_y)
@@ -1482,10 +1484,10 @@ class Game:
             # 在双人模式下，传递双人系统参数给UI
             if self.dual_player_system:
                 # 使用神秘剑士来渲染武器选择UI，并传递双人系统
-                self.ui.render(self.dual_player_system.mystic_swordsman, self.game_time, self.kill_num, self.dual_player_system)
+                self.ui.render(self.dual_player_system.mystic_swordsman, self.game_time, self.kill_num, self.dual_player_system, self.enemy_manager)
             else:
                 # 单角色模式使用普通玩家
-                self.ui.render(self.player, self.game_time, self.kill_num)
+                self.ui.render(self.player, self.game_time, self.kill_num, None, self.enemy_manager)
             
         # 渲染消息提示（在UI之后）
         self._render_message()
@@ -1967,13 +1969,42 @@ class Game:
         
         # 计算三角形的三个顶点（向上指向的三角形）
         points = [
-            (screen_x, screen_y - triangle_size),  # 顶点
-            (screen_x - triangle_size//2, screen_y + triangle_size//2),  # 左下角
-            (screen_x + triangle_size//2, screen_y + triangle_size//2)   # 右下角
+            (screen_x, screen_y-triangle_size-40),  # 顶点
+            (screen_x - triangle_size//2, screen_y - triangle_size//2-60),  # 左下角
+            (screen_x + triangle_size//2, screen_y - triangle_size//2-60)   # 右下角
         ]
         
         # 绘制三角形
         pygame.draw.polygon(self.screen, triangle_color, points)
         
         # 绘制边框
-        pygame.draw.polygon(self.screen, border_color, points, 2) 
+        pygame.draw.polygon(self.screen, border_color, points, 2)
+        
+    def _render_ninja_triangle(self):
+        """为忍者蛙渲染粉红色三角形标记"""
+        if not self.dual_player_system:
+            return
+            
+        ninja = self.dual_player_system.ninja_frog
+        
+        # 计算忍者蛙在屏幕上的位置
+        screen_x = ninja.world_x - self.camera_x + self.screen_center_x
+        screen_y = ninja.world_y - self.camera_y + self.screen_center_y
+        
+        # 三角形参数
+        triangle_size = 12
+        triangle_color = (255, 20, 147)  # 粉红色
+        border_color = (255, 255, 255)  # 白色边框
+        
+        # 计算三角形的三个顶点（向上指向的三角形）
+        points = [
+            (screen_x, screen_y - triangle_size - 40),  # 顶点
+            (screen_x - triangle_size//2, screen_y - triangle_size//2 - 60),  # 左下角
+            (screen_x + triangle_size//2, screen_y - triangle_size//2 - 60)   # 右下角
+        ]
+        
+        # 绘制三角形
+        pygame.draw.polygon(self.screen, triangle_color, points)
+        
+        # 绘制边框
+        pygame.draw.polygon(self.screen, border_color, points, 2)

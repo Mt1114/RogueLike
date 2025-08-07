@@ -27,9 +27,9 @@ DIFFICULTY_MULTIPLIERS = {
 
 # 敌人等级系数 (游戏时间增加时应用)
 LEVEL_SCALING = {
-    "health_per_level": 0.1,  # 每级增加10%生命值
-    "damage_per_level": 0.05,  # 每级增加5%伤害
-    "speed_per_level": 0.02,   # 每级增加2%速度
+    "health_per_level": 0.15,  # 每级增加15%生命值
+    "damage_per_level": 0.08,  # 每级增加8%伤害
+    "speed_per_level": 0.03,   # 每级增加3%速度
 }
 
 # 敌人基础配置
@@ -37,10 +37,10 @@ ENEMY_CONFIGS = {
     # 幽灵 - 基础敌人
     "ghost": {
         "health": 80,           # 基础生命值
-        "damage": 8,           # 基础伤害
+        "damage": 4,           # 基础伤害
         "speed": 150,           # 基础移动速度
         "score_value": 50,      # 击败后获得的分数
-        "exp_value": 20,        # 击败后获得的经验值（5个敌人升一级）
+        "exp_value": 5,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333, # 动画速度
         "scale": 1.0,           # 缩放大小
     },
@@ -48,10 +48,10 @@ ENEMY_CONFIGS = {
     # 萝卜 - 较慢但更健壮的敌人
     "radish": {
         "health": 150,
-        "damage": 12,
+        "damage": 5,
         "speed": 120,
         "score_value": 15,
-        "exp_value": 20,        # 击败后获得的经验值（5个敌人升一级）
+        "exp_value": 5,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333,
         "scale": 1.0,
     },
@@ -59,10 +59,10 @@ ENEMY_CONFIGS = {
     # 蝙蝠 - 快速但脆弱的敌人
     "bat": {
         "health": 60,
-        "damage": 8,
+        "damage": 4,
         "speed": 160,
         "score_value": 80,
-        "exp_value": 20,        # 击败后获得的经验值（5个敌人升一级）
+        "exp_value": 5,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333,
         "scale": 2.0,
     },
@@ -70,10 +70,10 @@ ENEMY_CONFIGS = {
     # 史莱姆 - 远程攻击敌人
     "slime": {
         "health": 40,
-        "damage": 10,
+        "damage": 6,
         "speed": 120,
         "score_value": 150,
-        "exp_value": 20,        # 击败后获得的经验值（5个敌人升一级）
+        "exp_value": 5,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333,
         "scale": 1.0,
         "attack_range": 800,    # 攻击范围
@@ -103,6 +103,11 @@ def get_enemy_config(enemy_type, difficulty="normal", level=1):
     
     config = ENEMY_CONFIGS[enemy_type].copy()
     
+    # 记录基础属性
+    base_health = config["health"]
+    base_damage = config["damage"]
+    base_speed = config["speed"]
+    
     # 应用难度系数
     if difficulty in DIFFICULTY_MULTIPLIERS["health"]:
         config["health"] *= DIFFICULTY_MULTIPLIERS["health"][difficulty]
@@ -115,6 +120,12 @@ def get_enemy_config(enemy_type, difficulty="normal", level=1):
         config["health"] *= (1 + LEVEL_SCALING["health_per_level"] * level_factor)
         config["damage"] *= (1 + LEVEL_SCALING["damage_per_level"] * level_factor)
         config["speed"] *= (1 + LEVEL_SCALING["speed_per_level"] * level_factor)
+        
+        # 打印调试信息
+        print(f"🔸 敌人属性调整 - {enemy_type} (等级{level}):")
+        print(f"   生命值: {base_health} → {config['health']} (+{LEVEL_SCALING['health_per_level']*100}%/级)")
+        print(f"   伤害值: {base_damage} → {config['damage']} (+{LEVEL_SCALING['damage_per_level']*100}%/级)")
+        print(f"   移动速度: {base_speed} → {config['speed']} (+{LEVEL_SCALING['speed_per_level']*100}%/级)")
     
     # 确保数值合理
     config["health"] = round(config["health"])

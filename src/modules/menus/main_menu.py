@@ -1,6 +1,7 @@
 import pygame
 from ..resource_manager import resource_manager
 from ..utils import FontManager
+from .options_menu import OptionsMenu
 
 class MainMenu:
     def __init__(self, screen):
@@ -8,9 +9,12 @@ class MainMenu:
         self.is_active = True
         
         # 菜单选项和对应的动作
-        self.options = ["开始新游戏", "设置", "退出游戏"]
-        self.actions = ["start", "settings", "quit"]
+        self.options = ["开始新游戏", "游戏介绍", "退出游戏"]
+        self.actions = ["start", "options", "quit"]
         self.selected_index = 0
+        
+        # 创建选项菜单
+        self.options_menu = OptionsMenu(screen)
         
         # 加载字体
         self.title_font = FontManager.get_font(74)
@@ -39,19 +43,19 @@ class MainMenu:
         try:
             self.start_button = resource_manager.load_image('start_button', 'images/ui/Start.png')
             self.options_button = resource_manager.load_image('options_button', 'images/ui/Options.png')
-            self.back_button = resource_manager.load_image('back_button', 'images/ui/Back.png')
+            self.quit_button = resource_manager.load_image('quit_button', 'images/ui/Back.png')  # 使用Back.png作为退出按钮
             
             # 调整按钮大小
             button_width = 300  # 放大1.5倍：200 * 1.5 = 300
             button_height = 120  # 放大1.5倍：80 * 1.5 = 120
             self.start_button = pygame.transform.scale(self.start_button, (button_width, button_height))
             self.options_button = pygame.transform.scale(self.options_button, (button_width, button_height))
-            self.back_button = pygame.transform.scale(self.back_button, (button_width, button_height))
+            self.quit_button = pygame.transform.scale(self.quit_button, (button_width, button_height))
         except Exception as e:
             print(f"加载按钮图片失败: {e}")
             self.start_button = None
             self.options_button = None
-            self.back_button = None
+            self.quit_button = None
             
         # 加载logo图片
         try:
@@ -66,13 +70,20 @@ class MainMenu:
             
     def handle_event(self, event):
         """处理输入事件"""
+        # 如果选项菜单激活，优先处理选项菜单事件
+        if self.options_menu.is_active:
+            result = self.options_menu.handle_event(event)
+            if result == "back_to_main":
+                return "back_to_main"
+            return None
+        
         if event.type == pygame.KEYDOWN:
             if event.key in [pygame.K_UP, pygame.K_w]:
                 self.selected_index = (self.selected_index - 1) % len(self.options)
                 resource_manager.play_sound("menu_move")
             elif event.key in [pygame.K_DOWN, pygame.K_s]:
                 self.selected_index = (self.selected_index + 1) % len(self.options)
-                resource_manager.play_sound("menu_move")
+                resource_manager.play_sound("menu_select")
             elif event.key in [pygame.K_RETURN, pygame.K_SPACE]:
                 resource_manager.play_sound("menu_select")
                 return self.actions[self.selected_index]
@@ -97,6 +108,11 @@ class MainMenu:
         
     def render(self):
         """渲染主菜单"""
+        # 如果选项菜单激活，渲染选项菜单
+        if self.options_menu.is_active:
+            self.options_menu.render()
+            return
+        
         # 绘制背景
         if self.background:
             self.screen.blit(self.background, (0, 0))
@@ -107,7 +123,7 @@ class MainMenu:
         self.button_rects.clear()
         
         # 绘制按钮
-        buttons = [self.start_button, self.options_button, self.back_button]
+        buttons = [self.start_button, self.options_button, self.quit_button]
         
         for i, button_img in enumerate(buttons):
             if button_img:
