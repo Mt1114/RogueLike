@@ -38,7 +38,7 @@ ENEMY_CONFIGS = {
     "ghost": {
         "health": 80,           # 基础生命值
         "damage": 4,           # 基础伤害
-        "speed": 150,           # 基础移动速度
+        "speed": 140,           # 基础移动速度
         "score_value": 50,      # 击败后获得的分数
         "exp_value": 5,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333, # 动画速度
@@ -49,7 +49,7 @@ ENEMY_CONFIGS = {
     "radish": {
         "health": 150,
         "damage": 5,
-        "speed": 120,
+        "speed":120,
         "score_value": 15,
         "exp_value": 5,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333,
@@ -60,7 +60,7 @@ ENEMY_CONFIGS = {
     "bat": {
         "health": 60,
         "damage": 7,
-        "speed": 160,
+        "speed": 150,
         "score_value": 80,
         "exp_value": 5,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333,
@@ -71,7 +71,7 @@ ENEMY_CONFIGS = {
     "slime": {
         "health": 40,
         "damage": 6,
-        "speed": 120,
+        "speed":120,
         "score_value": 150,
         "exp_value": 5,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333,
@@ -79,14 +79,14 @@ ENEMY_CONFIGS = {
         "attack_range": 800,    # 攻击范围
         "min_attack_range": 300, # 最小攻击距离
         "attack_cooldown": 2.0,  # 攻击冷却时间(秒)
-        "projectile_speed": 180, # 投射物速度
+        "projectile_speed": 140, # 投射物速度
     },
     
     # 灵魂 - 最强大的敌人
     "soul": {
         "health": 400,
         "damage": 50,
-        "speed": 120,
+        "speed":120,
         "score_value": 150,
         "exp_value": 200,        
         "animation_speed": 0.0333,
@@ -94,7 +94,7 @@ ENEMY_CONFIGS = {
         "attack_range": 1800,    # 攻击范围
         "min_attack_range": 0, # 最小攻击距离
         "attack_cooldown": 0.3,  # 攻击冷却时间(秒)
-        "projectile_speed": 150, # 投射物速度
+        "projectile_speed": 160, # 投射物速度
     },
     
 

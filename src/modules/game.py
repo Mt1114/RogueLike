@@ -847,9 +847,9 @@ class Game:
             action = self.main_menu.handle_event(event)
             if action == "start":
                 self.start_new_game()
-            elif action == "settings":
-                # TODO: 实现设置菜单功能
-                print("设置功能待实现")
+            elif action == "options":
+                # 显示选项菜单（游戏介绍）
+                self.main_menu.options_menu.show()
             elif action == "quit":
                 self.running = False  # 设置running为False以退出游戏
             return

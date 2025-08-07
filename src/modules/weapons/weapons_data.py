@@ -17,7 +17,7 @@ WEAPONS_CONFIG = {
             {
                 'level': 1,
                 'effects': {
-                    WeaponStatType.DAMAGE: 30,
+                    WeaponStatType.DAMAGE: 40,
                     WeaponStatType.ATTACK_SPEED: 1.0,
                 },
                 'description': '基础刀，近战攻击'
@@ -25,7 +25,7 @@ WEAPONS_CONFIG = {
             {
                 'level': 2,
                 'effects': {
-                    WeaponStatType.DAMAGE: 40,
+                    WeaponStatType.DAMAGE: 60,
                     WeaponStatType.ATTACK_SPEED: 1.2,
                 },
                 'description': '提升伤害和攻击速度'
@@ -33,7 +33,7 @@ WEAPONS_CONFIG = {
             {
                 'level': 3,
                 'effects': {
-                    WeaponStatType.DAMAGE: 60,
+                    WeaponStatType.DAMAGE: 80,
                     WeaponStatType.ATTACK_SPEED: 1.5,
                 },
                 'description': '最高伤害和攻击速度'

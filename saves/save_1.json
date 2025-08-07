@@ -12,7 +12,7 @@
     "hero_type": "ninja_frog",
     "component_states": {
       "movement": {
-        "speed": 200
+        "speed":120
       },
       "health": {
         "defense": 0,
