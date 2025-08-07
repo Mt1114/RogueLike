@@ -222,7 +222,7 @@ class BulletWeapon(Weapon):
             bullet_direction_y = math.sin(current_angle)
             
             # 计算子弹起始位置（稍微偏移以避免与玩家碰撞）
-            offset_distance = 30
+            offset_distance = 0
             start_x = player_x + bullet_direction_x * offset_distance
             start_y = player_y + bullet_direction_y * offset_distance
             
