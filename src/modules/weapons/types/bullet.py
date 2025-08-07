@@ -169,12 +169,15 @@ class BulletWeapon(Weapon):
         
         # 检查子弹数量（每次射击需要5颗子弹）
         if self.ammo < 5:
-            
+            print("no bullet")
             return
         
         # 开始攻击动画
         self.is_attacking = True
         self.attack_animation_timer = 0
+        
+        # 播放枪声
+        resource_manager.play_sound("gun_shot")
         
         # 创建子弹
         self._create_bullet(direction_x, direction_y)
@@ -190,7 +193,7 @@ class BulletWeapon(Weapon):
             self.is_reloading = True
             self.reload_timer = 0
             self.shots_fired = 0  # 重置已发射子弹计数
-            
+            print("开始装弹")
         
         # 重置攻击计时器
         self.attack_timer = 0
@@ -253,7 +256,7 @@ class BulletWeapon(Weapon):
             if self.reload_timer >= self.reload_duration:
                 self.is_reloading = False
                 self.reload_timer = 0
-                
+                print("装弹完成")
     
     def render(self, screen, camera_x, camera_y, attack_direction_x=None, attack_direction_y=None):
         """渲染武器和投射物"""

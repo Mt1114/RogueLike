@@ -10,6 +10,16 @@ def main():
     try:
         pygame.mixer.init()
         print("音频系统初始化成功")
+        
+        # 在音频系统初始化后加载资源
+        from modules.resource_manager import resource_manager
+        resource_manager._init_resources()
+        print("资源加载完成")
+        
+        # 播放背景音乐
+        resource_manager.play_music("background")
+        print("背景音乐开始播放")
+        
     except pygame.error as e:
         print(f"音频系统初始化失败: {e}")
         print("游戏将继续运行，但没有声音")

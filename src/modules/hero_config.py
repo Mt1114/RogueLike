@@ -173,21 +173,21 @@ ROLE2_CONFIG = {
         "idle": {
             "sprite_sheet": "images/roles/role2/normal.png",
             "frame_count": 4,
-            "frame_duration": 0.25,
+            "frame_duration": 0.0333,
             "frame_width": 80,
             "frame_height": 80
         },
         "run": {
             "sprite_sheet": "images/roles/role2/run.png",
             "frame_count": 4,
-            "frame_duration": 0.2,
+            "frame_duration": 0.0333,
             "frame_width": 80,
             "frame_height": 80
         },
         "hurt": {
             "sprite_sheet": "images/roles/role2/hurt.png",
             "frame_count": 4,
-            "frame_duration": 0.2,
+            "frame_duration": 0.0333,
             "frame_width": 80,
             "frame_height": 80
         }

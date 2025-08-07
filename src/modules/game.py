@@ -1646,7 +1646,19 @@ class Game:
                                     # 使用神秘剑士作为物品生成的目标（因为只有他能攻击）
                                     self.item_manager.spawn_item(enemy.rect.x, enemy.rect.y, enemy.type, self.dual_player_system.mystic_swordsman)
                                 self.enemy_manager.remove_enemy(enemy)
-                                resource_manager.play_sound("enemy_death")
+                                # 根据敌人类型播放不同的死亡音效
+                                if enemy.type == 'bat':
+                                    resource_manager.play_sound("bat_death")
+                                elif enemy.type == 'ghost':
+                                    resource_manager.play_sound("ghost_death")
+                                elif enemy.type == 'slime':
+                                    resource_manager.play_sound("slime_death")
+                                elif enemy.type == 'radish':
+                                    resource_manager.play_sound("radish_death")
+                                elif enemy.type == 'soul':
+                                    resource_manager.play_sound("soul_death")
+                                else:
+                                    resource_manager.play_sound("enemy_death")  # 默认音效
                                 
                             if should_destroy:
                                 projectile.kill()

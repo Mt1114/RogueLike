@@ -128,8 +128,6 @@ class ResourceManager:
             pygame.mixer.Sound: 加载的音效对象
         """
 
-        return None
-    
         if name in self.sounds:
             return self.sounds[name]
             
@@ -154,7 +152,6 @@ class ResourceManager:
             str: 音乐文件的完整路径
         """
 
-        return None
         if name in self.music:
             return self.music[name]
             
@@ -177,7 +174,6 @@ class ResourceManager:
             pygame.Surface: 图片surface,如果不存在返回错误提示图片
         """
 
-        return None
         if name not in self.images:
             print(f"图片资源 {name} 未加载")
             surface = pygame.Surface((1, 1))
@@ -194,7 +190,7 @@ class ResourceManager:
         Returns:
             pygame.mixer.Sound: 音效对象,如果不存在返回None
         """
-        return None
+        # return None
         if name not in self.sounds:
             print(f"音效资源 {name} 未加载")
             return None
@@ -209,7 +205,7 @@ class ResourceManager:
         Returns:
             str: 音乐文件路径,如果不存在返回None
         """
-        return None
+        # return None
         if name not in self.music:
             print(f"音乐资源 {name} 未加载")
             return None
@@ -224,8 +220,12 @@ class ResourceManager:
         try:
             sound = self.get_sound(name)
             if sound:
+                print(f"播放音效 {name}")
                 sound.play()
-        except pygame.error:
+            else:
+                print(f"音效资源 {name} 未加载")
+        except pygame.error as e:
+            print(f"播放音效 {name} 时出错: {e}")
             # 音频系统未初始化或播放失败，静默忽略
             pass
             
@@ -387,13 +387,24 @@ class ResourceManager:
         self.load_sound("upgrade", "sounds/upgrade.wav")
         self.load_sound("menu_move", "sounds/menu_move.wav")
         self.load_sound("menu_select", "sounds/menu_select.wav")
+        self.load_sound("melee_attack", "sounds/melee_attack.wav")
+        self.load_sound("gun_shot", "sounds/gun_shot.wav")  # 添加枪声
+        
+        # 添加不同敌人的死亡音效
+        self.load_sound("bat_death", "sounds/bat_death.wav")
+        self.load_sound("ghost_death", "sounds/ghost_death.wav")
+        self.load_sound("slime_death", "sounds/slime_death.wav")
+        self.load_sound("radish_death", "sounds/radish_death.wav")
+        self.load_sound("soul_death", "sounds/soul_death.wav")
         
         # 设置音量
         self.set_music_volume(0.5)  # 背景音乐音量
         for sound_name in ["hit", "enemy_death", "player_hurt", "level_up", 
                           "collect_exp", "collect_coin", "heal", "upgrade",
-                          "menu_move", "menu_select"]:
+                          "menu_move", "menu_select", "melee_attack", "gun_shot",
+                          "bat_death", "ghost_death", "slime_death", "radish_death", "soul_death"]:
             self.set_sound_volume(sound_name, 0.7)  # 音效音量
 
 # 创建全局资源管理器实例
-resource_manager = ResourceManager() 
+resource_manager = ResourceManager()
+# 延迟初始化资源，等pygame初始化后再加载 

@@ -38,7 +38,7 @@ ENEMY_CONFIGS = {
     "ghost": {
         "health": 80,           # 基础生命值
         "damage": 4,           # 基础伤害
-        "speed": 140,           # 基础移动速度
+        "speed": 150,           # 基础移动速度
         "score_value": 50,      # 击败后获得的分数
         "exp_value": 5,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333, # 动画速度
@@ -49,7 +49,7 @@ ENEMY_CONFIGS = {
     "radish": {
         "health": 150,
         "damage": 5,
-        "speed":120,
+        "speed": 120,
         "score_value": 15,
         "exp_value": 5,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333,
@@ -60,7 +60,7 @@ ENEMY_CONFIGS = {
     "bat": {
         "health": 60,
         "damage": 7,
-        "speed": 150,
+        "speed": 160,
         "score_value": 80,
         "exp_value": 5,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333,
@@ -71,7 +71,7 @@ ENEMY_CONFIGS = {
     "slime": {
         "health": 40,
         "damage": 6,
-        "speed":120,
+        "speed": 120,
         "score_value": 150,
         "exp_value": 5,        # 击败后获得的经验值（5个敌人升一级）
         "animation_speed": 0.0333,
@@ -79,22 +79,22 @@ ENEMY_CONFIGS = {
         "attack_range": 800,    # 攻击范围
         "min_attack_range": 300, # 最小攻击距离
         "attack_cooldown": 2.0,  # 攻击冷却时间(秒)
-        "projectile_speed": 140, # 投射物速度
+        "projectile_speed": 180, # 投射物速度
     },
     
     # 灵魂 - 最强大的敌人
     "soul": {
-        "health": 400,
+        "health": 1000,
         "damage": 50,
-        "speed":120,
+        "speed": 100,
         "score_value": 150,
         "exp_value": 200,        
         "animation_speed": 0.0333,
         "scale": 1.0,
         "attack_range": 1800,    # 攻击范围
         "min_attack_range": 0, # 最小攻击距离
-        "attack_cooldown": 0.3,  # 攻击冷却时间(秒)
-        "projectile_speed": 160, # 投射物速度
+        "attack_cooldown": 0.5,  # 攻击冷却时间(秒)
+        "projectile_speed": 150, # 投射物速度
     },
     
 
@@ -137,9 +137,12 @@ def get_enemy_config(enemy_type, difficulty="normal", level=1):
         config["speed"] *= (1 + LEVEL_SCALING["speed_per_level"] * level_factor)
         
         # 打印调试信息
-        
+        print(f"🔸 敌人属性调整 - {enemy_type} (等级{level}):")
+        print(f"   生命值: {base_health} → {config['health']} (+{LEVEL_SCALING['health_per_level']*100}%/级)")
+        print(f"   伤害值: {base_damage} → {config['damage']} (+{LEVEL_SCALING['damage_per_level']*100}%/级)")
+        print(f"   移动速度: {base_speed} → {config['speed']} (+{LEVEL_SCALING['speed_per_level']*100}%/级)")
     
-    # 确保数值合理print
+    # 确保数值合理
     config["health"] = round(config["health"])
     config["damage"] = round(config["damage"])
     config["speed"] = round(config["speed"])

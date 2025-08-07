@@ -197,6 +197,10 @@ class Knife(Weapon):
         self.melee_attack_duration = 0.3  # 攻击持续时间
         self.melee_attack_direction = (direction_x, direction_y)
         
+        # 立即播放攻击音效
+        from ...resource_manager import resource_manager
+        resource_manager.play_sound("melee_attack")
+        
         # 计算特效位置：在玩家当前位置，朝着鼠标方向偏移32像素
         effect_x = self.player.world_x + direction_x * 32
         effect_y = self.player.world_y + direction_y * 32
@@ -237,10 +241,6 @@ class Knife(Weapon):
                 if dot_product > -0.5:  # 从0.5改为-0.5，扩大攻击角度
                     # 对敌人造成伤害
                     enemy.take_damage(attack_damage)
-                    
-                    # 播放攻击音效
-                    from ...resource_manager import resource_manager
-                    resource_manager.play_sound("melee_attack")
         
     def _throw_single_knife(self, direction_x, direction_y):
         """投掷单个小刀"""
