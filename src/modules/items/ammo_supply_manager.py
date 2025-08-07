@@ -28,15 +28,15 @@ class AmmoSupplyManager:
         self.spawn_margin = 100  # 距离地图边缘的最小距离（调整为1倍缩放）
         
         # 游戏开始时立即生成一些补给
-        print("初始化弹药补给管理器...")
+        
         self._generate_initial_supplies()
         
     def _generate_initial_supplies(self):
         """游戏开始时生成初始补给"""
-        print("生成初始补给...")
+        
         for i in range(3):  # 生成3个初始补给
             self.spawn_supply()
-        print(f"初始补给生成完成，当前补给数量: {len(self.supplies)}")
+        
         
     def update(self, dt):
         """更新补给管理器"""
@@ -45,24 +45,24 @@ class AmmoSupplyManager:
         
         # 检查是否需要生成新的补给
         if self.spawn_timer >= self.spawn_interval:
-            print(f"开始生成 {self.spawn_count} 个补给...")
+            
             # 生成1个补给
             for i in range(self.spawn_count):
                 self.spawn_supply()
             self.spawn_timer = 0.0
-            print(f"当前补给数量: {len(self.supplies)}")
+            
         
         # 更新所有补给物品
         for supply in self.supplies[:]:  # 使用切片创建副本，避免在迭代时修改列表
             if not supply.update(dt):
                 # 如果补给超时，移除它
                 self.supplies.remove(supply)
-                print(f"补给超时移除，剩余补给数量: {len(self.supplies)}")
+                
                 
     def spawn_supply(self):
         """生成新的弹药补给"""
         if not hasattr(self.game, 'map_manager'):
-            print("地图管理器未初始化，无法生成补给")
+            
             return
             
         # 获取地图边界
@@ -89,7 +89,7 @@ class AmmoSupplyManager:
                 
             attempts += 1
             
-        print(f"❌ 无法找到有效的补给生成位置，尝试了 {max_attempts} 次")
+        
         
     def _is_valid_spawn_position(self, x, y):
         """检查生成位置是否有效
@@ -125,8 +125,7 @@ class AmmoSupplyManager:
                 supply_rect = pygame.Rect(x - 48, y - 48, 96, 96)
                 if tile.colliderect(supply_rect):
                     return False
-        else:
-            print(f"警告: 没有找到碰撞图块数据")
+        
                 
         # 检查是否与玩家重叠
         if hasattr(self.game, 'player'):

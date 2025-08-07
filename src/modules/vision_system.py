@@ -384,19 +384,19 @@ class VisionSystem:
         # 创建视野遮罩
         vision_mask = self.create_vision_mask(screen_width, screen_height)
         
-        if dark_overlay:
-            # 如果有黑暗遮罩，创建复合效果
-            # 复制黑暗遮罩
-            final_overlay = dark_overlay.copy()
+        # if dark_overlay:
+        #     # 如果有黑暗遮罩，创建复合效果
+        #     # 复制黑暗遮罩
+        #     final_overlay = dark_overlay.copy()
             
-            # 在视野区域清除黑暗（使用减法混合模式）
-            final_overlay.blit(vision_mask, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
+        #     # 在视野区域清除黑暗（使用减法混合模式）
+        #     final_overlay.blit(vision_mask, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
             
-            # 渲染最终遮罩
-            screen.blit(final_overlay, (0, 0))
-        else:
-            # 直接渲染视野遮罩
-            screen.blit(vision_mask, (0, 0))
+        #     # 渲染最终遮罩
+        #     screen.blit(final_overlay, (0, 0))
+        # else:
+        #     # 直接渲染视野遮罩
+        #     screen.blit(vision_mask, (0, 0))
         
         self._performance_stats['render_time'] += time.time() - start_time
     

@@ -94,7 +94,7 @@ class TeleportManager:
             # 如果道具存在时间超过2分钟，自动移除
             if teleport_item.lifetime_timer >= self.item_lifetime:
                 self.teleport_items.remove(teleport_item)
-                print(f"传送道具已过期，自动移除")
+                
             
     def render(self, screen, camera_x, camera_y):
         """渲染传送道具"""

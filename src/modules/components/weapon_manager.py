@@ -118,10 +118,10 @@ class WeaponManager(Component):
         
         # 检查是否是神秘剑士且处于远程模式
         if hasattr(self.owner, 'hero_type') and self.owner.hero_type == "role2":
-            print(f"调试 - manual_attack: hero_type={self.owner.hero_type}, is_ranged_mode={getattr(self.owner, 'is_ranged_mode', 'N/A')}")
+            
             if hasattr(self.owner, 'is_ranged_mode') and not self.owner.is_ranged_mode:
                 # 近战模式，不执行远程攻击
-                print("调试 - 近战模式，阻止远程攻击")
+                
                 return
         
         for weapon in self.weapons:
@@ -140,10 +140,10 @@ class WeaponManager(Component):
         
         # 检查是否是神秘剑士且处于近战模式
         if hasattr(self.owner, 'hero_type') and self.owner.hero_type == "role2":
-            print(f"调试 - melee_attack: hero_type={self.owner.hero_type}, is_ranged_mode={getattr(self.owner, 'is_ranged_mode', 'N/A')}")
+            
             if hasattr(self.owner, 'is_ranged_mode') and self.owner.is_ranged_mode:
                 # 远程模式，不执行近战攻击
-                print("调试 - 远程模式，阻止近战攻击")
+                
                 return
             
         for weapon in self.weapons:
@@ -276,4 +276,4 @@ class WeaponManager(Component):
         """重置武器管理器状态"""
         self.weapons.clear()
         self.weapon_levels.clear()
-        print("武器管理器已重置") 
+       

@@ -192,7 +192,7 @@ class ResourceManager:
         """
         # return None
         if name not in self.sounds:
-            print(f"音效资源 {name} 未加载")
+            
             return None
         return self.sounds[name]
         
@@ -207,7 +207,7 @@ class ResourceManager:
         """
         # return None
         if name not in self.music:
-            print(f"音乐资源 {name} 未加载")
+            
             return None
         return self.music[name]
         
@@ -220,12 +220,10 @@ class ResourceManager:
         try:
             sound = self.get_sound(name)
             if sound:
-                print(f"播放音效 {name}")
+                
                 sound.play()
-            else:
-                print(f"音效资源 {name} 未加载")
         except pygame.error as e:
-            print(f"播放音效 {name} 时出错: {e}")
+            
             # 音频系统未初始化或播放失败，静默忽略
             pass
             
@@ -358,7 +356,7 @@ class ResourceManager:
             Animation: 动画对象
         """
         if name not in self.animations:
-            print(f"动画 {name} 未加载")
+            
             return None
         return self.animations[name]
             

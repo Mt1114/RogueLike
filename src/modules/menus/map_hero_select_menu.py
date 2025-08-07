@@ -70,7 +70,7 @@ class MapHeroSelectMenu:
             self.p1_img = resource_manager.load_image('p1', 'images/ui/p1.png')
             self.p2_img = resource_manager.load_image('p2', 'images/ui/p2.png')
         except Exception as e:
-            print(f"加载角色图片失败: {e}")
+            
             self.role1_img = None
             self.role2_img = None
             self.p1_img = None
@@ -78,11 +78,11 @@ class MapHeroSelectMenu:
         
         # 加载普通图片
         try:
-            print("正在加载英雄选择界面图片: images/ui/background.png")
+            
             self.background_image = resource_manager.load_image('menu_image', 'images/ui/background.png')
-            print("英雄选择界面图片加载成功")
+            
         except Exception as e:
-            print(f"加载图片失败: {e}")
+            
             self.background_image = None
         
     def show(self):

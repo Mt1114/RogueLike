@@ -625,8 +625,7 @@ class Enemy(pygame.sprite.Sprite, ABC):
                 
                 # 调用attack方法，但传入忍者蛙作为目标
                 return self.attack(ninja_frog, 0.016)
-            else:
-                print(f"未找到双人系统，使用原始攻击逻辑")
+            
         
         # 使用一个很小的时间增量，保持现有行为一致
         return self.attack(player, 0.016)  # 约等于60fps的时间增量

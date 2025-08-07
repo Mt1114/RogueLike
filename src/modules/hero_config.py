@@ -31,7 +31,7 @@ DEFAULT_HERO_CONFIG = {
         }
     },
     "base_stats": {
-        "max_health": 10000,
+        "max_health": 100,
         "speed": 200,
         "defense": 0,
         "health_regen": 0,
@@ -114,7 +114,7 @@ NINJA_FROG_NEW_CONFIG = {
         }
     },
     "base_stats": {
-        "max_health": 10000,
+        "max_health": 100,
         "speed": 200,
         "defense": 0,
         "health_regen": 0,
@@ -153,7 +153,7 @@ NINJA_FROG_NEW_CONFIG = {
 #         }
 #     },
 #     "base_stats": {
-#         "max_health": 10000,
+#         "max_health": 100,
 #         "speed": 200,
 #         "defense": 0,
 #         "health_regen": 0,
@@ -193,7 +193,7 @@ ROLE2_CONFIG = {
         }
     },
     "base_stats": {
-        "max_health": 10000,
+        "max_health": 100,
         "speed": 200,
         "defense": 0,
         "health_regen": 0,

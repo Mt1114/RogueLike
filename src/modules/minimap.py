@@ -62,7 +62,7 @@ class Minimap:
             
             
         except Exception as e:
-            print(f"加载小地图图标失败: {e}")
+        
             self.role1_icon = None
             self.role2_icon = None
             self.key_icon = None
@@ -361,7 +361,7 @@ class Minimap:
         """重置小地图状态"""
         # 清空小地图表面
         self.surface.fill((0, 0, 0, 100))
-        print("小地图已重置")
+        
     
     def update_map_size(self, map_width, map_height):
         """更新地图尺寸并重新计算缩放比例
@@ -377,4 +377,4 @@ class Minimap:
         self.scale_x = self.minimap_width / map_width
         self.scale_y = self.minimap_height / map_height
         
-        print(f"小地图尺寸已更新: {map_width}x{map_height}, 缩放比例: {self.scale_x:.3f}x{self.scale_y:.3f}")
+        

@@ -66,7 +66,7 @@ class SceneManager:
     def switch_scene(self, scene_name: str):
         """切换场景"""
         if scene_name not in self.scenes:
-            print(f"场景 {scene_name} 不存在")
+            
             return
             
         # 退出当前场景
@@ -89,7 +89,7 @@ class SceneManager:
     def push_scene(self, scene_name: str):
         """推入场景（不退出当前场景）"""
         if scene_name not in self.scenes:
-            print(f"场景 {scene_name} 不存在")
+            
             return
             
         # 暂停当前场景
@@ -104,7 +104,7 @@ class SceneManager:
     def pop_scene(self):
         """弹出场景（返回上一个场景）"""
         if not self.scene_stack:
-            print("没有可返回的场景")
+            
             return
             
         # 退出当前场景

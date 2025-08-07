@@ -9,20 +9,20 @@ def main():
     # 尝试初始化音频系统，如果失败则继续运行游戏（只是没有声音）
     try:
         pygame.mixer.init()
-        print("音频系统初始化成功")
+        
         
         # 在音频系统初始化后加载资源
         from modules.resource_manager import resource_manager
         resource_manager._init_resources()
-        print("资源加载完成")
+        
         
         # 播放背景音乐
         resource_manager.play_music("background")
-        print("背景音乐开始播放")
+        
         
     except pygame.error as e:
         print(f"音频系统初始化失败: {e}")
-        print("游戏将继续运行，但没有声音")
+        
     
     screen_width = 1920
     screen_height = 1280
@@ -35,7 +35,7 @@ def main():
     intro_animation = IntroAnimation(screen)
     
     # 开场动画循环
-    print("播放开场动画...")
+    
     while intro_animation.is_playing:
         dt = clock.tick(120) / 1000.0  # 120 FPS for smooth animation
         
@@ -58,7 +58,7 @@ def main():
         intro_animation.render()
         pygame.display.flip()
     
-    print("开场动画完成，进入游戏...")
+    
     
     # 创建游戏实例
     game = Game(screen)
