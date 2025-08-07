@@ -250,11 +250,6 @@ class MovementComponent(Component):
                 self.facing_right = False
             # 如果只有Y方向移动（上下），保持当前朝向不变
             
-            # 调试信息：打印移动状态变化
-            if old_direction != (self.direction.x, self.direction.y):
-                print(f"调试 - 移动组件: 方向从{old_direction}变为({self.direction.x:.2f}, {self.direction.y:.2f})")
-                print(f"调试 - 移动组件: 移动状态 上={self.moving['up']}, 下={self.moving['down']}, 左={self.moving['left']}, 右={self.moving['right']}")
-                print(f"调试 - 移动组件: 标准化前原始方向 x={float(self.moving['right']) - float(self.moving['left'])}, y={float(self.moving['down']) - float(self.moving['up'])}")
             
 
             

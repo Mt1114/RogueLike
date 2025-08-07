@@ -189,8 +189,27 @@ class Soul(Enemy):
             if distance <= collision_radius:
                 # 造成碰撞伤害
                 collision_damage = self.damage * 0.5  # 碰撞伤害为攻击伤害的一半
-                player.take_damage(collision_damage)
-                print(f"Soul碰撞伤害: {collision_damage}")
+                
+                # 在双人模式下，如果神秘剑客被击中，伤害转移给忍者蛙
+                if hasattr(player, 'hero_type') and player.hero_type == "role2":
+                    # 检查是否有双人系统
+                    if hasattr(player, 'game') and hasattr(player.game, 'dual_player_system'):
+                        # 获取忍者蛙并转移伤害
+                        ninja_frog = player.game.dual_player_system.ninja_frog
+                        ninja_frog.take_damage(collision_damage)
+                        # 让神秘剑客也闪烁
+                        if hasattr(player, 'animation') and hasattr(player.animation, 'start_blinking'):
+                            invincible_duration = player.health_component.invincible_duration
+                            player.animation.start_blinking(invincible_duration)
+                        print(f"神秘剑客受到Soul碰撞伤害，忍者蛙受到 {collision_damage} 点伤害")
+                    else:
+                        # 如果没有双人系统，直接对神秘剑客造成伤害
+                        player.take_damage(collision_damage)
+                        print(f"神秘剑客受到Soul碰撞伤害: {collision_damage}")
+                else:
+                    # 忍者蛙被击中，直接造成伤害
+                    player.take_damage(collision_damage)
+                    print(f"忍者蛙受到Soul碰撞伤害: {collision_damage}")
         
         # 检查与第二个玩家的碰撞
         if second_player and second_player.health > 0:
@@ -199,8 +218,27 @@ class Soul(Enemy):
             if distance <= collision_radius:
                 # 造成碰撞伤害
                 collision_damage = self.damage * 0.5  # 碰撞伤害为攻击伤害的一半
-                second_player.take_damage(collision_damage)
-                print(f"Soul碰撞伤害: {collision_damage}")
+                
+                # 在双人模式下，如果神秘剑客被击中，伤害转移给忍者蛙
+                if hasattr(second_player, 'hero_type') and second_player.hero_type == "role2":
+                    # 检查是否有双人系统
+                    if hasattr(second_player, 'game') and hasattr(second_player.game, 'dual_player_system'):
+                        # 获取忍者蛙并转移伤害
+                        ninja_frog = second_player.game.dual_player_system.ninja_frog
+                        ninja_frog.take_damage(collision_damage)
+                        # 让神秘剑客也闪烁
+                        if hasattr(second_player, 'animation') and hasattr(second_player.animation, 'start_blinking'):
+                            invincible_duration = second_player.health_component.invincible_duration
+                            second_player.animation.start_blinking(invincible_duration)
+                        print(f"神秘剑客受到Soul碰撞伤害，忍者蛙受到 {collision_damage} 点伤害")
+                    else:
+                        # 如果没有双人系统，直接对神秘剑客造成伤害
+                        second_player.take_damage(collision_damage)
+                        print(f"神秘剑客受到Soul碰撞伤害: {collision_damage}")
+                else:
+                    # 忍者蛙被击中，直接造成伤害
+                    second_player.take_damage(collision_damage)
+                    print(f"忍者蛙受到Soul碰撞伤害: {collision_damage}")
         
     def _render_collision_aura(self, screen, screen_x, screen_y):
         """绘制碰撞光圈"""
@@ -237,7 +275,7 @@ class Soul(Enemy):
                     # 计算当前半径的透明度
                     current_alpha = int(alpha * (r / radius))
                     if current_alpha > 0:
-                        color = (0, 200, 0, current_alpha)  # 青色光圈
+                        color = (255, 255, 255, current_alpha)  # 青色光圈
                         pygame.draw.circle(aura_surface, color, (radius, radius), r, 2)
                 
                 # 将光圈绘制到屏幕上
@@ -333,8 +371,27 @@ class Soul(Enemy):
         
         # 如果距离小于碰撞半径，则判定为击中
         if distance < player.rect.width / 2 + projectile.radius:
-            # 玩家受到伤害
-            player.take_damage(projectile.damage)
+            # 在双人模式下，如果神秘剑客被击中，伤害转移给忍者蛙
+            if hasattr(player, 'hero_type') and player.hero_type == "role2":
+                # 检查是否有双人系统
+                if hasattr(player, 'game') and hasattr(player.game, 'dual_player_system'):
+                    # 获取忍者蛙并转移伤害
+                    ninja_frog = player.game.dual_player_system.ninja_frog
+                    ninja_frog.take_damage(projectile.damage)
+                    # 让神秘剑客也闪烁
+                    if hasattr(player, 'animation') and hasattr(player.animation, 'start_blinking'):
+                        invincible_duration = player.health_component.invincible_duration
+                        player.animation.start_blinking(invincible_duration)
+                    print(f"神秘剑客被Soul投射物击中，忍者蛙受到 {projectile.damage} 点伤害")
+                else:
+                    # 如果没有双人系统，直接对神秘剑客造成伤害
+                    player.take_damage(projectile.damage)
+                    print(f"神秘剑客被Soul投射物击中，受到 {projectile.damage} 点伤害")
+            else:
+                # 忍者蛙被击中，直接造成伤害
+                player.take_damage(projectile.damage)
+                print(f"忍者蛙被Soul投射物击中，受到 {projectile.damage} 点伤害")
+            
             return True
             
         return False

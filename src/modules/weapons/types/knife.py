@@ -188,8 +188,8 @@ class Knife(Weapon):
             return
             
         enemies = self.player.game.enemy_manager.enemies
-        attack_range = 95  # 扩大攻击范围（增加15像素）
-        attack_damage = self.current_stats.get(WeaponStatType.DAMAGE, 10) * 1.5  # 1.5倍伤害
+        attack_range = 160  # 增大攻击范围（从95增加到160像素）
+        attack_damage = self.current_stats.get(WeaponStatType.DAMAGE, 10) * 1.2  # 1.2倍伤害
         
         # 设置攻击状态
         self.melee_attacking = True
@@ -230,7 +230,7 @@ class Knife(Weapon):
                 dot_product = direction_x * enemy_dir_x + direction_y * enemy_dir_y
                 
                 # 扩大攻击角度范围（从60度扩大到120度）
-                if dot_product > -0.5:  # 从0.5改为-0.5，扩大攻击角度
+                if dot_product > -0.8:  # 从0.5改为-0.5，扩大攻击角度
                     # 对敌人造成伤害
                     enemy.take_damage(attack_damage)
                     

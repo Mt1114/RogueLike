@@ -386,6 +386,10 @@ class EnemyManager:
                 else:
                     # 如果没有光照系统或光照系统被禁用，正常渲染（包括血条）
                     enemy.render(screen, screen_x, screen_y, show_health_bar=True)
+                
+                # 显示碰撞圈（除了soul类型）
+                if enemy.type != 'soul':
+                    self._render_collision_circle(screen, enemy, screen_x, screen_y)
         
         # 渲染敌人子弹
         self._render_enemy_projectiles(screen, camera_x, camera_y, screen_center_x, screen_center_y)
@@ -523,6 +527,80 @@ class EnemyManager:
                 if projectile.lifetime <= 0:
                     self.enemy_projectiles.remove(projectile)
                     
+    def _render_collision_circle(self, screen, enemy, screen_x, screen_y):
+        """渲染敌人的碰撞圈
+        
+        Args:
+            screen: 屏幕表面
+            enemy: 敌人对象
+            screen_x: 敌人在屏幕上的x坐标
+            screen_y: 敌人在屏幕上的y坐标
+        """
+        import time
+        
+        # 获取当前时间用于动画
+        current_time = time.time()
+        
+        # 计算碰撞圈的半径（基于敌人的rect大小）
+        collision_radius = max(enemy.rect.width, enemy.rect.height) // 2
+        
+        # 获取敌人的碰撞偏移
+        offset_x, offset_y = enemy._get_collision_offset()
+        
+        # 计算碰撞圈的中心位置（敌人rect的中心，加上偏移）
+        circle_center_x = int(screen_x + enemy.rect.width // 2 + offset_x)
+        circle_center_y = int(screen_y + enemy.rect.height // 2 + offset_y)
+        
+        # 根据敌人类型设置不同的光圈颜色和参数
+        if enemy.type == 'bat':
+            aura_color = (255, 100, 0)  # 橙色光圈（蝙蝠）
+            size_multiplier = 1.2  # 蝙蝠光圈稍大
+            animation_speed = 4    # 蝙蝠动画稍快
+        elif enemy.type == 'ghost':
+            aura_color = (150, 0, 255)  # 紫色光圈（幽灵）
+            size_multiplier = 1.0  # 幽灵光圈正常大小
+            animation_speed = 2    # 幽灵动画较慢
+        elif enemy.type == 'radish':
+            aura_color = (0, 255, 0)    # 绿色光圈（萝卜）
+            size_multiplier = 0.8  # 萝卜光圈稍小
+            animation_speed = 1.5  # 萝卜动画最慢
+        elif enemy.type == 'slime':
+            aura_color = (0, 255, 255)  # 青色光圈（史莱姆）
+            size_multiplier = 1.1  # 史莱姆光圈稍大
+            animation_speed = 3    # 史莱姆动画中等
+        else:
+            aura_color = (255, 0, 0)    # 红色光圈（默认）
+            size_multiplier = 1.0  # 默认光圈大小
+            animation_speed = 2.5  # 默认动画速度
+        
+        # 创建渐变光圈效果
+        num_circles = 4  # 光圈层数
+        base_alpha = 40  # 基础透明度
+        
+        for i in range(num_circles):
+            # 计算当前圈的半径和透明度（应用大小倍数）
+            radius = int((collision_radius + 10 - i * 8) * size_multiplier)  # 每圈递减8像素
+            alpha = base_alpha - i * 8  # 每圈递减8透明度
+            
+            # 添加呼吸效果（使用敌人特定的动画速度）
+            breath_factor = 0.6 + 0.4 * math.sin(current_time * animation_speed)  # 呼吸动画
+            alpha = int(alpha * breath_factor)
+            
+            if alpha > 0 and radius > 0:
+                # 创建带透明度的表面
+                aura_surface = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+                
+                # 绘制渐变圆
+                for r in range(radius, 0, -2):
+                    # 计算当前半径的透明度
+                    current_alpha = int(alpha * (r / radius))
+                    if current_alpha > 0:
+                        color = (*aura_color, current_alpha)  # 使用敌人特定的颜色
+                        pygame.draw.circle(aura_surface, color, (radius, radius), r, 2)
+                
+                # 将光圈绘制到屏幕上
+                screen.blit(aura_surface, (circle_center_x - radius, circle_center_y - radius))
+    
     def _render_enemy_projectiles(self, screen, camera_x, camera_y, screen_center_x, screen_center_y):
         """渲染敌人子弹"""
         for projectile in self.enemy_projectiles:

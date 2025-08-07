@@ -847,9 +847,9 @@ class Game:
             action = self.main_menu.handle_event(event)
             if action == "start":
                 self.start_new_game()
-            elif action == "settings":
-                # TODO: 实现设置菜单功能
-                print("设置功能待实现")
+            elif action == "options":
+                # 显示选项菜单
+                self.main_menu.options_menu.show()
             elif action == "quit":
                 self.running = False  # 设置running为False以退出游戏
             return
@@ -1669,7 +1669,7 @@ class Game:
                 player_rect.centery = target_player.world_y
                 
                 if hasattr(enemy, 'projectiles'):
-                    enemy.attack_player(target_player)
+                    enemy.attack(target_player, 0.016)  # 传递dt参数
                 
                 if player_rect.colliderect(enemy.rect):
                     
@@ -1687,11 +1687,21 @@ class Game:
                     
                     if collision_detected:
                         
-                        if enemy.attack_player(target_player):
-                            # 如果神秘剑客受到伤害，让忍者蛙扣血
-                            
-                            resource_manager.play_sound("player_hurt")
-                            break
+                        # 直接处理碰撞伤害，不调用enemy.attack_player来避免重复处理
+                        if target_player.hero_type == "role2":  # 神秘剑客被击中
+                            # 伤害转移给忍者蛙
+                            self.dual_player_system.ninja_frog.take_damage(enemy.damage)
+                            # 让神秘剑客也闪烁
+                            if hasattr(target_player, 'animation') and hasattr(target_player.animation, 'start_blinking'):
+                                invincible_duration = target_player.health_component.invincible_duration
+                                target_player.animation.start_blinking(invincible_duration)
+                            print(f"神秘剑客受到碰撞伤害，忍者蛙受到 {enemy.damage} 点伤害")
+                        else:  # 忍者蛙被击中
+                            target_player.take_damage(enemy.damage)
+                            print(f"忍者蛙受到碰撞伤害 {enemy.damage} 点")
+                        
+                        resource_manager.play_sound("player_hurt")
+                        break
         
         # 检测敌人子弹和玩家的碰撞
         if hasattr(self.enemy_manager, 'enemy_projectiles'):
@@ -1728,6 +1738,10 @@ class Game:
                         # 如果神秘剑客受到伤害，让忍者蛙扣血
                         if target_player.hero_type == "role2":  # 神秘剑客被击中
                             self.dual_player_system.ninja_frog.take_damage(projectile.damage)
+                            # 让神秘剑客也闪烁
+                            if hasattr(target_player, 'animation') and hasattr(target_player.animation, 'start_blinking'):
+                                invincible_duration = target_player.health_component.invincible_duration
+                                target_player.animation.start_blinking(invincible_duration)
                             print(f"神秘剑客被击中，忍者蛙受到 {projectile.damage} 点伤害")
                         else:  # 忍者蛙被击中
                             target_player.take_damage(projectile.damage)
@@ -1801,10 +1815,10 @@ class Game:
                 player_rect.centerx = self.player.world_x
                 player_rect.centery = self.player.world_y
                 
-                # 对于Slime等远程攻击敌人，即使不直接碰撞也需要触发attack_player
+                # 对于Slime等远程攻击敌人，调用它们的attack方法而不是attack_player
                 # 这样才能正确生成投射物并处理碰撞逻辑
                 if hasattr(enemy, 'projectiles'):
-                    enemy.attack_player(self.player)
+                    enemy.attack(self.player, 0.016)  # 传递dt参数
                 
                 # 对于直接碰撞的敌人，进行常规碰撞检测
                 if player_rect.colliderect(enemy.rect):
@@ -1898,10 +1912,10 @@ class Game:
                 player_rect.centerx = self.player.world_x
                 player_rect.centery = self.player.world_y
                 
-                # 对于Slime等远程攻击敌人，即使不直接碰撞也需要触发attack_player
+                # 对于Slime等远程攻击敌人，调用它们的attack方法而不是attack_player
                 # 这样才能正确生成投射物并处理碰撞逻辑
                 if hasattr(enemy, 'projectiles'):
-                    enemy.attack_player(self.player)
+                    enemy.attack(self.player, 0.016)  # 传递dt参数
                 
                 # 对于直接碰撞的敌人，进行常规碰撞检测
                 if player_rect.colliderect(enemy.rect):

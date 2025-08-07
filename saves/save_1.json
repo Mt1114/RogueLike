@@ -1,13 +1,13 @@
 {
-  "timestamp": "2025-08-07 14:02:53",
+  "timestamp": "2025-08-07 14:29:20",
   "player_data": {
-    "health": 76,
+    "health": 45,
     "max_health": 100,
     "level": 1,
     "experience": 0,
     "coins": 0,
     "world_x": 1180.0,
-    "world_y": 1378.5999999999992,
+    "world_y": 1312.0,
     "weapons": [],
     "hero_type": "ninja_frog",
     "component_states": {
@@ -29,57 +29,75 @@
   },
   "game_data": {
     "kill_num": 0,
-    "game_time": 19.41700000000007,
+    "game_time": 26.93100000000014,
     "level": 1
   },
   "enemies_data": [
     {
       "type": "Bat",
       "health": 60,
-      "x": 1100,
-      "y": 1284
+      "x": 1130,
+      "y": 1262
     },
     {
       "type": "Slime",
       "health": 40,
-      "x": 1140,
-      "y": 1312
+      "x": 1664,
+      "y": 1292
     },
     {
       "type": "Slime",
       "health": 40,
-      "x": 1340,
-      "y": 1272
+      "x": 1664,
+      "y": 1292
     },
     {
       "type": "Slime",
       "health": 40,
-      "x": 1392,
-      "y": 1336
-    },
-    {
-      "type": "Radish",
-      "health": 150,
-      "x": 1568,
-      "y": 1552
+      "x": 1669,
+      "y": 1292
     },
     {
       "type": "Slime",
       "health": 40,
-      "x": 1770,
-      "y": 1800
+      "x": 1160,
+      "y": 1292
     },
     {
-      "type": "Radish",
-      "health": 150,
-      "x": 521,
-      "y": 587
+      "type": "Slime",
+      "health": 40,
+      "x": 1160,
+      "y": 1292
     },
     {
       "type": "Ghost",
       "health": 80,
-      "x": 355,
-      "y": 2175
+      "x": 1662,
+      "y": 1292
+    },
+    {
+      "type": "Ghost",
+      "health": 80,
+      "x": 1162,
+      "y": 1290
+    },
+    {
+      "type": "Slime",
+      "health": 40,
+      "x": 2016,
+      "y": 748
+    },
+    {
+      "type": "Ghost",
+      "health": 80,
+      "x": 577,
+      "y": 1882
+    },
+    {
+      "type": "Slime",
+      "health": 40,
+      "x": 315,
+      "y": 344
     }
   ]
 }

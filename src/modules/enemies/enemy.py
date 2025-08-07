@@ -254,9 +254,10 @@ class Enemy(pygame.sprite.Sprite, ABC):
         # 选择最近的目标
         target_player = self._get_nearest_player(player, second_player)
         
-        # 计算到目标玩家的方向（使用世界坐标）
-        enemy_center_x = self.rect.x + self.rect.width / 2
-        enemy_center_y = self.rect.y + self.rect.height / 2
+        # 计算到目标玩家的方向（使用偏移后的世界坐标）
+        offset_x, offset_y = self._get_collision_offset()
+        enemy_center_x = self.rect.x + self.rect.width / 2 + offset_x
+        enemy_center_y = self.rect.y + self.rect.height / 2 + offset_y
         dx = target_player.world_x - enemy_center_x
         dy = target_player.world_y - enemy_center_y
         distance = math.sqrt(dx * dx + dy * dy)
@@ -269,7 +270,7 @@ class Enemy(pygame.sprite.Sprite, ABC):
             dx = dx / distance
             dy = dy / distance
             
-            # 更新位置
+            # 更新位置（朝着偏移后的目标移动）
             self.rect.x += dx * self.speed * dt
             self.rect.y += dy * self.speed * dt
             
@@ -562,9 +563,10 @@ class Enemy(pygame.sprite.Sprite, ABC):
             if hasattr(player, 'game') and hasattr(player.game, 'dual_player_system'):
                 # 获取忍者蛙并转移伤害
                 ninja_frog = player.game.dual_player_system.ninja_frog
-                # 计算与忍者蛙的距离（使用中心坐标）
-                enemy_center_x = self.rect.x + self.rect.width / 2
-                enemy_center_y = self.rect.y + self.rect.height / 2
+                # 计算与忍者蛙的距离（使用偏移后的中心坐标）
+                offset_x, offset_y = self._get_collision_offset()
+                enemy_center_x = self.rect.x + self.rect.width / 2 + offset_x
+                enemy_center_y = self.rect.y + self.rect.height / 2 + offset_y
                 dx = enemy_center_x - ninja_frog.world_x
                 dy = enemy_center_y - ninja_frog.world_y
                 distance = (dx**2 + dy**2)**0.5
@@ -574,15 +576,20 @@ class Enemy(pygame.sprite.Sprite, ABC):
                 # 如果在攻击范围内
                 if distance < self.rect.width / 2 + ninja_frog.rect.width / 2:
                     ninja_frog.take_damage(self.damage)
+                    # 让神秘剑客也闪烁
+                    if hasattr(player, 'animation') and hasattr(player.animation, 'start_blinking'):
+                        invincible_duration = player.health_component.invincible_duration
+                        player.animation.start_blinking(invincible_duration)
                     print(f"神秘剑客受到近战攻击，忍者蛙受到 {self.damage} 点伤害")
                     return True
                 else:
                     print(f"忍者蛙不在攻击范围内")
                 return False
         
-        # 计算与玩家的距离（使用中心坐标）
-        enemy_center_x = self.rect.x + self.rect.width / 2
-        enemy_center_y = self.rect.y + self.rect.height / 2
+        # 计算与玩家的距离（使用偏移后的中心坐标）
+        offset_x, offset_y = self._get_collision_offset()
+        enemy_center_x = self.rect.x + self.rect.width / 2 + offset_x
+        enemy_center_y = self.rect.y + self.rect.height / 2 + offset_y
         dx = enemy_center_x - player.world_x
         dy = enemy_center_y - player.world_y
         distance = (dx**2 + dy**2)**0.5
@@ -630,6 +637,19 @@ class Enemy(pygame.sprite.Sprite, ABC):
         self._alive = False
         super().kill()
         
+    def _get_collision_offset(self):
+        """获取碰撞圈的偏移量
+        
+        Returns:
+            tuple: (offset_x, offset_y) 偏移量
+        """
+        if self.type == 'bat':
+            # 蝙蝠的碰撞圈偏移
+            return (-30, -30)  # 往左偏移30像素，往上偏移30像素
+        else:
+            # 其他敌人的碰撞圈偏移
+            return (-20, -20)  # 往左偏移20像素，往上偏移20像素
+    
     def alive(self):
         """返回敌人是否存活
         
