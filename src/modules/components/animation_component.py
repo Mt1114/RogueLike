@@ -151,11 +151,16 @@ class AnimationComponent(Component):
         # 更新闪烁效果
         if self.blinking:
             self.blink_timer -= dt
+            self.blink_duration_timer -= dt  # 更新持续时间计时器
             
             # 更新闪烁状态
             if self.blink_timer <= 0:
                 self.visible = not self.visible
                 self.blink_timer = self.blink_interval
+            
+            # 检查持续时间是否结束
+            if self.blink_duration_timer <= 0:
+                self.stop_blinking()
     
     def get_current_frame(self, flip_x=False):
         """
@@ -205,13 +210,8 @@ class AnimationComponent(Component):
         self.blink_interval = interval
         self.blink_timer = interval
         self.visible = True
-        
-        # 设置定时器在指定时间后关闭闪烁
-        def stop_blinking():
-            self.blinking = False
-            self.visible = True
-            
-        # TODO: 实现定时器功能，或者在上层逻辑中手动关闭闪烁效果
+        self.blink_duration = duration  # 添加持续时间属性
+        self.blink_duration_timer = duration  # 添加持续时间计时器
     
     def stop_blinking(self):
         """停止闪烁效果"""

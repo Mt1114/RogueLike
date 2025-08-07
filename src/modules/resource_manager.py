@@ -313,7 +313,8 @@ class ResourceManager:
                         frame_width: int, frame_height: int, 
                         frame_count: int, row: int = 0,
                         col: int = 0,
-                        frame_duration: float = 0.1, loop: bool = True) -> Animation:
+                        frame_duration: float = 0.1, loop: bool = True,
+                        vertical: bool = False) -> Animation:
         """从精灵表创建动画
         
         Args:
@@ -326,14 +327,21 @@ class ResourceManager:
             col: 精灵表中的起始列号(从0开始)
             frame_duration: 每帧持续时间
             loop: 是否循环播放
+            vertical: 是否为竖着的精灵图
             
         Returns:
             Animation: 动画对象
         """
         frames = []
         for i in range(frame_count):
-            frame = spritesheet.get_sprite((col + i) * frame_width, row * frame_height, 
-                                         frame_width, frame_height)
+            if vertical:
+                # 竖着的精灵图：垂直排列，每帧在y方向上递增
+                frame = spritesheet.get_sprite(col * frame_width, (row + i) * frame_height, 
+                                             frame_width, frame_height)
+            else:
+                # 横着的精灵图：水平排列，每帧在x方向上递增
+                frame = spritesheet.get_sprite((col + i) * frame_width, row * frame_height, 
+                                             frame_width, frame_height)
             frames.append(frame)
         
         animation = Animation(frames, frame_duration, loop)

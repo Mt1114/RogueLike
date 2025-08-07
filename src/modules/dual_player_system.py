@@ -141,6 +141,18 @@ class DualPlayerSystem:
         
         # 禁用神秘剑士的光照能力（通过不调用光照相关方法）
         
+          # 设置忍者蛙的受伤回调，让神秘剑客也闪烁
+        self.ninja_frog.health_component.on_damaged = self._on_ninja_frog_damaged
+        
+    def _on_ninja_frog_damaged(self, amount):
+        """忍者蛙受伤时的回调，让神秘剑客也闪烁"""
+        # 设置忍者蛙的动画为受伤状态
+        self.ninja_frog.animation.set_animation('hurt')
+        
+        # 让神秘剑客也开始闪烁
+        if hasattr(self.mystic_swordsman, 'animation') and hasattr(self.mystic_swordsman.animation, 'start_blinking'):
+            self.mystic_swordsman.animation.start_blinking(2.0)  # 闪烁2秒
+        
     def _init_lighting_system(self):
         """初始化光照系统"""
         self.lighting_manager = LightingManager(

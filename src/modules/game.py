@@ -321,6 +321,8 @@ class Game:
         self.enemy_manager.set_difficulty("normal")  # 设置初始难度
         # 设置波次UI回调函数
         self.enemy_manager.on_round_start = self._on_round_start
+        # 重置soul生成标志
+        self.enemy_manager.reset_soul_spawn_flag()
         self.item_manager = ItemManager()
         self.ammo_supply_manager = AmmoSupplyManager(self)  # 初始化弹药补给管理器
         self.health_supply_manager = HealthSupplyManager(self)  # 初始化生命补给管理器
@@ -519,6 +521,8 @@ class Game:
             self.enemy_manager.enemies.clear()
             self.enemy_manager.current_round = 0
             self.enemy_manager.game_time = 0
+            # 重置soul生成标志
+            self.enemy_manager.reset_soul_spawn_flag()
     
         
         # 重置物品管理器
@@ -755,6 +759,8 @@ class Game:
             self.enemy_manager.game = self  # 设置敌人管理器对游戏对象的引用
             # 设置波次UI回调函数
             self.enemy_manager.on_round_start = self._on_round_start
+            # 重置soul生成标志
+            self.enemy_manager.reset_soul_spawn_flag()
             self.item_manager = ItemManager()
             
             # 恢复游戏状态
@@ -1720,11 +1726,12 @@ class Game:
                     
                     if hasattr(projectile, 'damage'):
                         # 如果神秘剑客受到伤害，让忍者蛙扣血
-                        if target_player.hero_type == "mystic_swordsman" or target_player.hero_type == "role2":
+                        if target_player.hero_type == "role2":  # 神秘剑客被击中
                             self.dual_player_system.ninja_frog.take_damage(projectile.damage)
-                            
-                        else:
+                            print(f"神秘剑客被击中，忍者蛙受到 {projectile.damage} 点伤害")
+                        else:  # 忍者蛙被击中
                             target_player.take_damage(projectile.damage)
+                            print(f"忍者蛙被击中，受到 {projectile.damage} 点伤害")
                             
                     
                     self.enemy_manager.enemy_projectiles.remove(projectile)

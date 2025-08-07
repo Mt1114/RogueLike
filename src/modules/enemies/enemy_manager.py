@@ -1,7 +1,7 @@
 import pygame
 import random
 import math
-from .types import Ghost, Radish, Bat, Slime
+from .types import Ghost, Radish, Bat, Slime, Soul
 from .spawn_marker import SpawnMarker
 import time
 
@@ -32,6 +32,9 @@ class EnemyManager:
         
         # 波次UI回调函数
         self.on_round_start = None
+        
+        # 跟踪是否已经生成过soul敌人
+        self.soul_spawned = False
         
     def set_map_boundaries(self, min_x, min_y, max_x, max_y):
         """设置地图边界
@@ -68,6 +71,17 @@ class EnemyManager:
             enemy = Bat(x, y, enemy_type, self.difficulty, self.difficulty_level)
         elif enemy_type == 'slime':
             enemy = Slime(x, y, enemy_type, self.difficulty, self.difficulty_level)
+        elif enemy_type == 'soul':
+            enemy = Soul(x, y, enemy_type, self.difficulty, self.difficulty_level)
+            # 标记已经生成过soul敌人
+            self.soul_spawned = True
+            # 添加soul出现的警告消息
+            self.round_messages.append({
+                'text': "要当心！！！",
+                'timer': 0,
+                'duration': 3.0,
+                'color': (255, 0, 0)  # 红色
+            })
             
         # 应用波次属性加成
         if enemy and hasattr(self, 'health_multiplier') and hasattr(self, 'damage_multiplier'):
@@ -90,12 +104,6 @@ class EnemyManager:
                 enemy.game = self.game
             self.enemies.append(enemy)
             
-            # 打印调试信息
-            print(f"🎯 生成敌人 - {enemy_type} (难度等级{self.difficulty_level}):")
-            print(f"   位置: ({x}, {y})")
-            print(f"   生命值: {enemy.health}/{enemy.max_health}")
-            print(f"   伤害值: {enemy.damage}")
-            print(f"   移动速度: {enemy.speed}")
             
         return enemy
         
@@ -112,10 +120,7 @@ class EnemyManager:
         self.difficulty_level = max(1, int(self.game_time // 60) + 1)  # 每60秒提升一级
         
         # 如果难度等级发生变化，打印调试信息
-        if self.difficulty_level != old_difficulty_level:
-            print(f"🚀 难度等级提升: {old_difficulty_level} → {self.difficulty_level}")
-            print(f"   游戏时间: {self.game_time:.1f}秒")
-            print(f"   新生成的敌人将获得属性加成")
+       
         
         # 更新敌人子弹
         self._update_enemy_projectiles(dt)
@@ -186,7 +191,7 @@ class EnemyManager:
             
         # 第二波：1:00-2:30，1.5秒生成一个，四个点位总共40个
         elif game_time_minutes >= 1.0 and game_time_minutes < 2.5 and self.current_round == 0:
-            self._start_round(2, "第2波", 1.5, 1.2, 1.2, 40)  # 生成速度加快，属性提升20%
+            self._start_round(2, "第2波", 1.0, 1.2, 1.2, 1200)  # 生成速度加快，属性提升20%
             
         # 第二波结束，进入休息期：2:30-3:00（缩短休息期）
         elif game_time_minutes >= 2.5 and game_time_minutes < 3.0 and self.current_round == 2:
@@ -194,7 +199,7 @@ class EnemyManager:
             
         # 第三波：3:00-5:00，1秒生成一个，四个点位总共120个
         elif game_time_minutes >= 3.0 and game_time_minutes < 5.0 and self.current_round == 0:
-            self._start_round(3, "第3波", 1.0, 1.0, 1.5, 120)  # 生成速度加快，攻击力提升50%
+            self._start_round(3, "第3波", 4.0, 1.0, 1.1, 1200)  # 生成速度加快，攻击力提升50%
             
         # 修复2:00-2:30之间的空白期：如果第二波还在进行，继续生成敌人
         elif game_time_minutes >= 2.0 and game_time_minutes < 2.5 and self.current_round == 2:
@@ -223,7 +228,7 @@ class EnemyManager:
             'color': (255, 255, 0)  # 黄色
         })
         
-        print(f"开始第{round_num}波！生成间隔: {spawn_interval}秒, 生命值倍数: {health_multiplier}, 攻击力倍数: {damage_multiplier}, 最大敌人数: {max_enemies}")
+        
         
         # 触发波次UI显示
         if self.on_round_start:
@@ -232,7 +237,7 @@ class EnemyManager:
     def _end_round(self):
         """结束当前波次"""
         self.current_round = 0
-        print(f"波次结束，进入休息期")
+        
         
         # 添加休息期提示消息
         self.round_messages.append({
@@ -246,12 +251,12 @@ class EnemyManager:
         """游戏结束"""
         self.current_round = -1
         self.round_messages.append({
-            'text': "你安全了！",
+            'text': "好像安全了吧",
             'timer': 0,
             'duration': 5.0,
             'color': (0, 255, 0)  # 绿色
         })
-        print("游戏结束！你安全了！")
+        
         
     def _render_round_messages(self, screen):
         """渲染波次消息"""
@@ -430,6 +435,13 @@ class EnemyManager:
             enemy_type = random.choice(preferred_types)
         elif self.game_time < 10:  # 游戏开始10秒内
             enemy_type = 'slime'
+        
+        elif self.game_time>=120:
+            # 如果还没有生成过soul敌人，可以生成soul
+            available_types = ['ghost', 'radish', 'slime']
+            if not self.soul_spawned:
+                available_types.append('soul')
+            enemy_type = random.choice(available_types)
         else:  # 10秒后可以生成幽灵和萝卜
             enemy_type = random.choice(['ghost', 'radish', 'slime'])
             
@@ -443,6 +455,10 @@ class EnemyManager:
             difficulty (str): 难度级别 ('easy', 'normal', 'hard', 'nightmare')
         """
         self.difficulty = difficulty
+        
+    def reset_soul_spawn_flag(self):
+        """重置soul生成标志，用于重新开始游戏时"""
+        self.soul_spawned = False
             
     def spawn_bat(self, player):
         """在四个角落随机位置生成一个蝙蝠，确保在地图边界内"""

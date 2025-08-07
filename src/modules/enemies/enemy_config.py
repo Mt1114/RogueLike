@@ -28,8 +28,8 @@ DIFFICULTY_MULTIPLIERS = {
 # 敌人等级系数 (游戏时间增加时应用)
 LEVEL_SCALING = {
     "health_per_level": 0.15,  # 每级增加15%生命值
-    "damage_per_level": 0.08,  # 每级增加8%伤害
-    "speed_per_level": 0.03,   # 每级增加3%速度
+    "damage_per_level": 0.1,  # 每级增加8%伤害
+    "speed_per_level": 0.01,   # 每级增加3%速度
 }
 
 # 敌人基础配置
@@ -59,7 +59,7 @@ ENEMY_CONFIGS = {
     # 蝙蝠 - 快速但脆弱的敌人
     "bat": {
         "health": 60,
-        "damage": 4,
+        "damage": 7,
         "speed": 160,
         "score_value": 80,
         "exp_value": 5,        # 击败后获得的经验值（5个敌人升一级）
@@ -80,6 +80,21 @@ ENEMY_CONFIGS = {
         "min_attack_range": 300, # 最小攻击距离
         "attack_cooldown": 2.0,  # 攻击冷却时间(秒)
         "projectile_speed": 180, # 投射物速度
+    },
+    
+    # 灵魂 - 最强大的敌人
+    "soul": {
+        "health": 400,
+        "damage": 10,
+        "speed": 100,
+        "score_value": 150,
+        "exp_value": 200,        
+        "animation_speed": 0.0333,
+        "scale": 1.0,
+        "attack_range": 1800,    # 攻击范围
+        "min_attack_range": 0, # 最小攻击距离
+        "attack_cooldown": 0.5,  # 攻击冷却时间(秒)
+        "projectile_speed": 150, # 投射物速度
     },
     
 

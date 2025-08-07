@@ -493,6 +493,51 @@ class UI:
         # 渲染难度等级文本
         self.screen.blit(difficulty_surface, difficulty_rect)
 
+    def _render_flashlight_mode(self, dual_player_system):
+        """渲染手电筒模式显示
+        
+        Args:
+            dual_player_system: 双人系统实例
+        """
+        if not dual_player_system:
+            return
+            
+        # 获取当前光照模式
+        current_mode = dual_player_system.light_modes[dual_player_system.light_mode]
+        
+        # 模式名称映射（中文）
+        mode_name_map = {
+            "default": "默认模式",
+            "battle": "战斗模式", 
+            "explore": "探索模式",
+            "low_energy": "充能模式"
+        }
+        mode_name = mode_name_map.get(current_mode['name'], current_mode['name'])
+        
+        # 渲染模式文本
+        mode_text = f"手电筒: {mode_name}"
+        mode_surface = self.font.render(mode_text, True, (0, 255, 255))  # 青色
+        mode_rect = mode_surface.get_rect()
+        
+        # 计算位置：左侧，电量下方
+        margin = 20
+        x = margin
+        # 计算电量显示的位置，然后在其下方显示手电筒模式
+        coin_text_rect = self.font.render("0", True, (255, 255, 255)).get_rect()  # 临时获取文本高度
+        energy_y = coin_text_rect.bottom + 5 + 210 + coin_text_rect.height + 10  # 电量显示位置
+        y = energy_y + 430  # 电量下方30像素
+        
+        # 添加背景
+        bg_rect = pygame.Rect(x - 5, y - 2, mode_rect.width + 10, mode_rect.height + 4)
+        bg_surface = pygame.Surface((bg_rect.width, bg_rect.height))
+        bg_surface.set_alpha(150)
+        bg_surface.fill((0, 0, 0))
+        self.screen.blit(bg_surface, bg_rect)
+        
+        # 渲染文本
+        mode_rect.topleft = (x, y)
+        self.screen.blit(mode_surface, mode_rect)
+
     def render(self, player, game_time, game_kill_num, dual_player_system=None, enemy_manager=None):
         screen_width = self.screen.get_width()
         screen_height = self.screen.get_height()
@@ -554,6 +599,8 @@ class UI:
             self._render_ammo_display_left(weapon_player)
             # 显示传送道具数量
             self._render_teleport_info(primary_player)
+            # 渲染手电筒模式
+            self._render_flashlight_mode(dual_player_system)
         else:
             # 单人模式下也显示传送道具数量
             self._render_teleport_info(player)

@@ -556,7 +556,7 @@ class Enemy(pygame.sprite.Sprite, ABC):
 
         
         # 在双人模式下，如果神秘剑客被攻击，伤害转移给忍者蛙
-        if hasattr(player, 'hero_type') and (player.hero_type == "mystic_swordsman" or player.hero_type == "role2"):
+        if hasattr(player, 'hero_type') and player.hero_type == "role2":
 
             # 检查是否有双人系统
             if hasattr(player, 'game') and hasattr(player.game, 'dual_player_system'):
@@ -610,7 +610,7 @@ class Enemy(pygame.sprite.Sprite, ABC):
         
         
         # 在双人模式下，如果神秘剑客被攻击，伤害转移给忍者蛙
-        if hasattr(player, 'hero_type') and (player.hero_type == "mystic_swordsman" or player.hero_type == "role2"):
+        if hasattr(player, 'hero_type') and player.hero_type == "role2":
             
             # 检查是否有双人系统
             if hasattr(player, 'game') and hasattr(player.game, 'dual_player_system'):
