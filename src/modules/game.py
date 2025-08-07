@@ -1132,6 +1132,11 @@ class Game:
             self.fps_counter = 0
             self.fps_timer = 0
         
+        # 更新UI的FPS显示
+        if self.ui:
+            self.ui.update_fps(dt)
+            self.ui.set_fps(self.fps)
+        
         # 保持游戏状态的更新
         if self.in_main_menu:
             return
@@ -1728,10 +1733,10 @@ class Game:
                         # 如果神秘剑客受到伤害，让忍者蛙扣血
                         if target_player.hero_type == "role2":  # 神秘剑客被击中
                             self.dual_player_system.ninja_frog.take_damage(projectile.damage)
-                            print(f"神秘剑客被击中，忍者蛙受到 {projectile.damage} 点伤害")
+                            
                         else:  # 忍者蛙被击中
                             target_player.take_damage(projectile.damage)
-                            print(f"忍者蛙被击中，受到 {projectile.damage} 点伤害")
+                            
                             
                     
                     self.enemy_manager.enemy_projectiles.remove(projectile)

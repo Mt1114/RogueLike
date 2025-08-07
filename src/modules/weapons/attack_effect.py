@@ -27,7 +27,7 @@ class AttackEffect:
         self.is_playing = False
         self.current_frame = 0
         self.animation_timer = 0
-        self.frame_duration = 0.05  # 每帧持续时间（秒）
+        self.frame_duration = 0.03  # 每帧持续时间（秒）
         self.total_duration = self.frame_duration * frame_count
         
         # 特效位置和方向

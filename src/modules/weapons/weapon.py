@@ -40,7 +40,7 @@ class Weapon(pygame.sprite.Sprite):
         
         # 攻击后摇系统
         self.attack_recovery_timer = 0
-        self.attack_recovery_duration = 0.5 if not self.is_melee else 0.3  # 枪械0.5秒，刀0.3秒
+        self.attack_recovery_duration = 0.5 if not self.is_melee else 0.4  # 枪械0.5秒，刀0.3秒
         self.is_in_recovery = False  # 是否处于攻击后摇状态
         
         # 近战攻击状态

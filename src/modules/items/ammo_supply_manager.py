@@ -83,11 +83,9 @@ class AmmoSupplyManager:
                 # 创建新的补给物品
                 supply = AmmoSupply(x, y)
                 self.supplies.append(supply)
-                print(f"✓ 成功生成弹药补给在位置 ({x}, {y})")
+                
                 return
-            else:
-                if attempts < 3:  # 只打印前3次失败的尝试
-                    print(f"✗ 位置 ({x}, {y}) 无效，重新生成...")
+           
                 
             attempts += 1
             

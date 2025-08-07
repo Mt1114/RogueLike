@@ -338,12 +338,7 @@ class EnemyManager:
                         # 注意：光照系统使用的是屏幕坐标，所以需要转换
                         current_in_light = lighting_manager.is_in_light(enemy_screen_x, enemy_screen_y)
                         
-                        # 调试信息（可选）
-                        # print(f"敌人 {enemy.type} 位置: ({enemy_world_x}, {enemy_world_y})")
-                        # print(f"敌人屏幕坐标: ({enemy_screen_x}, {enemy_screen_y})")
-                        # print(f"在光照内: {current_in_light}, 曾经被看到: {enemy.has_been_seen}")
-                        # print(f"光照系统启用: {lighting_manager.is_enabled()}")
-                        # print("---")
+                        
                         
                         # 临时修复：强制显示血条，直到光照系统问题解决
                         enemy.has_been_seen = True

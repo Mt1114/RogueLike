@@ -132,7 +132,7 @@ class Slime(Enemy):
                     direction_y = dy / distance
                     
                     # 发射投射物
-                    print(f"Slime 发射投射物，目标: {target_player.hero_type}")
+                    
                     self._fire_projectile(direction_x, direction_y)
                     
                     # 重置攻击冷却
@@ -162,9 +162,7 @@ class Slime(Enemy):
         # 同时添加到敌人管理器的投射物列表中
         if hasattr(self, 'game') and hasattr(self.game, 'enemy_manager'):
             self.game.enemy_manager.enemy_projectiles.append(projectile)
-            print(f"投射物已添加到enemy_projectiles，当前数量: {len(self.game.enemy_manager.enemy_projectiles)}")
-        else:
-            print(f"无法添加投射物到enemy_projectiles，game或enemy_manager不存在")
+            
         
     def _check_projectile_hit(self, projectile, player):
         """
@@ -195,15 +193,15 @@ class Slime(Enemy):
                     if hasattr(player, 'animation') and hasattr(player.animation, 'start_blinking'):
                         invincible_duration = player.health_component.invincible_duration
                         player.animation.start_blinking(invincible_duration)
-                    print(f"神秘剑客被Slime投射物击中，忍者蛙受到 {projectile.damage} 点伤害")
+                    
                 else:
                     # 如果没有双人系统，直接对神秘剑客造成伤害
                     player.take_damage(projectile.damage)
-                    print(f"神秘剑客被Slime投射物击中，受到 {projectile.damage} 点伤害")
+                    
             else:
                 # 忍者蛙被击中，直接造成伤害
                 player.take_damage(projectile.damage)
-                print(f"忍者蛙被Slime投射物击中，受到 {projectile.damage} 点伤害")
+                
             
             return True
             

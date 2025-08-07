@@ -60,14 +60,6 @@ class Minimap:
             self.bullet_icon = resource_manager.load_image('bullet_map', 'images/ui/bullet.png')
             self.door_icon = resource_manager.load_image('door_map', 'images/ui/door.png')
             
-            print(f"小地图图标加载状态:")
-            print(f"  role1: {self.role1_icon is not None}")
-            print(f"  role2: {self.role2_icon is not None}")
-            print(f"  key: {self.key_icon is not None}")
-            print(f"  heart: {self.heart_icon is not None}")
-            print(f"  transport: {self.transport_icon is not None}")
-            print(f"  bullet: {self.bullet_icon is not None}")
-            print(f"  door: {self.door_icon is not None}")
             
         except Exception as e:
             print(f"加载小地图图标失败: {e}")

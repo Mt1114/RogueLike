@@ -30,6 +30,10 @@ class DualPlayerSystem:
         # 神秘剑士的攻击方向（用于武器渲染）
         self.mystic_attack_direction = (0, 0)
         
+        # 神秘剑士的攻击冷却系统
+        self.mystic_attack_cooldown_timer = 0
+        self.mystic_attack_cooldown_duration = 0.3  # 0.3秒攻击冷却
+        
         # 神秘剑士的临时光圈效果
         self.mystic_flashlight_active = False
         self.mystic_flashlight_timer = 0
@@ -90,14 +94,14 @@ class DualPlayerSystem:
         if not self.mouse_hidden:
             pygame.mouse.set_visible(False)
             self.mouse_hidden = True
-            print("🔸 鼠标已隐藏（游戏进行中）")
+            
     
     def show_mouse_for_ui(self):
         """为UI操作显示鼠标"""
         if self.mouse_hidden:
             pygame.mouse.set_visible(True)
             self.mouse_hidden = False
-            print("🔹 鼠标已显示（UI操作）")
+            
     
     def cleanup(self):
         """清理双人系统，恢复鼠标显示"""
@@ -191,12 +195,12 @@ class DualPlayerSystem:
                 self.mystic_flashlight_timer = self.mystic_flashlight_duration
             # elif event.key == pygame.K_KP5:  # 小键盘5键大招
             #     # 神秘剑士的大招
-            #     print("调试 - 检测到大招按键")
+            #     
             #     if self.mystic_swordsman.hero_type == "role2" and not self.mystic_swordsman.ultimate_active:
-            #         print("调试 - 激活大招")
+            #         
             #         self.mystic_swordsman.activate_ultimate()
             #     else:
-            #         print(f"调试 - 大招条件不满足: hero_type={self.mystic_swordsman.hero_type}, ultimate_active={self.mystic_swordsman.ultimate_active}")
+            #         
             elif event.key == pygame.K_KP0:  # 小键盘0键使用传送道具
                 # 使用传送道具
                 self.use_teleport_item()
@@ -261,6 +265,10 @@ class DualPlayerSystem:
     def _handle_mystic_attack(self, event):
         """处理神秘剑士的攻击"""
         if event.type == pygame.KEYDOWN:
+            # 检查攻击冷却
+            if self.mystic_attack_cooldown_timer > 0:
+                return  # 如果正在冷却中，直接返回
+                
             # 获取神秘剑士的位置
             swordsman_x = self.mystic_swordsman.world_x
             swordsman_y = self.mystic_swordsman.world_y
@@ -309,6 +317,9 @@ class DualPlayerSystem:
                             bullet_weapon.attack_timer = bullet_weapon.attack_interval
                             bullet_weapon._perform_attack(attack_direction[0], attack_direction[1])
                             
+                            # 启动攻击冷却
+                            self.mystic_attack_cooldown_timer = self.mystic_attack_cooldown_duration
+                            
                             # 激活神秘剑士的临时光圈
                             self.mystic_flashlight_active = True
                             self.mystic_flashlight_timer = self.mystic_flashlight_duration
@@ -320,6 +331,9 @@ class DualPlayerSystem:
                         # 重置攻击计时器以允许立即攻击
                         knife_weapon.attack_timer = knife_weapon.attack_interval
                         knife_weapon._perform_melee_attack(attack_direction[0], attack_direction[1])
+                        
+                        # 启动攻击冷却
+                        self.mystic_attack_cooldown_timer = self.mystic_attack_cooldown_duration
                         
                         # 激活神秘剑士的临时光圈（近战攻击也触发）
                         self.mystic_flashlight_active = True
@@ -346,6 +360,10 @@ class DualPlayerSystem:
             self.mystic_flashlight_timer -= dt
             if self.mystic_flashlight_timer <= 0:
                 self.mystic_flashlight_active = False
+                
+        # 更新神秘剑士的攻击冷却计时器
+        if self.mystic_attack_cooldown_timer > 0:
+            self.mystic_attack_cooldown_timer -= dt
                 
         # 更新电量系统
         self._update_energy(dt)

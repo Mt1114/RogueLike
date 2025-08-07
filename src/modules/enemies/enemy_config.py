@@ -85,15 +85,15 @@ ENEMY_CONFIGS = {
     # 灵魂 - 最强大的敌人
     "soul": {
         "health": 400,
-        "damage": 10,
-        "speed": 100,
+        "damage": 50,
+        "speed": 120,
         "score_value": 150,
         "exp_value": 200,        
         "animation_speed": 0.0333,
         "scale": 1.0,
         "attack_range": 1800,    # 攻击范围
         "min_attack_range": 0, # 最小攻击距离
-        "attack_cooldown": 0.5,  # 攻击冷却时间(秒)
+        "attack_cooldown": 0.3,  # 攻击冷却时间(秒)
         "projectile_speed": 150, # 投射物速度
     },
     
@@ -137,12 +137,9 @@ def get_enemy_config(enemy_type, difficulty="normal", level=1):
         config["speed"] *= (1 + LEVEL_SCALING["speed_per_level"] * level_factor)
         
         # 打印调试信息
-        print(f"🔸 敌人属性调整 - {enemy_type} (等级{level}):")
-        print(f"   生命值: {base_health} → {config['health']} (+{LEVEL_SCALING['health_per_level']*100}%/级)")
-        print(f"   伤害值: {base_damage} → {config['damage']} (+{LEVEL_SCALING['damage_per_level']*100}%/级)")
-        print(f"   移动速度: {base_speed} → {config['speed']} (+{LEVEL_SCALING['speed_per_level']*100}%/级)")
+        
     
-    # 确保数值合理
+    # 确保数值合理print
     config["health"] = round(config["health"])
     config["damage"] = round(config["damage"])
     config["speed"] = round(config["speed"])

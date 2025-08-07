@@ -22,7 +22,7 @@ class ProgressionSystem(Component):
         # 经验和等级
         self.level = 1
         self.experience = 0
-        self.exp_to_next_level = 500  # 初始升级需要100经验值（5个敌人）
+        self.exp_to_next_level = 100  # 初始升级需要100经验值（20个敌人）
         self.exp_growth_rate = 1.0  # 经验值增长率（固定）
         
         # 经验值倍率
@@ -71,12 +71,12 @@ class ProgressionSystem(Component):
         self.experience -= self.exp_to_next_level
         
         # 根据等级调整下一级所需经验值
-        if self.level < 10:
-            # 10级前：每5个敌人升一级（每个敌人20经验值）
-            self.exp_to_next_level = 500
+        if self.level < 6:
+            # 10级前：每20个敌人升一级（每个敌人5经验值）
+            self.exp_to_next_level = 100
         else:
-            # 10级后：每10个敌人升一级（每个敌人20经验值）
-            self.exp_to_next_level = 1000
+            # 10级后：每40个敌人升一级（每个敌人5经验值）
+            self.exp_to_next_level = 250
         
         # 播放升级音效
         resource_manager.play_sound("level_up")
@@ -85,9 +85,8 @@ class ProgressionSystem(Component):
         if self.on_level_up:
             self.on_level_up(self.level)
             
-        # 检查是否需要再次升级（如果经验值仍然超过下一级所需）
-        if self.experience >= self.exp_to_next_level:
-            self.level_up()
+        # 移除连续升级逻辑，避免无限递归
+        # 升级应该由外部系统控制，而不是在这里自动触发
             
         return True
     

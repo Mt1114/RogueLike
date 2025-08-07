@@ -36,7 +36,7 @@ class HealthSupplyManager:
         print("生成初始生命补给...")
         for i in range(3):  # 生成3个初始补给
             self.spawn_supply()
-        print(f"初始生命补给生成完成，当前补给数量: {len(self.supplies)}")
+        
         
     def update(self, dt):
         """更新补给管理器"""
@@ -45,19 +45,19 @@ class HealthSupplyManager:
         
         # 检查是否需要生成新的补给
         if self.spawn_timer >= self.spawn_interval:
-            print(f"开始生成 {self.spawn_count} 个生命补给...")
+            
             # 生成1个补给
             for i in range(self.spawn_count):
                 self.spawn_supply()
             self.spawn_timer = 0.0
-            print(f"当前生命补给数量: {len(self.supplies)}")
+            
         
         # 更新所有补给物品
         for supply in self.supplies[:]:  # 使用切片创建副本，避免在迭代时修改列表
             if not supply.update(dt):
                 # 如果补给超时，移除它
                 self.supplies.remove(supply)
-                print(f"生命补给超时移除，剩余补给数量: {len(self.supplies)}")
+                
                 
     def spawn_supply(self):
         """生成一个新的生命补给"""
@@ -80,12 +80,11 @@ class HealthSupplyManager:
                 # 创建补给
                 supply = HealthSupply(x, y)
                 self.supplies.append(supply)
-                print(f"✓ 成功生成生命补给在位置 ({x}, {y})")
+                
                 return
-            else:
-                print(f"✗ 位置 ({x}, {y}) 无效，重新生成...")
+            
         
-        print("警告: 无法找到有效的生命补给生成位置")
+        
         
     def _is_valid_spawn_position(self, x, y):
         """检查位置是否适合生成补给

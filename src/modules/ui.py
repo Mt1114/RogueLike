@@ -1,4 +1,5 @@
 import pygame
+import time
 from .utils import FontManager
 from .resource_manager import resource_manager
 from .upgrade_system import UpgradeManager
@@ -10,6 +11,13 @@ class UI:
         self.font = pygame.font.SysFont('simHei', 24)
         self.small_font = pygame.font.SysFont('simHei', 80)  # 较小的字体用于时间显示
         
+        # FPS相关
+        self.fps_font = pygame.font.SysFont('simHei', 20)  # FPS显示字体
+        self.fps_timer = 0
+        self.fps_counter = 0
+        self.current_fps = 0
+        self.last_fps_update = time.time()
+        
         # UI颜色
         self.exp_bar_color = (0, 255, 255)    # 青色
         self.exp_back_color = (0, 100, 100)   # 深青色
@@ -17,6 +25,7 @@ class UI:
         self.health_back_color = (100, 0, 0)  # 深红色
         self.text_color = (255, 255, 255)     # 白色
         self.coin_color = (255, 215, 0)       # 金色
+        self.fps_color = (0, 255, 0)          # 绿色FPS显示
         
         # UI尺寸和位置
         self.margin = 10  # 减小边距
@@ -77,6 +86,49 @@ class UI:
         
         # 武器模式显示相关
         self.weapon_mode_font = pygame.font.SysFont('simHei', 20)
+        
+    def update_fps(self, dt):
+        """更新FPS计算"""
+        self.fps_counter += 1
+        self.fps_timer += dt
+        
+        # 每秒更新一次FPS显示
+        if self.fps_timer >= 1.0:
+            self.current_fps = self.fps_counter
+            self.fps_counter = 0
+            self.fps_timer = 0
+    
+    def set_fps(self, fps):
+        """设置FPS值（从游戏类获取）"""
+        self.current_fps = fps
+            
+    def _render_fps(self):
+        """渲染FPS显示"""
+        screen_width = self.screen.get_width()
+        
+        # 小地图位置：右上角 (screen_width - 270 - 60, 150)
+        # FPS显示位置：小地图左边，距离小地图10像素
+        minimap_x = screen_width - 270 - 60
+        fps_x = minimap_x - 80  # 小地图左边80像素
+        fps_y = 150  # 与小地图同高度
+        
+        # 渲染FPS文本
+        fps_text = f"FPS: {self.current_fps}"
+        fps_surface = self.fps_font.render(fps_text, True, self.fps_color)
+        
+        # 添加半透明背景
+        text_rect = fps_surface.get_rect()
+        text_rect.topleft = (fps_x, fps_y)
+        
+        # 创建背景矩形
+        bg_rect = pygame.Rect(fps_x - 5, fps_y - 2, text_rect.width + 10, text_rect.height + 4)
+        bg_surface = pygame.Surface((bg_rect.width, bg_rect.height))
+        bg_surface.set_alpha(128)
+        bg_surface.fill((0, 0, 0))
+        self.screen.blit(bg_surface, bg_rect)
+        
+        # 渲染FPS文本
+        self.screen.blit(fps_surface, text_rect)
         
     def _render_ammo_info(self, player):
         """渲染弹药信息
@@ -747,6 +799,9 @@ class UI:
     
         # 渲染难度等级信息
         self._render_difficulty_level(enemy_manager)
+        
+        # 渲染FPS显示
+        self._render_fps()
 
     def _render_heart_health(self, player, screen_width, screen_height):
         """渲染心形血量显示

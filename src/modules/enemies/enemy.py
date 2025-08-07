@@ -471,7 +471,7 @@ class Enemy(pygame.sprite.Sprite, ABC):
         if random.random() < 0.3:
             actual_damage *= 2
             is_critical = True
-            print(f"暴击！伤害翻倍: {amount} -> {actual_damage}")
+        
         
         # 造成伤害
         self.health -= actual_damage
@@ -571,7 +571,7 @@ class Enemy(pygame.sprite.Sprite, ABC):
                 dy = enemy_center_y - ninja_frog.world_y
                 distance = (dx**2 + dy**2)**0.5
                 
-                print(f"与忍者蛙距离: {distance:.1f}")
+                
                 
                 # 如果在攻击范围内
                 if distance < self.rect.width / 2 + ninja_frog.rect.width / 2:
@@ -580,10 +580,9 @@ class Enemy(pygame.sprite.Sprite, ABC):
                     if hasattr(player, 'animation') and hasattr(player.animation, 'start_blinking'):
                         invincible_duration = player.health_component.invincible_duration
                         player.animation.start_blinking(invincible_duration)
-                    print(f"神秘剑客受到近战攻击，忍者蛙受到 {self.damage} 点伤害")
+                   
                     return True
-                else:
-                    print(f"忍者蛙不在攻击范围内")
+                
                 return False
         
         # 计算与玩家的距离（使用偏移后的中心坐标）

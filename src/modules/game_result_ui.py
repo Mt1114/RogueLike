@@ -37,12 +37,7 @@ class GameResultUI:
             self.home_image = resource_manager.load_image('home_ui', 'images/ui/Home_1.png')
             self.give_up_image = resource_manager.load_image('give_up_ui', 'images/ui/GiveUp.png')
             
-            print(f"游戏结果UI图片加载状态:")
-            print(f"  WIN: {self.win_image is not None}")
-            print(f"  LOST: {self.lost_image is not None}")
-            print(f"  AGAIN: {self.again_image is not None}")
-            print(f"  HOME: {self.home_image is not None}")
-            print(f"  GIVE_UP: {self.give_up_image is not None}")
+            
             
         except Exception as e:
             print(f"加载游戏结果UI图片失败: {e}")

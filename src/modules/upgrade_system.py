@@ -93,21 +93,21 @@ class UpgradeManager:
                     PassiveUpgradeLevel(
                         name="迅捷",
                         level=1,
-                        effects={'speed': 0.2},
+                        effects={'speed': 0.1},
                         description="移动速度提升20%",
                         icon_path="images/passives/speed_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="迅捷",
                         level=2,
-                        effects={'speed': 0.5},
+                        effects={'speed': 0.2},
                         description="移动速度提升50%",
                         icon_path="images/passives/speed_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="迅捷",
                         level=3,
-                        effects={'speed': 1},
+                        effects={'speed': 0.3},
                         description="移动速度提升100%",
                         icon_path="images/passives/speed_up_32x32.png"
                     )
@@ -127,15 +127,15 @@ class UpgradeManager:
                     PassiveUpgradeLevel(
                         name="生命回复",
                         level=2,
-                        effects={'health_regen': 2},
-                        description="每秒回复2点生命值",
+                        effects={'health_regen': 1.5},
+                        description="每秒回复1.5点生命值",
                         icon_path="images/passives/heal_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="生命回复",
                         level=3,
-                        effects={'health_regen': 5},
-                        description="每秒回复3点生命值",
+                        effects={'health_regen': 2},
+                        description="每秒回复2点生命值",
                         icon_path="images/passives/heal_up_32x32.png"
                     )
                 ]

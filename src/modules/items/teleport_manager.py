@@ -40,12 +40,12 @@ class TeleportManager:
                 teleport_item = TeleportItem(x, y)
                 self.teleport_items.append(teleport_item)
                 self.spawned_count += 1
-                print(f"生成传送道具 #{self.spawned_count} 在位置 ({x}, {y})")
+                
                 return teleport_item
                 
             attempts += 1
             
-        print("无法找到合适的传送道具生成位置")
+        
         
     def _is_position_blocked(self, x, y):
         """检查位置是否被阻挡"""

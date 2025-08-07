@@ -10,7 +10,7 @@ class KeyManager:
         self.keys = []  # 当前存在的钥匙列表
         self.spawned_keys = 0  # 已生成的钥匙数量
         self.max_keys = 3  # 最大钥匙数量
-        self.key_spawn_times = [0.0, 60.0, 210.0]  # 钥匙生成时间点（秒）
+        self.key_spawn_times = [0.0, 60.0,120.0]  # 钥匙生成时间点（秒）
         self.spawned_keys_set = set()  # 记录已生成的钥匙时间点
         
     def update(self, dt, game_time):
@@ -27,7 +27,7 @@ class KeyManager:
                 len(self.keys) < self.max_keys):
                 self._spawn_key(i + 1)  # 传递钥匙编号
                 self.spawned_keys_set.add(i)
-                print(f"第{i + 1}把钥匙生成，游戏时间: {game_time:.1f}秒")
+                
     
     def _spawn_key(self, key_id):
         """生成一把新钥匙
@@ -63,10 +63,10 @@ class KeyManager:
                 if self.game.item_manager:
                     self.game.item_manager.items.append(key_item)
                 
-                print(f"钥匙 {key_id} 生成在位置 ({x}, {y})")
+                
                 return
         
-        print("警告：无法找到有效的钥匙生成位置")
+       
     
     def _is_valid_position(self, x, y, collision_tiles):
         """检查位置是否有效（不与墙壁碰撞）
@@ -124,7 +124,7 @@ class KeyManager:
     def on_key_collected(self):
         """当钥匙被拾取时调用"""
         # 钥匙被拾取，不需要生成新的钥匙（钥匙按时间生成）
-        print(f"钥匙被拾取，当前已生成: {len(self.spawned_keys_set)}")
+        
         
     def get_next_key_spawn_time(self, game_time):
         """获取下一把钥匙的生成时间
