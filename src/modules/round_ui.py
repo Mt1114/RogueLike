@@ -34,7 +34,7 @@ class RoundUI:
             round_number: 波次编号（1、2、3）
         """
         if round_number not in [1, 2, 3]:
-            print(f"无效的波次编号: {round_number}")
+            
             return
         
 
@@ -62,7 +62,7 @@ class RoundUI:
         # 获取当前波次的图片
         round_image = self.round_images.get(self.current_round)
         if not round_image:
-            print(f"波次图片未加载: Round{self.current_round}")
+            
             return
         
         # 计算淡入淡出效果

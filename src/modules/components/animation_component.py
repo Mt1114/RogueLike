@@ -102,7 +102,7 @@ class AnimationComponent(Component):
                 frame = resource_manager.load_image(f"{hero_type}_{anim_name}_frame_{i}", frame_path)
                 frames.append(frame)
             except:
-                print(f"无法加载帧文件: {frame_path}")
+                
                 # 如果加载失败，使用第一帧作为替代
                 if i == 1:
                     frame = resource_manager.load_image(f"{hero_type}_{anim_name}_frame_{i}", base_path)

@@ -249,7 +249,7 @@ class Weapon(pygame.sprite.Sprite):
             # 消耗弹药（只有远程武器）
             if not self.is_melee:
                 self.ammo -= 1
-                print(f"弹药剩余: {self.ammo}")
+                
             
     def melee_attack(self, screen):
         """近战攻击（K键触发）

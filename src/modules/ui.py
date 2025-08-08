@@ -40,9 +40,9 @@ class UI:
         try:
             self.teleport_icon = resource_manager.load_image('teleport_icon', 'images/ui/transport.png')
             self.teleport_icon = pygame.transform.scale(self.teleport_icon, (73, 64))  # 调整传送道具图标大小
-            print("传送道具图标加载成功")
+            
         except Exception as e:
-            print(f"传送道具图标加载失败: {e}")
+            
             # 创建一个默认的传送道具图标
             self.teleport_icon = pygame.Surface((73, 64), pygame.SRCALPHA)
             pygame.draw.circle(self.teleport_icon, (0, 255, 255), (36, 32), 30)  # 青色圆圈
@@ -52,9 +52,9 @@ class UI:
         try:
             self.heart_icon = resource_manager.load_image('heart_icon', 'images/ui/heart_icon.png')
             self.heart_icon = pygame.transform.scale(self.heart_icon, (32, 32))  # 调整心形图标大小
-            print("心形血量图标加载成功")
+            
         except Exception as e:
-            print(f"心形血量图标加载失败: {e}")
+            
             # 创建一个默认的心形图标
             self.heart_icon = pygame.Surface((32, 32), pygame.SRCALPHA)
             pygame.draw.circle(self.heart_icon, (255, 0, 0), (16, 16), 15)  # 红色圆圈作为替代
@@ -509,15 +509,14 @@ class UI:
             icon_rect.centery = teleport_rect.centery  # 垂直居中对齐
             self.screen.blit(self.teleport_icon, icon_rect)
             
-            # print("传送道具图标为空，无法渲染")
-            # 绘制一个简单的测试图标
+            
             test_icon = pygame.Surface((73, 64), pygame.SRCALPHA)
             pygame.draw.circle(test_icon, (255, 0, 0), (36, 32), 30)  # 红色圆圈
             test_rect = test_icon.get_rect()
             test_rect.right = teleport_rect.left - 10
             test_rect.centery = teleport_rect.centery
             self.screen.blit(test_icon, test_rect)
-            # print("使用测试图标")
+            
         
         # 渲染文本（居中显示）
         teleport_rect.center = (screen_center_x, screen_center_y)

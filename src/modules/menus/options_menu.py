@@ -48,13 +48,13 @@ class OptionsMenu:
                     scaled_image = pygame.transform.scale(image, (new_width, new_height))
                     self.detail_images.append(scaled_image)
                 else:
-                    print(f"无法加载图片: {image_path}")
+                    
                     # 创建一个占位符图片
                     placeholder = pygame.Surface((400, 300))
                     placeholder.fill((100, 100, 100))
                     self.detail_images.append(placeholder)
             except Exception as e:
-                print(f"加载图片 {i} 时出错: {e}")
+                
                 # 创建一个占位符图片
                 placeholder = pygame.Surface((400, 300))
                 placeholder.fill((100, 100, 100))

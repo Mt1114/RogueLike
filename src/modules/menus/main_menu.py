@@ -36,7 +36,7 @@ class MainMenu:
             self.background = resource_manager.load_image('menu_background', 'images/ui/Home_page.png')
             self.background = pygame.transform.scale(self.background, (screen.get_width(), screen.get_height()))
         except Exception as e:
-            print(f"加载背景图片失败: {e}")
+            
             self.background = None
             
         # 加载按钮图片
@@ -52,7 +52,7 @@ class MainMenu:
             self.options_button = pygame.transform.scale(self.options_button, (button_width, button_height))
             self.quit_button = pygame.transform.scale(self.quit_button, (button_width, button_height))
         except Exception as e:
-            print(f"加载按钮图片失败: {e}")
+            
             self.start_button = None
             self.options_button = None
             self.quit_button = None
@@ -65,7 +65,7 @@ class MainMenu:
             logo_height = 300
             self.logo = pygame.transform.scale(self.logo, (logo_width, logo_height))
         except Exception as e:
-            print(f"加载logo图片失败: {e}")
+            
             self.logo = None
             
     def handle_event(self, event):

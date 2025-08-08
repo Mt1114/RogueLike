@@ -157,11 +157,10 @@ class Game:
             if self.light_cursor:
                 # 缩放光标到更大尺寸（从32x32增加到48x48）
                 self.light_cursor = pygame.transform.scale(self.light_cursor, (48, 48))
-                print("战斗鼠标光标加载成功")
-            else:
-                print("战斗鼠标光标加载失败")
+                
+            
         except Exception as e:
-            print(f"无法加载战斗鼠标光标: {e}")
+            
             self.light_cursor = None
         
     def _init_lighting_system(self):
@@ -387,7 +386,7 @@ class Game:
         # 设置战斗中的鼠标光标
         if self.light_cursor:
             pygame.mouse.set_visible(False)  # 隐藏默认鼠标光标
-            print("设置战斗鼠标光标")
+            
         
         # 播放背景音乐
         resource_manager.play_music("background", loops=-1)
@@ -398,7 +397,7 @@ class Game:
         Args:
             round_number: 波次编号（1、2、3）
         """
-        print(f"波次开始回调: Round{round_number}")
+        
         if self.round_ui:
             self.round_ui.show_round(round_number)
         
@@ -411,7 +410,7 @@ class Game:
         
         # 恢复默认鼠标光标
         pygame.mouse.set_visible(True)
-        print("恢复默认鼠标光标")
+        
         
     def start_new_game(self):
         """显示地图和英雄选择界面"""
@@ -498,7 +497,7 @@ class Game:
             self.dual_player_system.ninja_frog.movement.velocity = pygame.math.Vector2(0, 0)
             self.dual_player_system.mystic_swordsman.movement.direction = pygame.math.Vector2(0, 0)
             self.dual_player_system.mystic_swordsman.movement.velocity = pygame.math.Vector2(0, 0)
-            print("双人模式移动状态已重置")
+           
             
         elif self.player:
             # 单人模式：重置玩家位置
@@ -522,11 +521,11 @@ class Game:
             # 重置移动方向和速度
             self.player.movement.direction = pygame.math.Vector2(0, 0)
             self.player.movement.velocity = pygame.math.Vector2(0, 0)
-            print("单人模式移动状态已重置")
+            
         
         # 增加全局关卡
         self.global_level += 1
-        print(f"进入第 {self.global_level} 关，怪物强度提升30%")
+        
         
         # 重置敌人管理器
         if self.enemy_manager:
@@ -542,45 +541,45 @@ class Game:
         # 重置物品管理器
         if self.item_manager:
             self.item_manager.items.clear()
-            print("物品管理器已重置")
+            
         
         # 重置钥匙管理器
         if self.key_manager:
             self.key_manager.keys.clear()
             self.key_manager.spawned_keys_set.clear()
-            print("钥匙管理器已重置")
+            
         
         # 重置逃生门状态
         if self.escape_door:
             self.escape_door.reset()
-            print("逃生门已重置")
+            
         
         # 重置弹药补给管理器
         if self.ammo_supply_manager:
             self.ammo_supply_manager.supplies.clear()
-            print("弹药补给管理器已重置")
+            
         
         # 重置生命补给管理器
         if self.health_supply_manager:
             self.health_supply_manager.supplies.clear()
-            print("生命补给管理器已重置")
+            
         
         # 小地图已在load_map中重新创建，无需额外处理
         
         # 重置升级系统
         if self.upgrade_manager:
             self.upgrade_manager.reset()
-            print("升级系统已重置")
+            
         
         # 重置武器管理器
         if hasattr(self, 'weapon_manager') and self.weapon_manager:
             self.weapon_manager.reset()
-            print("武器管理器已重置")
+            
         
         # 重置被动技能管理器
         if hasattr(self, 'passive_manager') and self.passive_manager:
             self.passive_manager.reset()
-            print("被动技能管理器已重置")
+            
         
         # 重置相机位置
         if self.dual_player_system:
@@ -598,7 +597,7 @@ class Game:
         # 设置战斗中的鼠标光标
         if self.light_cursor:
             pygame.mouse.set_visible(False)  # 隐藏默认鼠标光标
-            print("设置战斗鼠标光标")
+            
         
         print(f"下一关 {next_map} 初始化完成")
             
@@ -616,14 +615,14 @@ class Game:
                 screen_width = self.screen.get_width()
                 screen_height = self.screen.get_height()
                 self.minimap = Minimap(map_width, map_height, screen_width, screen_height)
-                print(f"小地图已重新创建，适应新地图尺寸: {map_width}x{map_height}")
+                
             
             # 重新创建逃生门
             from .items.escape_door import EscapeDoor
             door_x = map_width - 100  # 地图右上角X坐标
             door_y = 100  # 地图右上角Y坐标
             self.escape_door = EscapeDoor(door_x, door_y)
-            print(f"逃生门已重新创建，位置: ({door_x}, {door_y})")
+            
             
             # 根据地图尺寸设置玩家的起始位置和边界
             if self.player:
@@ -672,7 +671,7 @@ class Game:
             # 加载玩家数据
             player_data = save_data.get('player_data', {})
             if not player_data:
-                print("存档数据损坏：缺少玩家数据")
+                
                 return False
                 
             # 创建新的玩家实例，使用存档中的英雄类型
@@ -816,12 +815,12 @@ class Game:
             # 设置战斗中的鼠标光标
             if self.light_cursor:
                 pygame.mouse.set_visible(False)  # 隐藏默认鼠标光标
-                print("加载存档：设置战斗鼠标光标")
+                
             
             return True
             
         except Exception as e:
-            print(f"加载存档时出错: {e}")
+            
             # 如果加载失败，重置到初始状态
             self.start_new_game()
             return False
@@ -857,8 +856,7 @@ class Game:
                     if self.load_game_state(action):
                         self.in_main_menu = False
                         self.load_menu.hide()
-                    else:
-                        print("加载存档失败")
+                    
                 return
             
             # 处理主菜单事件
@@ -881,8 +879,7 @@ class Game:
                 if self.load_game_state(action):
                     self.load_menu.hide()
                     self.paused = False  # 取消暂停状态
-                else:
-                    print("加载存档失败")
+                
             return True
             
         # 处理保存菜单事件
@@ -1236,7 +1233,7 @@ class Game:
                 result = self.level_transition.update(dt)
                 if result == "next_level":
                     # 关卡过渡动画结束，进入下一关
-                    print(f"关卡过渡动画结束，进入下一关: {self.level_transition.next_map}")
+                    
                     self._start_next_level(self.level_transition.next_map)
                 return
             else:

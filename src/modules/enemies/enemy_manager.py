@@ -192,28 +192,34 @@ class EnemyManager:
             enemy.update(dt, player, second_player)
             
     def _update_round_system(self, dt, player):
-        """更新波次系统"""
+        """更新波次系统，根据关卡数调整怪物生成速度"""
         game_time_minutes = self.game_time / 60.0
         
-        # 第一波：0:00-0:30，2.5秒生成一个，四个点位总共24个
+        # 根据关卡数计算生成间隔倍数
+        spawn_speed_multiplier = self._get_spawn_speed_multiplier()
+        
+        # 第一波：0:00-0:30，2.5秒生成一个
         if game_time_minutes >= 0 and game_time_minutes < 0.5 and self.current_round == 0:
-            self._start_round(1, "第1波", 2.5, 1.0, 1.0, 1200)
+            adjusted_interval = 2.5 / spawn_speed_multiplier
+            self._start_round(1, f"第1波 (关卡{self.global_level})", adjusted_interval, 1.0, 1.0, 840)  # 1200 * 0.7 = 840
             
-        # 第一波结束，进入休息期：0:30-1:00（缩短休息期）
+        # 第一波结束，进入休息期：0:30-1:00
         elif game_time_minutes >= 0.5 and game_time_minutes < 1.0 and self.current_round == 1:
             self._end_round()
             
-        # 第二波：1:00-2:30，1.5秒生成一个，四个点位总共40个
+        # 第二波：1:00-2:30，1.0秒生成一个
         elif game_time_minutes >= 1.0 and game_time_minutes < 2.5 and self.current_round == 0:
-            self._start_round(2, "第2波", 1.0, 1.2, 1.2, 1200)  # 生成速度加快，属性提升20%
+            adjusted_interval = 1.0 / spawn_speed_multiplier
+            self._start_round(2, f"第2波 (关卡{self.global_level})", adjusted_interval, 1.2, 1.2, 840)  # 1200 * 0.7 = 840
             
-        # 第二波结束，进入休息期：2:30-3:00（缩短休息期）
+        # 第二波结束，进入休息期：2:30-3:00
         elif game_time_minutes >= 2.5 and game_time_minutes < 3.0 and self.current_round == 2:
             self._end_round()
             
-        # 第三波：3:00-5:00，1秒生成一个，四个点位总共120个
+        # 第三波：3:00-5:00，1.0秒生成一个
         elif game_time_minutes >= 3.0 and game_time_minutes < 5.0 and self.current_round == 0:
-            self._start_round(3, "第3波", 4.0, 1.0, 1.1, 1200)  # 生成速度加快，攻击力提升50%
+            adjusted_interval = 1.0 / spawn_speed_multiplier
+            self._start_round(3, f"第3波 (关卡{self.global_level})", adjusted_interval, 1.0, 1.1, 840)  # 1200 * 0.7 = 840
             
         # 修复2:00-2:30之间的空白期：如果第二波还在进行，继续生成敌人
         elif game_time_minutes >= 2.0 and game_time_minutes < 2.5 and self.current_round == 2:
@@ -223,7 +229,22 @@ class EnemyManager:
         # 游戏结束：5:00后
         elif game_time_minutes >= 5.0 and self.current_round != -1:
             self._end_game()
-            
+    
+    def _get_spawn_speed_multiplier(self):
+        """根据关卡数获取生成速度倍数
+        
+        Returns:
+            float: 生成速度倍数
+        """
+        if self.global_level == 1:
+            return 1.0  # 第一关：基础速度
+        elif self.global_level == 2:
+            return 2.0  # 第二关：2倍速度
+        elif self.global_level >= 3:
+            return 3.0  # 第三关及以上：3倍速度
+        else:
+            return 1.0  # 默认基础速度
+        
     def _start_round(self, round_num, message, spawn_interval, health_multiplier, damage_multiplier, max_enemies=None):
         """开始新波次"""
         self.current_round = round_num
@@ -316,7 +337,7 @@ class EnemyManager:
         # 渲染出生点标记
         for marker in self.spawn_markers[:]:  # 使用切片复制避免在迭代时修改
             marker.update(0.016)  # 假设60FPS
-            if marker.duration <= 0:
+            if marker.timer >= marker.duration:  # 修复：检查timer而不是duration
                 self.spawn_markers.remove(marker)
             else:
                 marker.render(screen, camera_x, camera_y, screen_center_x, screen_center_y)
@@ -352,31 +373,13 @@ class EnemyManager:
                         # 注意：光照系统使用的是屏幕坐标，所以需要转换
                         current_in_light = lighting_manager.is_in_light(enemy_screen_x, enemy_screen_y)
                         
-                        # 调试信息（可选）
-                        # print(f"敌人 {enemy.type} 位置: ({enemy_world_x}, {enemy_world_y})")
-                        # print(f"敌人屏幕坐标: ({enemy_screen_x}, {enemy_screen_y})")
-                        # print(f"在光照内: {current_in_light}, 曾经被看到: {enemy.has_been_seen}")
-                        # print(f"光照系统启用: {lighting_manager.is_enabled()}")
-                        # print("---")
+                       
                         
                         # 临时修复：强制显示血条，直到光照系统问题解决
                         enemy.has_been_seen = True
                         enemy.render(screen, screen_x, screen_y, show_health_bar=True)
                         
-                        # 原始逻辑（暂时注释掉）
-                        # if current_in_light:
-                        #     # 在光照内时，标记为已看到，显示怪物和血条
-                        #     enemy.has_been_seen = True
-                        #     enemy.render(screen, screen_x, screen_y, show_health_bar=True)
-                        # elif enemy.has_been_seen:
-                        #     # 曾经被看到过但当前不在光照内，显示怪物和血条
-                        #     enemy.render(screen, screen_x, screen_y, show_health_bar=True)
-                        # else:
-                        #     # 如果从未被看到过且当前不在光照内，仍然渲染敌人（但可能半透明）
-                        #     # 这样可以避免"看不见但能攻击"的问题
-                        #     enemy.render(screen, screen_x, screen_y, show_health_bar=False)
-                        
-                        # 记录最后检测位置和光照状态
+                       
                         enemy._last_light_check = time.time()
                         enemy._last_light_x = enemy.rect.centerx
                         enemy._last_light_y = enemy.rect.centery
@@ -402,7 +405,6 @@ class EnemyManager:
                     enemy.render(screen, screen_x, screen_y, show_health_bar=True)
                 
                 # 显示碰撞圈（除了soul类型）
-                # 注释掉怪物光圈显示
                 # if enemy.type != 'soul':
                 #     self._render_collision_circle(screen, enemy, screen_x, screen_y)
         
@@ -414,7 +416,7 @@ class EnemyManager:
             self.enemies.remove(enemy)
             
     def random_spawn_enemy(self, player, preferred_types=None):
-        """在四个角落随机位置生成敌人，确保在地图边界内
+        """在多个位置随机生成敌人，根据关卡数增加出生点数量
         
         Args:
             player: 玩家对象
@@ -425,19 +427,36 @@ class EnemyManager:
             
         min_x, min_y, max_x, max_y = self.map_boundaries
         
-        # 定义四个角落的生成区域（距离边界100像素，调整为1倍缩放）
+        # 基础四个角落的生成区域
         corner_offset = 100
-        corners = [
+        base_corners = [
             (min_x + corner_offset, min_y + corner_offset),  # 左上角
             (max_x - corner_offset, min_y + corner_offset),  # 右上角
             (min_x + corner_offset, max_y - corner_offset),  # 左下角
             (max_x - corner_offset, max_y - corner_offset)   # 右下角
         ]
         
-        # 随机选择一个角落
-        spawn_x, spawn_y = random.choice(corners)
+        # 根据关卡数增加出生点
+        spawn_points = base_corners.copy()
         
-        # 在选定的角落周围添加一些随机偏移（±50像素）
+        if self.global_level >= 2:
+            # 第二关：增加8个随机出生点 + 1个中间出生点
+            additional_points = self._generate_additional_spawn_points(8, min_x, min_y, max_x, max_y)
+            middle_points = self._generate_middle_spawn_points(1, min_x, min_y, max_x, max_y)
+            spawn_points.extend(additional_points)
+            spawn_points.extend(middle_points)
+            
+        if self.global_level >= 3:
+            # 第三关：再增加20个随机出生点 + 4个中间出生点
+            additional_points = self._generate_additional_spawn_points(20, min_x, min_y, max_x, max_y)
+            middle_points = self._generate_middle_spawn_points(4, min_x, min_y, max_x, max_y)
+            spawn_points.extend(additional_points)
+            spawn_points.extend(middle_points)
+        
+        # 随机选择一个出生点
+        spawn_x, spawn_y = random.choice(spawn_points)
+        
+        # 在选定的位置周围添加一些随机偏移（±50像素）
         spawn_x += random.uniform(-50, 50)
         spawn_y += random.uniform(-50, 50)
         
@@ -466,6 +485,61 @@ class EnemyManager:
             
         self.spawn_enemy(enemy_type, spawn_x, spawn_y)
         return True  # 成功生成敌人
+    
+    def _generate_additional_spawn_points(self, count, min_x, min_y, max_x, max_y):
+        """生成额外的随机出生点（边缘区域）
+        
+        Args:
+            count: 要生成的出生点数量
+            min_x, min_y, max_x, max_y: 地图边界
+            
+        Returns:
+            list: 出生点坐标列表
+        """
+        spawn_points = []
+        margin = 150  # 距离边界的边距
+        
+        for _ in range(count):
+            # 在地图边缘区域随机生成位置
+            x = random.uniform(min_x + margin, max_x - margin)
+            y = random.uniform(min_y + margin, max_y - margin)
+            spawn_points.append((x, y))
+            
+        return spawn_points
+    
+    def _generate_middle_spawn_points(self, count, min_x, min_y, max_x, max_y):
+        """生成中间的出生点
+        
+        Args:
+            count: 要生成的出生点数量
+            min_x, min_y, max_x, max_y: 地图边界
+            
+        Returns:
+            list: 出生点坐标列表
+        """
+        spawn_points = []
+        
+        # 计算地图中心区域
+        center_x = (min_x + max_x) / 2
+        center_y = (min_y + max_y) / 2
+        
+        # 中心区域的大小（地图的1/3）
+        center_width = (max_x - min_x) / 3
+        center_height = (max_y - min_y) / 3
+        
+        # 中心区域的边界
+        center_min_x = center_x - center_width / 2
+        center_max_x = center_x + center_width / 2
+        center_min_y = center_y - center_height / 2
+        center_max_y = center_y + center_height / 2
+        
+        for _ in range(count):
+            # 在中心区域随机生成位置
+            x = random.uniform(center_min_x, center_max_x)
+            y = random.uniform(center_min_y, center_max_y)
+            spawn_points.append((x, y))
+            
+        return spawn_points
             
     def set_difficulty(self, difficulty):
         """设置游戏难度
@@ -484,7 +558,6 @@ class EnemyManager:
         self.global_level = global_level
         # 计算关卡强度倍数：每关增加30%
         self.level_strength_multiplier = 1.0 + (global_level - 1) * 0.3
-        print(f"设置全局关卡: {global_level}, 强度倍数: {self.level_strength_multiplier:.2f}")
         
     def get_level_strength_multiplier(self):
         """获取当前关卡强度倍数"""

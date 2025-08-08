@@ -94,7 +94,7 @@ class TeleportItem(Item):
             # 如果神秘剑客就在忍者蛙位置，稍微偏移一点
             self.mystic_target_pos = (ninja_x + 0, ninja_y)
             
-        print(f"传送启动！神秘剑客从 {self.mystic_start_pos} 传送到 {self.mystic_target_pos}")
+        
         return True
     
     def update_teleport(self, dt, dual_player_system):
@@ -122,7 +122,7 @@ class TeleportItem(Item):
             self.teleport_timer = 0
             self.mystic_start_pos = None
             self.mystic_target_pos = None
-            print("传送完成！")
+            
             
     def is_teleport_active(self):
         """检查是否正在传送"""

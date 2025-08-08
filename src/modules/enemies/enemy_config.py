@@ -136,11 +136,7 @@ def get_enemy_config(enemy_type, difficulty="normal", level=1):
         config["damage"] *= (1 + LEVEL_SCALING["damage_per_level"] * level_factor)
         config["speed"] *= (1 + LEVEL_SCALING["speed_per_level"] * level_factor)
         
-        # 打印调试信息
-        print(f"🔸 敌人属性调整 - {enemy_type} (等级{level}):")
-        print(f"   生命值: {base_health} → {config['health']} (+{LEVEL_SCALING['health_per_level']*100}%/级)")
-        print(f"   伤害值: {base_damage} → {config['damage']} (+{LEVEL_SCALING['damage_per_level']*100}%/级)")
-        print(f"   移动速度: {base_speed} → {config['speed']} (+{LEVEL_SCALING['speed_per_level']*100}%/级)")
+        
     
     # 确保数值合理
     config["health"] = round(config["health"])
