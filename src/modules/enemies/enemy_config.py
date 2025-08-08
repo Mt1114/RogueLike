@@ -84,8 +84,8 @@ ENEMY_CONFIGS = {
     
     # 灵魂 - 最强大的敌人
     "soul": {
-        "health": 1000,
-        "damage": 50,
+        "health": 400,
+        "damage": 30,
         "speed": 100,
         "score_value": 150,
         "exp_value": 200,        

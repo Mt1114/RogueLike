@@ -1797,8 +1797,8 @@ class Game:
                     projectile_x = getattr(projectile, 'world_x', getattr(projectile, 'x', 0))
                     projectile_y = getattr(projectile, 'world_y', getattr(projectile, 'y', 0))
                     
-                    dx = enemy.rect.x - projectile_x
-                    dy = enemy.rect.y - projectile_y
+                    dx = enemy.rect.centerx - projectile_x
+                    dy = enemy.rect.centery - projectile_y
                     distance = (dx**2 + dy**2)**0.5
                     
                     if distance < enemy.rect.width / 2 + projectile.rect.width / 2:
@@ -1894,8 +1894,8 @@ class Game:
                 for enemy in self.enemy_manager.enemies:
                     # 首先使用矩形做快速检测
                     # 计算世界坐标系中的距离
-                    dx = enemy.rect.x - projectile.world_x
-                    dy = enemy.rect.y - projectile.world_y
+                    dx = enemy.rect.centerx - projectile.world_x
+                    dy = enemy.rect.centery - projectile.world_y
                     distance = (dx**2 + dy**2)**0.5
                     
                     if distance < enemy.rect.width / 2 + projectile.rect.width / 2:

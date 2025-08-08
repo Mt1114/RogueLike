@@ -57,6 +57,16 @@ def build_exe():
         print("资源文件检查失败，请确保assets文件夹完整")
         return False
     
+    # 检查图标文件
+    icon_path = "assets/images/ui/icon.png"
+    if not os.path.exists(icon_path):
+        print(f"警告：图标文件不存在: {icon_path}")
+        print("将使用默认图标")
+        icon_param = []
+    else:
+        print(f"找到图标文件: {icon_path}")
+        icon_param = ["--icon=" + icon_path]
+    
     # 清理之前的构建文件
     if os.path.exists("build"):
         shutil.rmtree("build")
@@ -95,6 +105,9 @@ def build_exe():
         "--collect-all=numpy",
         "src/main.py"  # 主程序文件
     ]
+    
+    # 添加图标参数
+    cmd.extend(icon_param)
     
     print("开始打包游戏...")
     print("打包命令:", " ".join(cmd))

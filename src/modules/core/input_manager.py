@@ -71,7 +71,7 @@ class InputManager:
         
         # 通用控制
         self.add_action("pause", [pygame.K_ESCAPE])
-        self.add_action("toggle_lighting", [pygame.K_l])
+        self.add_action("toggle_lighting", [pygame.K_b])
         self.add_action("debug_mode", [pygame.K_F1])
         
     def add_action(self, name: str, keys: list = None, mouse_buttons: list = None):

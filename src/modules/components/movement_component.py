@@ -159,6 +159,53 @@ class MovementComponent(Component):
         if not self.enabled:
             return
             
+        # 根据角色类型使用不同的按键配置
+        keys = pygame.key.get_pressed()
+        
+        # 检查角色类型
+        hero_type = getattr(self.owner, 'hero_type', 'ninja_frog')
+        
+        if hero_type == "ninja_frog":
+            # 忍者蛙使用方向键
+            self.moving['up'] = keys[pygame.K_UP]
+            self.moving['down'] = keys[pygame.K_DOWN]
+            self.moving['left'] = keys[pygame.K_LEFT]
+            self.moving['right'] = keys[pygame.K_RIGHT]
+            
+            # 更新角色朝向
+            if keys[pygame.K_LEFT]:
+                self.facing_right = False
+            elif keys[pygame.K_RIGHT]:
+                self.facing_right = True
+                
+        elif hero_type == "role2":
+            # 神秘剑客使用WASD
+            self.moving['up'] = keys[pygame.K_w]
+            self.moving['down'] = keys[pygame.K_s]
+            self.moving['left'] = keys[pygame.K_a]
+            self.moving['right'] = keys[pygame.K_d]
+            
+            # 更新角色朝向
+            if keys[pygame.K_a]:
+                self.facing_right = False
+            elif keys[pygame.K_d]:
+                self.facing_right = True
+        else:
+            # 默认使用WASD
+            self.moving['up'] = keys[pygame.K_w]
+            self.moving['down'] = keys[pygame.K_s]
+            self.moving['left'] = keys[pygame.K_a]
+            self.moving['right'] = keys[pygame.K_d]
+            
+            # 更新角色朝向
+            if keys[pygame.K_a]:
+                self.facing_right = False
+            elif keys[pygame.K_d]:
+                self.facing_right = True
+            
+        # 更新移动方向
+        self._update_movement_direction()
+        
         # 计算速度
         self.velocity = self.direction * self.speed
         

@@ -192,7 +192,7 @@ class VisionSystem:
         end_angle = self.direction + self.half_angle
         
         # 生成扇形边缘的点
-        num_points = getattr(self, 'ray_count', 16)  # 使用配置的光线数量
+        num_points = getattr(self, 'ray_count', 64)  # 使用配置的光线数量
         angles = np.linspace(start_angle, end_angle, num_points)
         
         for angle in angles:

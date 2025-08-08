@@ -120,22 +120,22 @@ class UpgradeManager:
                     PassiveUpgradeLevel(
                         name="生命回复",
                         level=1,
-                        effects={'health_regen': 1},
+                        effects={'health_regen':1},
                         description="每秒回复1点生命值",
                         icon_path="images/passives/heal_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="生命回复",
                         level=2,
-                        effects={'health_regen': 1.5},
-                        description="每秒回复1.5点生命值",
+                        effects={'health_regen': 2},
+                        description="每秒回复2点生命值",
                         icon_path="images/passives/heal_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="生命回复",
                         level=3,
-                        effects={'health_regen': 2},
-                        description="每秒回复2点生命值",
+                        effects={'health_regen': 5},
+                        description="每秒回复5点生命值",
                         icon_path="images/passives/heal_up_32x32.png"
                     )
                 ]

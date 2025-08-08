@@ -668,7 +668,7 @@ class UI:
         self._render_heart_health(primary_player, screen_width, screen_height)
         
         # 显示弹药数量（在右上角）
-        self._render_ammo_info(weapon_player)
+        # self._render_ammo_info(weapon_player)  # 注释掉弹药显示
         
         # 显示钥匙数量（在左上角）
         self._render_key_info(primary_player, game_time)
@@ -834,7 +834,7 @@ class UI:
             self.screen.blit(energy_text, energy_rect)
     
         # 渲染难度等级信息
-        self._render_difficulty_level(enemy_manager)
+        # self._render_difficulty_level(enemy_manager)  # 注释掉关卡难度显示
 
     def _render_heart_health(self, player, screen_width, screen_height):
         """渲染心形血量显示

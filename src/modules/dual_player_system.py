@@ -169,55 +169,41 @@ class DualPlayerSystem:
         """处理输入事件"""
         # 确保每个事件只被处理一次，避免事件堆积
         if event.type == pygame.KEYDOWN:
-            if event.key in [pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d]:
-                # 忍者蛙的移动控制
-                self.ninja_frog.handle_event(event)
+            # 忍者蛙的控制
+            if event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
+                # 忍者蛙的移动控制（方向键）
+                # 移动现在由MovementComponent的update方法处理，这里不需要额外处理
                 return True  # 标记事件已处理
-            elif event.key == pygame.K_SPACE:
-                # 忍者蛙的穿墙技能
+            elif event.key == pygame.K_KP0:  # 小键盘0键穿墙技能
                 if self.ninja_frog.hero_type == "ninja_frog" and not self.ninja_frog.phase_through_walls and self.ninja_frog.phase_cooldown_timer <= 0:
                     self.ninja_frog.activate_phase_through_walls()
                 return True  # 标记事件已处理
-            elif event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
-                # 神秘剑士的移动控制（方向键）
-                self._handle_mystic_movement(event)
+                
+            # 神秘剑客的控制
+            elif event.key in [pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d]:
+                # 神秘剑客的移动控制（WASD）
+                # 移动现在由MovementComponent的update方法处理，这里不需要额外处理
                 return True  # 标记事件已处理
-            elif event.key in [pygame.K_KP5, pygame.K_KP4, pygame.K_KP6, pygame.K_KP8]:
-                # 神秘剑士的攻击控制（数字键盘）
-                self._handle_mystic_attack(event)
-                return True  # 标记事件已处理
-            elif event.key == pygame.K_u:  # U键远程攻击
-                # 神秘剑士的远程攻击
-                self.mystic_swordsman.weapon_manager.manual_attack(self.screen)
-                # 激活神秘剑士的临时光圈
-                self.mystic_flashlight_active = True
-                self.mystic_flashlight_timer = self.mystic_flashlight_duration
-                return True  # 标记事件已处理
-            elif event.key == pygame.K_k:  # K键近战攻击
-                # 神秘剑士的近战攻击
-                self.mystic_swordsman.weapon_manager.melee_attack(self.screen)
-                # 激活神秘剑士的临时光圈
-                self.mystic_flashlight_active = True
-                self.mystic_flashlight_timer = self.mystic_flashlight_duration
-                return True  # 标记事件已处理
-            elif event.key == pygame.K_KP0:  # 小键盘0键使用传送道具
+            elif event.key == pygame.K_e:  # E键使用传送道具
                 # 使用传送道具
                 self.use_teleport_item()
                 return True  # 标记事件已处理
-            elif event.key == pygame.K_KP1:  # 小键盘1键武器切换（仅对神秘剑士）
+            elif event.key == pygame.K_SPACE:  # 空格键武器切换
                 # 神秘剑士的武器切换
                 if self.mystic_swordsman.hero_type == "role2":
                     self.mystic_swordsman.toggle_weapon_mode()
                 return True  # 标记事件已处理
+            elif event.key in [pygame.K_i, pygame.K_j, pygame.K_k, pygame.K_l]:
+                # 神秘剑士的攻击控制（IJKL）
+                self._handle_mystic_attack(event)
+                return True  # 标记事件已处理
                 
         elif event.type == pygame.KEYUP:
-            if event.key in [pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d]:
-                # 忍者蛙的移动控制
-                self.ninja_frog.handle_event(event)
+            # 忍者蛙的移动控制（方向键）
+            if event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
                 return True  # 标记事件已处理
-            elif event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
-                # 神秘剑士的移动控制（方向键）
-                self._handle_mystic_movement(event)
+            # 神秘剑客的移动控制（WASD）
+            elif event.key in [pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d]:
                 return True  # 标记事件已处理
                 
         # 鼠标事件（忍者蛙的光源控制）
@@ -233,40 +219,7 @@ class DualPlayerSystem:
         # 如果事件没有被处理，返回False
         return False
                 
-    def _handle_mystic_movement(self, event):
-        """处理神秘剑士的移动控制"""
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP:
-                
-                self.mystic_swordsman.movement.moving['up'] = True
-            elif event.key == pygame.K_DOWN:
-                
-                self.mystic_swordsman.movement.moving['down'] = True
-            elif event.key == pygame.K_LEFT:
-                
-                self.mystic_swordsman.movement.moving['left'] = True
-            elif event.key == pygame.K_RIGHT:
-                
-                self.mystic_swordsman.movement.moving['right'] = True
-        elif event.type == pygame.KEYUP:
-            if event.key == pygame.K_UP:
-                
-                self.mystic_swordsman.movement.moving['up'] = False
-            elif event.key == pygame.K_DOWN:
-                
-                self.mystic_swordsman.movement.moving['down'] = False
-            elif event.key == pygame.K_LEFT:
-                
-                self.mystic_swordsman.movement.moving['left'] = False
-            elif event.key == pygame.K_RIGHT:
-                
-                self.mystic_swordsman.movement.moving['right'] = False
-                
-        # 更新移动方向
-        self.mystic_swordsman.movement._update_movement_direction()
-        
-        # 打印当前移动状态
-        moving = self.mystic_swordsman.movement.moving
+
         
             
     def _handle_mystic_attack(self, event):
@@ -282,18 +235,18 @@ class DualPlayerSystem:
             
             # 根据按键确定攻击方向
             attack_direction = None
-            if event.key == pygame.K_KP8:  # 上
+            if event.key == pygame.K_i:  # I键 - 上
                 attack_direction = (0, -1)
                 
-            elif event.key == pygame.K_KP5:  # 下
+            elif event.key == pygame.K_k:  # K键 - 下
                 attack_direction = (0, 1)
                 
-            elif event.key == pygame.K_KP4:  # 左
+            elif event.key == pygame.K_j:  # J键 - 左
                 attack_direction = (-1, 0)
                 
                 # 更新角色朝向为朝左
                 self.mystic_swordsman.movement.facing_right = False
-            elif event.key == pygame.K_KP6:  # 右
+            elif event.key == pygame.K_l:  # L键 - 右
                 attack_direction = (1, 0)
                 
                 # 更新角色朝向为朝右

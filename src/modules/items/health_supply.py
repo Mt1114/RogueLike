@@ -34,7 +34,7 @@ class HealthSupply(Item):
         
         # 生命补给特有属性
         self.health_percent = 0.5  # 恢复50%的最大生命值
-        self.lifetime = 20.0  # 存活时间20秒
+        self.lifetime = 60.0  # 存活时间20秒
         self.time_alive = 0.0  # 已存活时间
         
         # 动画效果
@@ -43,7 +43,7 @@ class HealthSupply(Item):
         self.bob_timer = 0.0  # 浮动计时器
         
         # 闪烁效果（最后10秒开始闪烁）
-        self.blink_start_time = 10.0  # 开始闪烁的时间
+        self.blink_start_time = 50.0  # 开始闪烁的时间
         self.blink_speed = 5.0  # 闪烁速度
         
     def update(self, dt):

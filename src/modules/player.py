@@ -234,7 +234,7 @@ class Player(pygame.sprite.Sprite):
     # 公共方法 - 保持与旧接口兼容
     def handle_event(self, event):
         """处理输入事件"""
-        self.movement.handle_event(event)
+        # 移动使用 get_pressed() 方式，不需要处理移动事件
         
         # 处理U键远程攻击
         if event.type == pygame.KEYDOWN and event.key == pygame.K_u:
@@ -243,7 +243,7 @@ class Player(pygame.sprite.Sprite):
                 self.weapon_manager.manual_attack(self.game.screen)
                 
         # 处理K键近战攻击
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_k:
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_p:
             # 获取屏幕对象（从游戏实例获取）
             if self.game and hasattr(self.game, 'screen'):
                 self.weapon_manager.melee_attack(self.game.screen)
@@ -254,7 +254,7 @@ class Player(pygame.sprite.Sprite):
                 self.activate_ultimate()
         
         # 处理穿墙技能（仅对忍者蛙）
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_KP0:
             if self.hero_type == "ninja_frog" and not self.phase_through_walls and self.phase_cooldown_timer <= 0:
                 self.activate_phase_through_walls()
         
