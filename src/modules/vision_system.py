@@ -5,7 +5,7 @@ import time
 
 class VisionSystem:
     def __init__(self, radius=300, angle=90, color=(255, 255, 200, 100), 
-                 circle_radius=80, circle_color=(255, 255, 200, 100), ray_count=16):
+                 circle_radius=80, circle_color=(255, 255, 200, 100), ray_count=24):
         """
         视野系统初始化
         
@@ -57,6 +57,8 @@ class VisionSystem:
         
         # 性能监控
         self._performance_stats = {
+            'raycast_calls': 0,
+            'raycast_time': 0,
             'render_time': 0,
             'cache_hits': 0,
             'cache_misses': 0
@@ -156,8 +158,11 @@ class VisionSystem:
         pygame.draw.circle(mask_surface, (255, 255, 255, 255), 
                          (self.center_x, self.center_y), self.circle_radius)
         
-        # 计算视野顶点（简化版本，无光线追踪）
-        vertices = self._calculate_vision_vertices(screen_width, screen_height)
+        # 计算视野顶点
+        if self.walls:
+            vertices = self._calculate_vision_vertices_with_raycast(screen_width, screen_height)
+        else:
+            vertices = self._calculate_vision_vertices(screen_width, screen_height)
         
         # 缓存顶点
         self._cache_vertices = vertices
@@ -166,10 +171,17 @@ class VisionSystem:
         self._cache_radius = self.radius
         self._cache_angle = self.angle
         
-        # 绘制扇形视野
+        # 绘制扇形视野（抗锯齿处理）
         if len(vertices) >= 3:
-            # 使用简单的多边形绘制
+            # 使用更平滑的绘制方式
             pygame.draw.polygon(mask_surface, (255, 255, 255, 255), vertices, 0)
+            
+            # 添加边缘平滑处理
+            if len(vertices) > 3:
+                # 在边缘点绘制小圆来平滑边界
+                for vertex in vertices[1:]:  # 跳过中心点
+                    pygame.draw.circle(mask_surface, (255, 255, 255, 255), 
+                                     (int(vertex[0]), int(vertex[1])), 3)
             
         return mask_surface
         
@@ -198,6 +210,27 @@ class VisionSystem:
         for angle in angles:
             x = self.center_x + self.radius * math.cos(angle)
             y = self.center_y + self.radius * math.sin(angle)
+            
+            # 检查点是否在屏幕范围内，如果不在则调整半径
+            if x < 0 or x > screen_width or y < 0 or y > screen_height:
+                # 计算到屏幕边界的距离
+                dist_to_left = abs(x - 0)
+                dist_to_right = abs(x - screen_width)
+                dist_to_top = abs(y - 0)
+                dist_to_bottom = abs(y - screen_height)
+                
+                # 找到最近的边界距离
+                min_dist = min(dist_to_left, dist_to_right, dist_to_top, dist_to_bottom)
+                
+                # 调整半径，使点刚好在屏幕边界内
+                adjusted_radius = self.radius - min_dist - 5  # 留5像素边距
+                if adjusted_radius > 0:
+                    x = self.center_x + adjusted_radius * math.cos(angle)
+                    y = self.center_y + adjusted_radius * math.sin(angle)
+                else:
+                    # 如果调整后半径太小，跳过这个点
+                    continue
+            
             vertices.append((x, y))
             
         return vertices
@@ -211,9 +244,132 @@ class VisionSystem:
             screen_width (int): 屏幕宽度
             screen_height (int): 屏幕高度
         """
-        # 此方法未使用，已删除以简化代码
-        pass
+        if not self.walls:
+            # 如果没有墙壁，绘制完整圆形
+            pygame.draw.circle(surface, (255, 255, 255, 255), 
+                             (self.center_x, self.center_y), self.circle_radius)
+            return
+            
+        # 计算圆形边界的所有顶点（按照扇形的逻辑）
+        vertices = []
         
+        # 添加中心点
+        vertices.append((self.center_x, self.center_y))
+        
+        # 性能优化：根据圆形半径调整采样点数量
+        num_points = max(24, int(self.circle_radius / 6))  # 增加采样点以获得更平滑的圆形
+        angles = np.linspace(0, 2 * math.pi, num_points)
+        
+        for angle in angles:
+            # 计算理论上的终点
+            end_x = self.center_x + self.circle_radius * math.cos(angle)
+            end_y = self.center_y + self.circle_radius * math.sin(angle)
+            
+            # 进行光线追踪
+            blocked, hit_point = self.ray_cast(self.center_x, self.center_y, end_x, end_y)
+            
+            if blocked:
+                # 如果被阻挡，使用阻挡点
+                x, y = hit_point
+            else:
+                # 如果没有被阻挡，使用理论终点
+                x, y = end_x, end_y
+            
+            # 检查点是否在屏幕范围内，如果不在则调整半径
+            if x < 0 or x > screen_width or y < 0 or y > screen_height:
+                # 计算到屏幕边界的距离
+                dist_to_left = abs(x - 0)
+                dist_to_right = abs(x - screen_width)
+                dist_to_top = abs(y - 0)
+                dist_to_bottom = abs(y - screen_height)
+                
+                # 找到最近的边界距离
+                min_dist = min(dist_to_left, dist_to_right, dist_to_top, dist_to_bottom)
+                
+                # 调整半径，使点刚好在屏幕边界内
+                adjusted_radius = self.circle_radius - min_dist - 5  # 留5像素边距
+                if adjusted_radius > 0:
+                    x = self.center_x + adjusted_radius * math.cos(angle)
+                    y = self.center_y + adjusted_radius * math.sin(angle)
+                else:
+                    # 如果调整后半径太小，跳过这个点
+                    continue
+            
+            vertices.append((x, y))
+        
+        # 绘制多边形
+        if len(vertices) >= 3:
+            pygame.draw.polygon(surface, (255, 255, 255, 255), vertices)
+        
+    def _calculate_vision_vertices_with_raycast(self, screen_width, screen_height):
+        """
+        计算带光线追踪的视野扇形顶点（高度优化版本）
+        
+        Returns:
+            list: 顶点坐标列表 [(x1, y1), (x2, y2), ...]
+        """
+        vertices = []
+        
+        # 添加中心点
+        vertices.append((self.center_x, self.center_y))
+        
+        # 计算扇形的边界点
+        start_angle = self.direction - self.half_angle
+        end_angle = self.direction + self.half_angle
+        
+        # 使用配置的光线数量来确保平滑的扇形
+        num_points = getattr(self, 'ray_count', 64)  # 使用配置的光线数量
+        
+        # 使用更高效的角度生成
+        angles = []
+        for i in range(num_points):
+            angle = start_angle + (end_angle - start_angle) * i / (num_points - 1)
+            angles.append(angle)
+        
+        # 批量处理光线追踪
+        start_time = time.time()
+        for angle in angles:
+            # 计算理论上的终点
+            end_x = self.center_x + self.radius * math.cos(angle)
+            end_y = self.center_y + self.radius * math.sin(angle)
+            
+            # 进行光线追踪
+            blocked, hit_point = self.ray_cast(self.center_x, self.center_y, end_x, end_y)
+            
+            if blocked:
+                # 如果被阻挡，使用阻挡点
+                x, y = hit_point
+            else:
+                # 如果没有被阻挡，使用理论终点
+                x, y = end_x, end_y
+            
+            # 检查点是否在屏幕范围内，如果不在则调整半径
+            if x < 0 or x > screen_width or y < 0 or y > screen_height:
+                # 计算到屏幕边界的距离
+                dist_to_left = abs(x - 0)
+                dist_to_right = abs(x - screen_width)
+                dist_to_top = abs(y - 0)
+                dist_to_bottom = abs(y - screen_height)
+                
+                # 找到最近的边界距离
+                min_dist = min(dist_to_left, dist_to_right, dist_to_top, dist_to_bottom)
+                
+                # 调整半径，使点刚好在屏幕边界内
+                adjusted_radius = self.radius - min_dist - 5  # 留5像素边距
+                if adjusted_radius > 0:
+                    x = self.center_x + adjusted_radius * math.cos(angle)
+                    y = self.center_y + adjusted_radius * math.sin(angle)
+                else:
+                    # 如果调整后半径太小，跳过这个点
+                    continue
+            
+            vertices.append((x, y))
+        
+        self._performance_stats['raycast_time'] += time.time() - start_time
+        self._performance_stats['raycast_calls'] += len(angles)
+            
+        return vertices
+    
     def render(self, screen, dark_overlay=None):
         """
         渲染视野系统（优化版本）
@@ -222,8 +378,27 @@ class VisionSystem:
             screen (pygame.Surface): 游戏屏幕
             dark_overlay (pygame.Surface): 黑暗遮罩（可选）
         """
-        # 此方法已被 LightingManager 替代，保留为空方法以保持兼容性
-        pass
+        start_time = time.time()
+        screen_width, screen_height = screen.get_size()
+        
+        # 创建视野遮罩
+        vision_mask = self.create_vision_mask(screen_width, screen_height)
+        
+        # if dark_overlay:
+        #     # 如果有黑暗遮罩，创建复合效果
+        #     # 复制黑暗遮罩
+        #     final_overlay = dark_overlay.copy()
+            
+        #     # 在视野区域清除黑暗（使用减法混合模式）
+        #     final_overlay.blit(vision_mask, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
+            
+        #     # 渲染最终遮罩
+        #     screen.blit(final_overlay, (0, 0))
+        # else:
+        #     # 直接渲染视野遮罩
+        #     screen.blit(vision_mask, (0, 0))
+        
+        self._performance_stats['render_time'] += time.time() - start_time
     
     def is_in_vision(self, x, y):
         """
@@ -329,6 +504,8 @@ class VisionSystem:
     def reset_performance_stats(self):
         """重置性能统计"""
         self._performance_stats = {
+            'raycast_calls': 0,
+            'raycast_time': 0,
             'render_time': 0,
             'cache_hits': 0,
             'cache_misses': 0
@@ -374,7 +551,7 @@ class VisionSystem:
         self.screen_center_y = screen_center_y
         
     def ray_cast(self, start_x, start_y, end_x, end_y):
-        """光线追踪（简化版本，无碰撞检测）
+        """光线追踪（无碰撞版本）
         
         Args:
             start_x, start_y: 起始点坐标（屏幕坐标）
@@ -383,7 +560,7 @@ class VisionSystem:
         Returns:
             tuple: (是否被阻挡, 阻挡点坐标) - 总是返回False表示无阻挡
         """
-        # 简化版本：光源可以穿透所有墙壁，直接返回终点
+        # 无碰撞版本：光源可以穿透所有墙壁
         return False, (end_x, end_y)
 
 

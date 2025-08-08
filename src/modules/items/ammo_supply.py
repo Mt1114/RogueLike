@@ -20,7 +20,7 @@ class AmmoSupply(Item):
             self.image = resource_manager.load_image('ammo_supply', 'images/ui/bullet.png')
             self.image = pygame.transform.scale(self.image, (96, 96))
         except Exception as e:
-            print(f"加载弹药补给图片失败: {e}")
+            
             # 如果加载失败，创建一个默认的黄色圆形图标
             self.image = pygame.Surface((96, 96), pygame.SRCALPHA)
             pygame.draw.circle(self.image, (255, 255, 0), (48, 48), 48)
@@ -79,7 +79,7 @@ class AmmoSupply(Item):
                 if hasattr(weapon, 'ammo') and not weapon.is_melee:
                     # 确保不超过最大弹药量
                     weapon.ammo = min(weapon.ammo + self.ammo_amount, weapon.max_ammo)
-                    print(f"获得弹药补给！武器类型: {weapon.type}, 当前弹药: {weapon.ammo}/{weapon.max_ammo}")
+                    
         
         return True  # 返回True表示拾取成功，物品应该被销毁
     

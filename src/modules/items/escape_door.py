@@ -96,4 +96,4 @@ class EscapeDoor(pygame.sprite.Sprite):
         self.is_locked = True
         self.is_opened = False
         self._update_appearance()
-        print("逃生门已重置为锁定状态") 
+        

@@ -572,7 +572,7 @@ class Player(pygame.sprite.Sprite):
             
         self.phase_through_walls = True
         self.phase_timer = 0
-        print("激活穿墙技能！")
+        
         
         # 加载穿墙时的特殊动画
         self._load_phase_animation()
@@ -588,7 +588,7 @@ class Player(pygame.sprite.Sprite):
         if self.phase_timer >= self.phase_duration:
             self.phase_through_walls = False
             self.phase_cooldown_timer = self.phase_cooldown  # 开始CD
-            print("穿墙技能结束")
+            
     
     def _load_phase_icon(self):
         """加载穿墙技能图标"""
@@ -602,11 +602,10 @@ class Player(pygame.sprite.Sprite):
             if self.phase_icon:
                 # 缩放图标到合适大小
                 self.phase_icon = pygame.transform.scale(self.phase_icon, (48, 48))
-                print("穿墙技能图标加载成功")
-            else:
-                print("穿墙技能图标加载失败")
+                
+            
         except Exception as e:
-            print(f"无法加载穿墙技能图标: {e}")
+            
             self.phase_icon = None
     
     def render_phase_cooldown(self, screen):
@@ -624,7 +623,7 @@ class Player(pygame.sprite.Sprite):
         if not self.phase_icon:
             self.phase_icon = pygame.Surface((icon_size, icon_size), pygame.SRCALPHA)
             pygame.draw.circle(self.phase_icon, (0, 255, 255), (icon_size // 2, icon_size // 2), icon_size // 2)
-            print("使用默认穿墙技能图标")
+            
         
         # 创建带黄色边框的图标
         bordered_icon = pygame.Surface((icon_size + 4, icon_size + 4), pygame.SRCALPHA)
@@ -663,10 +662,10 @@ class Player(pygame.sprite.Sprite):
             if phase_image and phase_image.get_size() != (1, 1):
                 self.phase_animation_image = pygame.transform.scale(phase_image, (64, 64))
             else:
-                print("穿墙动画图片加载失败")
+                
                 self.phase_animation_image = None
         except Exception as e:
-            print(f"无法加载穿墙动画图片: {e}")
+            
             self.phase_animation_image = None
     
     def toggle_weapon_mode(self):

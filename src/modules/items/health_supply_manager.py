@@ -28,12 +28,12 @@ class HealthSupplyManager:
         self.spawn_margin = 100  # 距离地图边缘的最小距离
         
         # 游戏开始时立即生成一些补给
-        print("初始化生命补给管理器...")
+        
         self._generate_initial_supplies()
         
     def _generate_initial_supplies(self):
         """游戏开始时生成初始补给"""
-        print("生成初始生命补给...")
+        
         for i in range(3):  # 生成3个初始补给
             self.spawn_supply()
         
@@ -62,7 +62,7 @@ class HealthSupplyManager:
     def spawn_supply(self):
         """生成一个新的生命补给"""
         if not hasattr(self.game, 'map_manager'):
-            print("错误: 游戏没有地图管理器")
+            
             return
             
         # 获取地图尺寸
@@ -120,8 +120,7 @@ class HealthSupplyManager:
                 supply_rect = pygame.Rect(x - 48, y - 48, 96, 96)
                 if tile.colliderect(supply_rect):
                     return False
-        else:
-            print(f"警告: 没有找到碰撞图块数据")
+        
                 
         # 检查是否与玩家重叠
         if hasattr(self.game, 'player'):

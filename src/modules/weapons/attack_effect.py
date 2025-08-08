@@ -42,7 +42,7 @@ class AttackEffect:
             # 加载原始图片
             original_image = resource_manager.load_image('attack_effect', self.image_path)
             if not original_image:
-                print(f"警告：无法加载攻击特效图片: {self.image_path}")
+                
                 return []
             
             frames = []
@@ -59,7 +59,7 @@ class AttackEffect:
             
             return frames
         except Exception as e:
-            print(f"错误：分割攻击特效图片失败: {e}")
+            
             return []
     
     def play(self, x, y, direction_x, direction_y):

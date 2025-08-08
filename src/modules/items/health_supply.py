@@ -24,7 +24,7 @@ class HealthSupply(Item):
             self.image = resource_manager.load_image('heart_supply', 'images/ui/heart.png')
             self.image = pygame.transform.scale(self.image, (96, 96))
         except Exception as e:
-            print(f"加载心形图片失败: {e}")
+            
             # 如果加载失败，创建一个默认的红色圆形图标
             self.image = pygame.Surface((96, 96), pygame.SRCALPHA)
             pygame.draw.circle(self.image, (255, 0, 0), (48, 48), 48)
@@ -93,7 +93,7 @@ class HealthSupply(Item):
             
             if actual_heal > 0:
                 health_comp.health = new_health
-                print(f"获得生命补给！恢复 {actual_heal} 点生命，当前生命: {health_comp.health}/{max_health}")
+                
                 return True  # 拾取成功
         return False  # 未拾取成功
         
