@@ -124,7 +124,7 @@ class Game:
         self.debug_mode = False
         
         # 性能优化选项
-        self.show_fps_display = False  # 是否显示FPS，默认关闭以提高性能
+        self.show_fps_display = True  # 是否显示FPS，默认开启
         
         # 帧数跟踪
         self.fps = 0

@@ -13,7 +13,7 @@ VISION_CONFIG = {
         "radius": 640,        # 扇形视野半径（像素）- 覆盖半个窗口宽度
         "angle": 30,          # 扇形视野角度（度）
         "color": (255, 255, 255, 128),  # 扇形区域透明度 (R, G, B, A)
-        "ray_count": 64,      # 光线数量（影响扇形的平滑度）
+        "ray_count": 16,      # 光线数量（影响扇形的平滑度，降低以提高性能）
     },
     
     # 圆形光源配置
@@ -68,7 +68,7 @@ VISION_PRESETS = {
         "sector_angle": 30,
         "circle_radius": 80,
         "darkness_alpha": 255,
-        "ray_count": 12,
+        "ray_count": 8,
     },
     "wide": {
         "name": "宽视野",
@@ -76,7 +76,7 @@ VISION_PRESETS = {
         "sector_angle": 120,
         "circle_radius": 100,
         "darkness_alpha": 180,
-        "ray_count": 12,
+        "ray_count": 8,
     },
     "narrow": {
         "name": "窄视野",
@@ -84,7 +84,7 @@ VISION_PRESETS = {
         "sector_angle": 60,
         "circle_radius": 60,
         "darkness_alpha": 220,
-        "ray_count": 12,
+        "ray_count": 8,
     },
     "night_vision": {
         "name": "夜视模式",
@@ -92,7 +92,7 @@ VISION_PRESETS = {
         "sector_angle": 180,
         "circle_radius": 120,
         "darkness_alpha": 150,
-        "ray_count": 12,
+        "ray_count": 8,
     },
     "tunnel": {
         "name": "隧道视野",
